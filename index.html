@@ -2030,6 +2030,68 @@ function getSupabaseErrorMessage(err){
   if(err.code) parts.push('Code : ' + err.code);
   return parts.join(' — ') || JSON.stringify(err);
 }
+
+
+// Version debug / correctif stockage local
+window.EDH_APP_VERSION = 'V7-2026-05-06-storage-quota-supabase';
+console.info('EDH app version:', window.EDH_APP_VERSION);
+
+function minimalUserForStorage(u){
+  return {
+    id: u?.id || null,
+    supabase_id: u?.supabase_id || null,
+    firstName: u?.firstName || '',
+    lastName: u?.lastName || '',
+    email: u?.email || '',
+    password: u?.password || '',
+    role: u?.role || 'student',
+    school: u?.school || '',
+    campus: u?.campus || '',
+    region: u?.region || '',
+    regions_autorisees: splitAccessValues(u?.regions_autorisees || u?.campus || u?.region),
+    schools_autorisees: getSchoolsArray(Array.isArray(u?.schools_autorisees) ? u.schools_autorisees.join(', ') : (u?.schools_autorisees || u?.school || '')),
+    phone: u?.phone || '',
+    locked: Boolean(u?.locked)
+  };
+}
+function usersForLocalStorage(){
+  // On ne stocke plus des objets utilisateurs complets : cela évite l'erreur navigateur Code 22 / quota localStorage.
+  return (Array.isArray(USERS) ? USERS : []).map(minimalUserForStorage).slice(0, 500);
+}
+function safeLocalStorageSet(key, value){
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch(err) {
+    console.warn('localStorage plein ou inaccessible pour', key, err);
+    try {
+      // Nettoyage des anciennes copies volumineuses. Supabase reste la source de vérité.
+      ['edh_users_v3','edh_lycees_v2','edh_master_lycees_v1','edh_reporting_v1','edh_registrations_v2','edh_leads_v1','edh_students_v2'].forEach(k => {
+        if(k !== key) localStorage.removeItem(k);
+      });
+      localStorage.setItem(key, value);
+      return true;
+    } catch(err2) {
+      console.warn('Sauvegarde locale ignorée pour', key, err2);
+      return false;
+    }
+  }
+}
+function safeLocalStorageRemove(key){
+  try { localStorage.removeItem(key); } catch(e) { console.warn('Suppression localStorage impossible', key, e); }
+}
+function clearEdhLocalCache(){
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith('edh_')).forEach(k => localStorage.removeItem(k));
+    showToast('Cache local EDH vidé. Recharge la page.', 'success');
+  } catch(e) {
+    console.warn('Cache local non vidé', e);
+  }
+}
+window.clearEdhLocalCache = clearEdhLocalCache;
+if(new URLSearchParams(window.location.search).get('resetCache') === '1'){
+  try { Object.keys(localStorage).filter(k => k.startsWith('edh_')).forEach(k => localStorage.removeItem(k)); } catch(e) {}
+}
 function getMissingSupabaseColumn(err){
   const msg = getSupabaseErrorMessage(err);
   const m = msg.match(/could not find the "([^"]+)" column/i) || msg.match(/column "([^"]+)".*does not exist/i);
@@ -2135,13 +2197,13 @@ function mapAppUserToSupabase(u){
 }
 async function refreshUsersFromSupabase(){
   if(!supabaseClient) return false;
-  const { data, error } = await supabaseClient.from('utilisateurs').select('*').order('last_name', { ascending:true });
+  const { data, error } = await supabaseClient.from('utilisateurs').select('id,app_id,first_name,last_name,email,password,role,school,campus,region,regions_autorisees,schools_autorisees,phone,locked').order('last_name', { ascending:true });
   if(error){ console.warn('Utilisateurs Supabase non chargés', error); return false; }
   if(Array.isArray(data)){
     const remoteUsers = data.map(mapSupabaseUserToApp).filter(u => u.email);
     USERS = remoteUsers;
     ensureDefaultUsers();
-    localStorage.setItem('edh_users_v3', JSON.stringify(USERS));
+    safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
     return true;
   }
   return false;
@@ -2197,12 +2259,12 @@ async function findUserForLogin(username, password){
   if(!login || !pass) return null;
   if(supabaseClient){
     try {
-      const { data, error } = await supabaseClient.from('utilisateurs').select('*').eq('email', login).eq('password', pass).limit(1);
+      const { data, error } = await supabaseClient.from('utilisateurs').select('id,app_id,first_name,last_name,email,password,role,school,campus,region,regions_autorisees,schools_autorisees,phone,locked').eq('email', login).eq('password', pass).limit(1);
       if(!error && Array.isArray(data) && data.length){
         const remoteUser = mapSupabaseUserToApp(data[0]);
         const idx = USERS.findIndex(u => (u.email || '').toLowerCase() === remoteUser.email || u.id === remoteUser.id);
         if(idx > -1) USERS[idx] = remoteUser; else USERS.unshift(remoteUser);
-        localStorage.setItem('edh_users_v3', JSON.stringify(USERS));
+        safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
         return remoteUser;
       }
       if(error) console.warn('Connexion Supabase utilisateurs ignorée', error);
@@ -2455,7 +2517,7 @@ async function loadFromSupabase(){
       // Supabase est prioritaire : si la table est vide ou si des lignes ont été supprimées dans Supabase,
       // on remplace l'état local au lieu de réécrire l'ancien localStorage dans la base.
       LYCEES = mapped;
-      localStorage.setItem('edh_master_lycees_v1', JSON.stringify(LYCEES.map(stableLyceePart)));
+      safeLocalStorageSet('edh_master_lycees_v1', JSON.stringify(LYCEES.map(stableLyceePart)));
       saveSeasonData(S.season);
     }
 
@@ -2807,11 +2869,11 @@ function masterLycees(){
 function updateMasterFromCurrentLycees(){
   const map = new Map(masterLycees().map(l => [l.id, l]));
   LYCEES.forEach(l => map.set(l.id, {...(map.get(l.id)||{}), ...stableLyceePart(l)}));
-  localStorage.setItem('edh_master_lycees_v1', JSON.stringify(Array.from(map.values())));
+  safeLocalStorageSet('edh_master_lycees_v1', JSON.stringify(Array.from(map.values())));
 }
 function seasonStorageKey(season){ return 'edh_season_data_' + String(season || DEFAULT_SEASON).replace(/[^0-9-]/g,'_'); }
 function saveSeasonData(season=S.season){
-  localStorage.setItem(seasonStorageKey(season), JSON.stringify({lycees:LYCEES, reporting:REPORTING_DATA, registrations:REGISTRATIONS, leads:LEADS}));
+  safeLocalStorageSet(seasonStorageKey(season), JSON.stringify({lycees:LYCEES, reporting:REPORTING_DATA, registrations:REGISTRATIONS, leads:LEADS}));
 }
 function loadSeasonData(season=S.season){
   const raw = localStorage.getItem(seasonStorageKey(season));
@@ -2834,26 +2896,26 @@ function loadSeasonData(season=S.season){
 function bootstrapSeasonStorage(){
   S.season = localStorage.getItem('edh_current_season_v1') || DEFAULT_SEASON;
   if(!localStorage.getItem('edh_master_lycees_v1') && Array.isArray(LYCEES) && LYCEES.length){
-    localStorage.setItem('edh_master_lycees_v1', JSON.stringify(LYCEES.map(stableLyceePart)));
+    safeLocalStorageSet('edh_master_lycees_v1', JSON.stringify(LYCEES.map(stableLyceePart)));
   }
   if(!localStorage.getItem(seasonStorageKey(DEFAULT_SEASON)) && Array.isArray(LYCEES) && LYCEES.length){
-    localStorage.setItem(seasonStorageKey(DEFAULT_SEASON), JSON.stringify({lycees:LYCEES, reporting:REPORTING_DATA || {}, registrations:REGISTRATIONS || [], leads:LEADS || []}));
+    safeLocalStorageSet(seasonStorageKey(DEFAULT_SEASON), JSON.stringify({lycees:LYCEES, reporting:REPORTING_DATA || {}, registrations:REGISTRATIONS || [], leads:LEADS || []}));
   }
   loadSeasonData(S.season);
 }
 function saveLocalData(){
   updateMasterFromCurrentLycees();
   saveSeasonData(S.season);
-  localStorage.setItem('edh_current_season_v1', S.season || DEFAULT_SEASON);
-  localStorage.setItem('edh_students_v2', JSON.stringify(STUDENTS));
-  localStorage.setItem('edh_student_profile_v2', JSON.stringify(S.studentProfile || null));
-  localStorage.setItem('edh_users_v3', JSON.stringify(USERS));
-  localStorage.setItem('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
-  localStorage.setItem('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
-  localStorage.setItem('edh_lycees_v2', JSON.stringify(LYCEES));
-  localStorage.setItem('edh_reporting_v1', JSON.stringify(REPORTING_DATA));
-  localStorage.setItem('edh_registrations_v2', JSON.stringify(REGISTRATIONS));
-  localStorage.setItem('edh_leads_v1', JSON.stringify(LEADS || []));
+  safeLocalStorageSet('edh_current_season_v1', S.season || DEFAULT_SEASON);
+  safeLocalStorageSet('edh_students_v2', JSON.stringify(STUDENTS));
+  safeLocalStorageSet('edh_student_profile_v2', JSON.stringify(S.studentProfile || null));
+  safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+  safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
+  safeLocalStorageSet('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
+  safeLocalStorageSet('edh_lycees_v2', JSON.stringify(LYCEES));
+  safeLocalStorageSet('edh_reporting_v1', JSON.stringify(REPORTING_DATA));
+  safeLocalStorageSet('edh_registrations_v2', JSON.stringify(REGISTRATIONS));
+  safeLocalStorageSet('edh_leads_v1', JSON.stringify(LEADS || []));
   queueSupabaseSave();
 }
 function ensureDefaultUsers(){
@@ -2877,8 +2939,8 @@ function ensureDefaultUsers(){
 function restoreEmbeddedLyceesIfEmpty(){
   if((!Array.isArray(LYCEES) || !LYCEES.length) && typeof window !== 'undefined' && Array.isArray(window.__EDH_EMBEDDED_LYCEES) && window.__EDH_EMBEDDED_LYCEES.length){
     LYCEES = window.__EDH_EMBEDDED_LYCEES.map(l => ({...l}));
-    localStorage.setItem('edh_lycees_v2', JSON.stringify(LYCEES));
-    localStorage.setItem('edh_master_lycees_v1', JSON.stringify(LYCEES.map(stableLyceePart)));
+    safeLocalStorageSet('edh_lycees_v2', JSON.stringify(LYCEES));
+    safeLocalStorageSet('edh_master_lycees_v1', JSON.stringify(LYCEES.map(stableLyceePart)));
     saveSeasonData(S.season || DEFAULT_SEASON);
     return true;
   }
@@ -2893,13 +2955,14 @@ function loadLocalData
     STUDENTS = JSON.parse(localStorage.getItem('edh_students_v2') || '[]');
     REGISTRATIONS = JSON.parse(localStorage.getItem('edh_registrations_v2') || '[]');
     USERS = JSON.parse(localStorage.getItem('edh_users_v3') || '[]');
+    if(Array.isArray(USERS)) USERS = USERS.map(minimalUserForStorage);
     DELETED_DEFAULT_USER_IDS = JSON.parse(localStorage.getItem('edh_deleted_default_user_ids_v1') || '[]');
     REPORTING_DATA = JSON.parse(localStorage.getItem('edh_reporting_v1') || '{}');
     LEADS = JSON.parse(localStorage.getItem('edh_leads_v1') || '[]');
     bootstrapSeasonStorage();
     ensureDefaultUsers();
-    localStorage.setItem('edh_users_v3', JSON.stringify(USERS));
-    localStorage.setItem('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
+    safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+    safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
     S.currentUserId = JSON.parse(localStorage.getItem('edh_current_user_v3') || 'null');
     const savedProfile = JSON.parse(localStorage.getItem('edh_student_profile_v2') || 'null');
     S.studentProfile = savedProfile;
@@ -4193,7 +4256,7 @@ function initSeasonSelect(){
 function changeSeason(season){
   saveSeasonData(S.season || DEFAULT_SEASON);
   S.season = season || DEFAULT_SEASON;
-  localStorage.setItem('edh_current_season_v1', S.season);
+  safeLocalStorageSet('edh_current_season_v1', S.season);
   loadSeasonData(S.season);
   S.search=''; S.statut=[]; S.dept=[]; S.type=''; S.school=''; S.page=1; S.schoolPage=1;
   const search = document.getElementById('global-search'); if(search) search.value='';
@@ -4202,7 +4265,7 @@ function changeSeason(season){
   refreshCurrentPage();
   showToast(`Saison ${S.season} chargée`);
 }
-function saveLeadWebhookUrl(){ localStorage.setItem('edh_lead_webhook_url_v1', document.getElementById('lead-webhook-url')?.value || ''); }
+function saveLeadWebhookUrl(){ safeLocalStorageSet('edh_lead_webhook_url_v1', document.getElementById('lead-webhook-url')?.value || ''); }
 function loadLeadWebhookUrl(){ const el=document.getElementById('lead-webhook-url'); if(el) el.value = localStorage.getItem('edh_lead_webhook_url_v1') || ''; }
 function parseHashParam(name){ return new URLSearchParams((window.location.hash || '').replace(/^#/, '')).get(name); }
 // Ancienne ouverture QR remplacée par le formulaire public V3.
