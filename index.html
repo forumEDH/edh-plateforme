@@ -4285,12 +4285,20 @@ function fillDemoLogin(){
 }
 
 function openLoginModal(){
-  document.getElementById('login-modal').classList.add('open');
+  const modal = document.getElementById('login-modal');
+  if(!modal) return;
+  modal.style.display = '';
+  modal.removeAttribute('aria-hidden');
+  modal.classList.add('open');
   updateLoginHelp();
 }
 
 function closeLoginModal(){
-  document.getElementById('login-modal').classList.remove('open');
+  const modal = document.getElementById('login-modal');
+  if(!modal) return;
+  modal.classList.remove('open');
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden','true');
 }
 
 async function submitLogin(){
@@ -4311,6 +4319,10 @@ async function submitLogin(){
     if(idx > -1) USERS[idx] = found; else USERS.unshift(found);
   }
   if(!found) return showToast("Identifiants incorrects ou compte non synchronisé", 'error');
+
+  // Fermeture immédiate : on ne laisse pas Supabase bloquer la fenêtre de connexion.
+  closeLoginModal();
+
   S.currentUserId = found.id;
   setRole(found.role || requestedRole);
   if(normalizeRoleValue(found.role || requestedRole) === 'student'){
@@ -4318,14 +4330,23 @@ async function submitLogin(){
   } else {
     S.studentProfile = null;
   }
+
   saveLocalData();
-  const supabaseReloaded = await loadFromSupabase();
-  if(!supabaseReloaded) restoreEmbeddedLyceesIfEmpty();
-  populateStaticSelects();
-  updateSchoolFilterCounts();
-  closeLoginModal();
   showToast(roleIsInternal(found.role || requestedRole) ? 'Connexion collaborateur réussie' : 'Connexion étudiant réussie');
   refreshCurrentPage();
+
+  // Synchronisation Supabase en arrière-plan après connexion.
+  setTimeout(async () => {
+    try {
+      const supabaseReloaded = await loadFromSupabase();
+      if(!supabaseReloaded) restoreEmbeddedLyceesIfEmpty();
+      populateStaticSelects();
+      updateSchoolFilterCounts();
+      refreshCurrentPage();
+    } catch(err) {
+      console.warn('Synchronisation Supabase après connexion impossible', err);
+    }
+  }, 50);
 }
 
 
