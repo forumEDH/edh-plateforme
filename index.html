@@ -1984,6 +1984,7 @@ const supabaseClient = SUPABASE_ENABLED ? window.supabase.createClient(SUPABASE_
 let SUPABASE_SYNC_READY = false;
 let SUPABASE_SYNC_TIMER = null;
 let SUPABASE_IS_PUSHING = false;
+let SUPABASE_LAST_LOAD_AT = 0;
 
 const SEASON_FIELDS = ['statut','date','heure','formation','ecoles','commentaire','ancien_etudiant','participants','prospect_global','term'];
 let CURRENT_PUBLIC_LEAD_EVENT_ID = null;
@@ -2033,7 +2034,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V7-2026-05-06-storage-quota-supabase';
+window.EDH_APP_VERSION = 'V8-2026-05-06-login-rapide-supabase-bg';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2257,6 +2258,14 @@ async function findUserForLogin(username, password){
   const login = (username || '').toString().trim().toLowerCase();
   const pass = (password || '').toString().trim();
   if(!login || !pass) return null;
+
+  // V8 : connexion rapide. On valide d'abord avec le cache local minimal déjà présent
+  // pour éviter d'attendre Supabase à chaque connexion. Supabase est ensuite resynchronisé
+  // en arrière-plan et reste la source de vérité pour les données partagées.
+  ensureDefaultUsers();
+  const localFound = USERS.find(u => (((u.email || '').toLowerCase() === login) || (login === 'admin' && (u.email || '') === 'admin')) && (u.password || '') === pass);
+  if(localFound) return localFound;
+
   if(supabaseClient){
     try {
       const { data, error } = await supabaseClient.from('utilisateurs').select('id,app_id,first_name,last_name,email,password,role,school,campus,region,regions_autorisees,schools_autorisees,phone,locked').eq('email', login).eq('password', pass).limit(1);
@@ -2546,6 +2555,7 @@ async function loadFromSupabase(){
     if(remoteRegistrations.length) REGISTRATIONS = remoteRegistrations;
 
     SUPABASE_SYNC_READY = true;
+    SUPABASE_LAST_LOAD_AT = Date.now();
     showToast('Connexion Supabase active');
     return true;
   } catch(err){
@@ -4382,6 +4392,11 @@ function closeLoginModal(){
 
 async function syncAfterLoginInBackground(){
   try {
+    // V8 : si Supabase vient déjà d'être chargé au lancement, on ne recharge pas tout
+    // immédiatement après la connexion. Cela évite une double attente inutile.
+    if(SUPABASE_LAST_LOAD_AT && Date.now() - SUPABASE_LAST_LOAD_AT < 20000){
+      return;
+    }
     const supabaseReloaded = await loadFromSupabase();
     if(!supabaseReloaded) restoreEmbeddedLyceesIfEmpty();
     populateStaticSelects();
@@ -5336,9 +5351,11 @@ function importReportingFromFile(){
 // ══════════════════════════════════════
 async function init(){
   if(typeof window !== 'undefined') window.__EDH_EMBEDDED_LYCEES = Array.isArray(LYCEES) ? LYCEES.map(l => ({...l})) : [];
+
+  // V8 : on affiche l'interface immédiatement avec les données locales / embarquées.
+  // Le chargement complet Supabase se fait ensuite en arrière-plan.
   loadLocalData();
-  const supabaseLoaded = await loadFromSupabase();
-  if(!supabaseLoaded) restoreEmbeddedLyceesIfEmpty();
+  restoreEmbeddedLyceesIfEmpty();
   populateStaticSelects();
   const visibleAtInit = schoolsVisibleForCurrentUser();
   if(!visibleAtInit.includes(S.currentSchool)) S.currentSchool = visibleAtInit[0] || SCHOOLS[0];
@@ -5354,6 +5371,21 @@ async function init(){
   const topbar = document.getElementById('topbar-listing-only'); if(topbar) topbar.style.display='none';
   updateLoginHelp();
   if(!openedFromQr) openLoginModal();
+
+  // Synchronisation en arrière-plan : elle ne bloque plus l'affichage ni la connexion.
+  setTimeout(async () => {
+    try {
+      const supabaseLoaded = await loadFromSupabase();
+      if(!supabaseLoaded) restoreEmbeddedLyceesIfEmpty();
+      populateStaticSelects();
+      populateDepts();
+      updateSchoolFilterCounts();
+      refreshCurrentPage();
+    } catch(err){
+      console.error('Erreur chargement Supabase initial en arrière-plan:', err);
+      showToast('Connexion Supabase impossible : données locales utilisées', 'error');
+    }
+  }, 80);
 }
 </script>
 
