@@ -555,7 +555,7 @@ td strong { color: var(--text); font-weight: 600; }
 
 /* ── TOAST ── */
 .toast {
-  position: fixed; bottom: 24px; right: 24px; z-index: 500;
+  position: fixed; bottom: 24px; right: 24px; z-index: 99999;
   background: var(--text); color: white; padding: 10px 18px;
   border-radius: 8px; font-size: 13px; font-weight: 500;
   box-shadow: var(--shadow-lg); transform: translateY(60px); opacity: 0;
@@ -1913,9 +1913,10 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const EDH_BUILD_VERSION = "V5-2026-05-06-login-lycee-supabase";
-window.EDH_BUILD_VERSION = EDH_BUILD_VERSION;
-console.log("EDH build", EDH_BUILD_VERSION);
+const APP_PATCH_VERSION = "V6-2026-05-06-visible-errors-login-lycee";
+console.log("EDH plateforme", APP_PATCH_VERSION);
+window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
+window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
 // ══════════════════════════════════════
 // DATA BOOTSTRAP
 // ══════════════════════════════════════
@@ -2322,12 +2323,10 @@ async function saveLyceeDirectToSupabase(localLycee){
   if(!supabaseClient){
     return { ok:false, skipped:true, message:'Client Supabase non initialisé' };
   }
-
-  let payload = mapAppLyceeToSupabase(localLycee);
+  const payload = mapAppLyceeToSupabase(localLycee);
   if(!payload.nom || !payload.ville){
     return { ok:false, skipped:true, message:'Nom et ville requis' };
   }
-
   try {
     let existingId = localLycee.supabase_id || null;
 
@@ -2342,46 +2341,23 @@ async function saveLyceeDirectToSupabase(localLycee){
       existingId = existing && existing.length ? existing[0].id : null;
     }
 
-    // Sauvegarde robuste : si Supabase n'a pas encore une colonne présente dans le HTML
-    // (ex. campus, region, commentaire...), on retire uniquement cette colonne et on réessaie.
-    const missingColumns = [];
-
-    for(let attempt = 0; attempt < 10; attempt++){
-      const response = existingId
-        ? await supabaseClient.from('lycees').update(payload).eq('id', existingId).select('id').single()
-        : await supabaseClient.from('lycees').insert([payload]).select('id').single();
-
-      if(!response.error){
-        localLycee.supabase_id = response.data?.id || existingId || localLycee.supabase_id || null;
-        return { ok:true, id: localLycee.supabase_id, missingColumns };
-      }
-
-      const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
-      if(cleaned){
-        const missing = getMissingSupabaseColumn(response.error);
-        if(missing) missingColumns.push(missing);
-        payload = cleaned;
-        continue;
-      }
-
-      // Fallback : certaines politiques Supabase autorisent l'insert/update mais pas le retour .select().
-      // On tente alors une écriture sans retour de ligne, pour ne pas bloquer la sauvegarde.
-      const msg = getSupabaseErrorMessage(response.error).toLowerCase();
-      if(msg.includes('permission') || msg.includes('row-level security') || msg.includes('rls') || msg.includes('violates')){
-        const minimal = existingId
-          ? await supabaseClient.from('lycees').update(payload).eq('id', existingId)
-          : await supabaseClient.from('lycees').insert([payload]);
-        if(!minimal.error){
-          localLycee.supabase_id = existingId || localLycee.supabase_id || null;
-          return { ok:true, id: localLycee.supabase_id, missingColumns, minimalReturn:true };
-        }
-        throw minimal.error;
-      }
-
-      throw response.error;
+    if(existingId){
+      const { error } = await supabaseClient
+        .from('lycees')
+        .update(payload)
+        .eq('id', existingId);
+      if(error) throw error;
+      localLycee.supabase_id = existingId;
+    } else {
+      const { data, error } = await supabaseClient
+        .from('lycees')
+        .insert([payload])
+        .select('id')
+        .single();
+      if(error) throw error;
+      localLycee.supabase_id = data?.id || null;
     }
-
-    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder ce lycée' };
+    return { ok:true, id: localLycee.supabase_id };
   } catch(err){
     console.error('Erreur sauvegarde directe lycée Supabase:', err);
     return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
@@ -3900,108 +3876,81 @@ function openAddModal(){
 
 async function saveForm(){
   if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
+  const nom = document.getElementById('f-nom').value.trim();
+  const ville = document.getElementById('f-ville').value.trim();
+  const statut = document.getElementById('f-statut').value;
+  if(!nom||!ville||!statut){ showToast('Nom, ville et statut sont requis','error'); return; }
 
-  const saveBtn = Array.from(document.querySelectorAll('#modal-edit .modal-footer .btn-primary'))[0];
-  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Enregistrement…'; }
+  const schools = checkedValues('f-schools');
 
-  try {
-    const nom = document.getElementById('f-nom').value.trim();
-    const ville = document.getElementById('f-ville').value.trim();
-    const statut = document.getElementById('f-statut').value;
-    if(!nom||!ville||!statut){
-      showToast('Nom, ville et statut sont requis','error');
-      return;
+  const obj = {
+    nom, ville,
+    cp: document.getElementById('f-cp').value||null,
+    departement: document.getElementById('f-dept').value||null,
+    campus: checkedValues('f-campus').join(', ') || null,
+    region: checkedValues('f-campus').join(', ') || null,
+    type: document.getElementById('f-type').value||null,
+    adresse: document.getElementById('f-adresse').value||null,
+    statut,
+    date: cleanDateForSupabase(document.getElementById('f-date').value),
+    heure: document.getElementById('f-heure').value||null,
+    formation: document.getElementById('f-formation').value||null,
+    ecoles: schools.length===SCHOOLS.length?'tout le monde':schools.join(', ')||null,
+    organisateur: document.getElementById('f-org').value||null,
+    tel_organisateur: document.getElementById('f-tel-org').value||null,
+    mail_ecole: document.getElementById('f-mail').value||null,
+    tel_ecole: document.getElementById('f-tel').value||null,
+    mail_organisateur: document.getElementById('f-mail-org').value||null,
+    ancien_etudiant: null,
+    commentaire: document.getElementById('f-commentaire').value||null,
+  };
+
+  let savedLycee = null;
+  let successLabel = 'Lycée ajouté';
+
+  if(S.editingId){
+    const idx=LYCEES.findIndex(x=>x.id===S.editingId);
+    if(idx>-1){
+      LYCEES[idx]={...LYCEES[idx],...obj};
+      savedLycee = LYCEES[idx];
+      successLabel = 'Lycée mis à jour';
     }
-
-    const schools = checkedValues('f-schools');
-    const userSchools = userSchoolAccess(currentUser());
-    const finalSchools = schools.length ? schools : userSchools;
-
-    const campusValues = checkedValues('f-campus');
-    const userCampus = userCampusAccess(currentUser());
-    const finalCampus = campusValues.length ? campusValues : userCampus;
-
-    const obj = {
-      nom, ville,
-      cp: document.getElementById('f-cp').value||null,
-      departement: document.getElementById('f-dept').value||null,
-      campus: finalCampus.join(', ') || null,
-      region: finalCampus.join(', ') || null,
-      type: document.getElementById('f-type').value||null,
-      adresse: document.getElementById('f-adresse').value||null,
-      statut,
-      date: cleanDateForSupabase(document.getElementById('f-date').value),
-      heure: document.getElementById('f-heure').value||null,
-      formation: document.getElementById('f-formation').value||null,
-      ecoles: finalSchools.length===SCHOOLS.length?'tout le monde':finalSchools.join(', ')||null,
-      organisateur: document.getElementById('f-org').value||null,
-      tel_organisateur: document.getElementById('f-tel-org').value||null,
-      mail_ecole: document.getElementById('f-mail').value||null,
-      tel_ecole: document.getElementById('f-tel').value||null,
-      mail_organisateur: document.getElementById('f-mail-org').value||null,
-      ancien_etudiant: null,
-      commentaire: document.getElementById('f-commentaire').value||null,
-    };
-
-    let savedLycee = null;
-    let successLabel = 'Lycée ajouté';
-
-    if(S.editingId){
-      const idx=LYCEES.findIndex(x=>x.id===S.editingId);
-      if(idx>-1){
-        LYCEES[idx]={...LYCEES[idx],...obj};
-        savedLycee = LYCEES[idx];
-        successLabel = 'Lycée mis à jour';
-      }
-    } else {
-      obj.id=nextId();
-      LYCEES.unshift(obj);
-      savedLycee = obj;
-    }
-
-    if(!savedLycee){
-      showToast('Lycée introuvable', 'error');
-      return;
-    }
-
-    // Fermeture immédiate : le pop-up ne dépend plus de la réponse réseau Supabase.
-    const previousPushState = SUPABASE_IS_PUSHING;
-    SUPABASE_IS_PUSHING = true;
-    saveLocalData();
-    SUPABASE_IS_PUSHING = previousPushState;
-    updateSchoolFilterCounts();
-    closeModal('modal-edit');
-    setTimeout(()=>closeModal('modal-edit'), 50);
-    refreshCurrentPage();
-    showToast(successLabel + ' en local. Synchronisation Supabase en cours…');
-
-    // Synchronisation Supabase en arrière-plan pour tous les comptes collaborateurs/admins.
-    setTimeout(async () => {
-      try {
-        const directSave = await saveLyceeDirectToSupabase(savedLycee);
-        if(directSave.ok){
-          const previousPushState2 = SUPABASE_IS_PUSHING;
-          SUPABASE_IS_PUSHING = true;
-          saveLocalData();
-          SUPABASE_IS_PUSHING = previousPushState2;
-          const ignored = directSave.missingColumns && directSave.missingColumns.length
-            ? ' Colonnes ignorées car absentes : ' + directSave.missingColumns.join(', ')
-            : '';
-          showToast(successLabel + ' dans Supabase.' + ignored, 'success');
-        } else {
-          showToast(successLabel + ' en local, mais pas dans Supabase : ' + (directSave.message || 'erreur inconnue'), 'error');
-        }
-      } catch(err){
-        console.error('Erreur synchronisation lycée Supabase:', err);
-        showToast(successLabel + ' en local, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error');
-      }
-    }, 0);
-  } catch(err){
-    console.error('Erreur enregistrement lycée:', err);
-    showToast('Erreur lors de l’enregistrement du lycée : ' + getSupabaseErrorMessage(err), 'error');
-  } finally {
-    if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Enregistrer'; }
+  } else {
+    obj.id=nextId();
+    LYCEES.unshift(obj);
+    savedLycee = obj;
   }
+
+  if(!savedLycee) return showToast('Lycée introuvable', 'error');
+
+  // L'interface ne doit pas attendre Supabase pour se fermer.
+  const previousPushState = SUPABASE_IS_PUSHING;
+  SUPABASE_IS_PUSHING = true; // évite un second push global qui peut échouer sur d'autres tables Supabase
+  saveLocalData();
+  SUPABASE_IS_PUSHING = previousPushState;
+
+  updateSchoolFilterCounts();
+  closeModal('modal-edit');
+  showToast(successLabel + ' localement. Synchronisation Supabase en cours…');
+  refreshCurrentPage();
+
+  // Synchronisation Supabase en arrière-plan. L'erreur reste visible au-dessus de tous les pop-up.
+  (async () => {
+    const directSave = await saveLyceeDirectToSupabase(savedLycee);
+    if(directSave.ok){
+      const previousPushState2 = SUPABASE_IS_PUSHING;
+      SUPABASE_IS_PUSHING = true;
+      saveLocalData();
+      SUPABASE_IS_PUSHING = previousPushState2;
+      showToast(successLabel + ' dans Supabase');
+    } else {
+      console.error('Sauvegarde lycée Supabase refusée:', directSave.error || directSave.message || directSave);
+      showToast(successLabel + ' localement, mais pas dans Supabase : ' + (directSave.message || 'erreur inconnue'), 'error');
+    }
+  })().catch(err => {
+    console.error('Erreur sauvegarde lycée Supabase:', err);
+    showToast(successLabel + ' localement, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error');
+  });
 }
 
 // ══════════════════════════════════════
@@ -4201,11 +4150,7 @@ function applyFilters(){
 // ══════════════════════════════════════
 // MODAL HELPERS
 // ══════════════════════════════════════
-function closeModal(id){
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.classList.remove('open');
-}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 function closeModalIf(e,id){ if(e.target.id===id) closeModal(id); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal('modal-detail'); closeModal('modal-edit'); closeModal('modal-student'); closeModal('modal-import-students'); closeModal('modal-registration'); closeModal('modal-user'); closeModal('modal-email'); } });
 
@@ -4363,18 +4308,34 @@ function openLoginModal(){
 }
 
 function closeLoginModal(){
-  document.getElementById('login-modal').classList.remove('open');
+  const el = document.getElementById('login-modal');
+  if(!el) return;
+  el.classList.remove('open');
+  // Sécurité anti-blocage : si une promesse Supabase ou une erreur JS garde la classe ouverte,
+  // on force quand même la disparition visuelle du pop-up.
+  el.style.display = 'none';
+  setTimeout(() => { el.style.display = ''; }, 80);
+}
+
+async function syncAfterLoginInBackground(){
+  try {
+    const supabaseReloaded = await loadFromSupabase();
+    if(!supabaseReloaded) restoreEmbeddedLyceesIfEmpty();
+    populateStaticSelects();
+    updateSchoolFilterCounts();
+    refreshCurrentPage();
+  } catch(err){
+    console.error('Erreur Supabase après connexion:', err);
+    showToast('Erreur Supabase après connexion : ' + getSupabaseErrorMessage(err), 'error');
+  }
 }
 
 async function submitLogin(){
-  const loginBtn = Array.from(document.querySelectorAll('#login-modal .btn-primary'))[0];
-  if(loginBtn){ loginBtn.disabled = true; loginBtn.textContent = 'Connexion…'; }
+  const requestedRole = document.getElementById('login-role')?.value || 'collaborateur';
+  const user = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
+  const pass = (document.getElementById('login-password')?.value || '').trim();
 
   try {
-    const requestedRole = document.getElementById('login-role')?.value || 'collaborateur';
-    const user = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
-    const pass = (document.getElementById('login-password')?.value || '').trim();
-
     let found = await findUserForLogin(user, pass);
 
     if(!found && user === 'student' && pass === 'edhstudent'){
@@ -4387,15 +4348,7 @@ async function submitLogin(){
       const idx = USERS.findIndex(u => u.id === found.id || (u.email||'').toLowerCase() === 'admin');
       if(idx > -1) USERS[idx] = found; else USERS.unshift(found);
     }
-    if(!found){
-      showToast("Identifiants incorrects ou compte non synchronisé", 'error');
-      return;
-    }
-
-    // On garantit que l'utilisateur connecté reste en mémoire locale même si le rechargement
-    // Supabase des utilisateurs échoue ou ne renvoie pas ce compte.
-    const idxUser = USERS.findIndex(u => u.id === found.id || (u.email||'').toLowerCase() === (found.email||'').toLowerCase());
-    if(idxUser > -1) USERS[idxUser] = found; else USERS.unshift(found);
+    if(!found) return showToast("Identifiants incorrects ou compte non synchronisé", 'error');
 
     S.currentUserId = found.id;
     setRole(found.role || requestedRole);
@@ -4405,37 +4358,21 @@ async function submitLogin(){
       S.studentProfile = null;
     }
 
-    saveLocalData();
+    // On ferme immédiatement le pop-up. Supabase ne doit jamais bloquer l'interface.
     closeLoginModal();
-    setTimeout(()=>closeLoginModal(), 50);
     showToast(roleIsInternal(found.role || requestedRole) ? 'Connexion collaborateur réussie' : 'Connexion étudiant réussie');
+
+    saveLocalData();
+    populateStaticSelects();
+    updateSchoolFilterCounts();
     refreshCurrentPage();
 
-    // Rechargement Supabase APRES fermeture du pop-up.
-    setTimeout(async () => {
-      try {
-        const previousUser = found;
-        const previousUserId = found.id;
-        const supabaseReloaded = await loadFromSupabase();
-        if(!supabaseReloaded) restoreEmbeddedLyceesIfEmpty();
-        const existsAfterReload = USERS.some(u => u.id === previousUser.id || (u.email||'').toLowerCase() === (previousUser.email||'').toLowerCase());
-        if(!existsAfterReload) USERS.unshift(previousUser);
-        S.currentUserId = previousUserId;
-        populateStaticSelects();
-        updateSchoolFilterCounts();
-        refreshCurrentPage();
-      } catch(err){
-        console.error('Erreur rechargement Supabase après connexion:', err);
-        showToast('Connexion réussie, mais synchronisation Supabase impossible : ' + getSupabaseErrorMessage(err), 'error');
-      } finally {
-        closeLoginModal();
-      }
-    }, 0);
+    // Rechargement Supabase en arrière-plan pour afficher les données partagées.
+    syncAfterLoginInBackground();
   } catch(err){
     console.error('Erreur connexion:', err);
-    showToast('Erreur de connexion : ' + getSupabaseErrorMessage(err), 'error');
-  } finally {
-    if(loginBtn){ loginBtn.disabled = false; loginBtn.textContent = 'Se connecter'; }
+    closeLoginModal();
+    showToast('Erreur connexion : ' + getSupabaseErrorMessage(err), 'error');
   }
 }
 
