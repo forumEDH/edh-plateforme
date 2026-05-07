@@ -857,14 +857,12 @@ td strong { color: var(--text); font-weight: 600; }
       <div class="role-hint" id="season-hint">Le listing reste commun, les événements, leads et reportings sont séparés par saison.</div>
       <div class="divider" style="margin:10px 0"></div>
       <div class="role-box-label">Connexion</div>
-      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openLoginModal()">Se connecter / changer de mode</button>
-      <select id="role-switch" class="role-box-select" style="margin-top:8px" disabled>
-        <option value="collaborateur">Collaborateur EDH</option>
-        <option value="student">Étudiant</option>
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openLoginModal()">Se connecter</button>
+      <select id="role-switch" class="role-box-select" style="margin-top:8px;background:#eef0f5;color:#6b7280;cursor:not-allowed" disabled>
+        <option value="collaborateur">Espace collaborateur</option>
       </select>
-      <div class="role-hint" id="role-hint">Mode collaborateur : vues internes, lycées, étudiants et gestion des forums.</div>
+      <div class="role-hint" id="role-hint">Espace collaborateur : accès réservé aux comptes collaborateurs et administrateurs.</div>
       <div class="login-footer-note" id="current-user-label" style="margin-top:8px">Aucun utilisateur connecté</div>
-      <div class="sync-status syncing" id="supabase-status"><span class="sync-dot"></span><span id="supabase-status-label">Supabase : initialisation…</span></div>
     </div>
   </div>
 </aside>
@@ -910,6 +908,10 @@ td strong { color: var(--text); font-weight: 600; }
       </button>
     </div>
     <div class="topbar-right" id="topbar-users-actions" style="display:none">
+      <button class="btn btn-outline" data-role="collaborateur" onclick="reloadUsersFromSupabaseAndRender()">
+        <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        Recharger Supabase
+      </button>
       <button class="btn btn-primary" data-role="collaborateur" onclick="openUserModal()">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Ajouter un utilisateur
@@ -1294,6 +1296,7 @@ td strong { color: var(--text); font-weight: 600; }
           <div class="page-subtitle">Créer et gérer les comptes d'accès à la plateforme</div>
         </div>
         <div class="small-actions">
+          <button class="btn btn-outline" onclick="reloadUsersFromSupabaseAndRender()">Recharger Supabase</button>
           <button class="btn btn-outline" onclick="downloadUsersExcel()">Exporter Excel</button>
           <button class="btn btn-outline" onclick="openImportUsersModal()">Importer Excel</button>
           <button class="btn btn-primary" onclick="openUserModal()">Ajouter un utilisateur</button>
@@ -1756,33 +1759,24 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="login-overlay" id="login-modal">
   <div class="login-card">
     <div class="login-head">
-      <div class="login-title">Connexion à la plateforme</div>
-      <div class="login-sub">Choisissez votre type d'accès puis connectez-vous avec un compte existant.</div>
+      <div class="login-title">Espace collaborateur</div>
+      <div class="login-sub">Connectez-vous avec un compte collaborateur, admin campus ou admin global.</div>
     </div>
     <div class="login-body">
+      <input type="hidden" id="login-role" value="collaborateur">
       <div class="form-grid">
         <div class="form-field full">
-          <label class="form-label">Type d'accès</label>
-          <select class="form-select" id="login-role" onchange="updateLoginHelp()">
-            <option value="collaborateur">Collaborateur / Admin</option>
-            <option value="student">Étudiant / Visiteur</option>
-          </select>
-        </div>
-        <div class="form-field">
           <label class="form-label">Identifiant</label>
-          <input class="form-input" id="login-username" placeholder="Votre identifiant">
+          <input class="form-input" id="login-username" placeholder="Adresse mail ou identifiant">
         </div>
-        <div class="form-field">
+        <div class="form-field full">
           <label class="form-label">Mot de passe</label>
-          <input class="form-input" id="login-password" type="password" placeholder="Votre mot de passe">
+          <input class="form-input" id="login-password" type="password" placeholder="Mot de passe">
         </div>
       </div>
-      <div class="login-help" id="login-help-box"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-        <button class="btn btn-outline" onclick="fillDemoLogin()">Remplir identifiants démo</button>
         <button class="btn btn-primary" onclick="submitLogin()">Se connecter</button>
       </div>
-      <div class="login-footer-note">Les comptes utilisateurs créés par un admin sont synchronisés avec Supabase et servent à la connexion.</div>
     </div>
   </div>
 </div>
@@ -1936,7 +1930,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V11-2026-05-07-supabase-source-unique-clean-events";
+const APP_PATCH_VERSION = "V14-2026-05-07-espace-collaborateur";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2015,6 +2009,16 @@ let SUPABASE_REMOTE_REFRESH_TIMER = null;
 let SUPABASE_PERIODIC_REFRESH_TIMER = null;
 const ALLOW_DEMO_ACCOUNTS = false;
 
+// V12 SAFE SYNC
+// On garde Supabase comme source de vérité, mais on désactive le temps réel
+// automatique et le polling permanent pour éviter de multiplier les connexions
+// lorsque plusieurs onglets ou collaborateurs sont ouverts. Les écritures restent
+// directes vers Supabase lors des vraies actions utilisateur.
+const EDH_SUPABASE_REALTIME_ENABLED = false;
+const EDH_SUPABASE_AUTO_REFRESH_MS = 0;
+let SUPABASE_USERS_LAST_LOAD_AT = 0;
+let SUPABASE_USERS_PAGE_REFRESHING = false;
+
 const SEASON_FIELDS = ['statut','date','heure','formation','ecoles','commentaire','ancien_etudiant','participants','prospect_global','term'];
 let CURRENT_PUBLIC_LEAD_EVENT_ID = null;
 let MAIL_CONTEXT_ID = null;
@@ -2063,7 +2067,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V11-2026-05-07-supabase-source-unique-clean-events';
+window.EDH_APP_VERSION = 'V14-2026-05-07-espace-collaborateur';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2219,20 +2223,26 @@ function mapAppStudentToSupabase(s){
   return { app_id: normalizeSupabaseText(s.id), first_name: normalizeSupabaseText(s.firstName), last_name: normalizeSupabaseText(s.lastName), email: normalizeSupabaseText(s.email), phone: normalizeSupabaseText(s.phone), school: normalizeSupabaseText(s.school), campus: normalizeSupabaseText(s.campus), lycee: normalizeSupabaseText(s.lycee), lycee_ville: normalizeSupabaseText(s.lyceeVille), promo: normalizeSupabaseText(s.promo), notes: normalizeSupabaseText(s.notes) };
 }
 function mapSupabaseUserToApp(row){
+  const firstName = pickField(row, ['first_name','firstname','firstName','prenom','prénom','Prenom','Prénom','nom_prenom','nom prénom']) || '';
+  const lastName = pickField(row, ['last_name','lastname','lastName','nom','Nom','name','full_name']) || '';
+  const email = (pickField(row, ['email','mail','adresse_mail','adresse mail','adresse e-mail','email_identifiant','identifiant','username','login','Adresse mail / identifiant']) || '').toString().trim().toLowerCase();
+  const rawSchools = pickField(row, ['schools_autorisees','school','ecole','école','ecoles','écoles','schools']) || '';
+  const rawCampus = pickField(row, ['campus','region','regions','regions_autorisees','campus_autorises','campus_autorisees','campus autorisés']) || '';
+  const appId = pickField(row, ['app_id','user_id']) || row.id || nextUserId();
   return {
-    id: String(pickField(row, ['app_id','id','user_id']) || nextUserId()),
+    id: String(appId),
     supabase_id: row.id || null,
-    firstName: pickField(row, ['first_name','firstname','firstName','prenom','prénom','Prenom','Prénom']) || '',
-    lastName: pickField(row, ['last_name','lastname','lastName','nom','Nom']) || '',
-    email: (pickField(row, ['email','mail','username','identifiant']) || '').toString().trim().toLowerCase(),
-    password: (pickField(row, ['password','mot_de_passe','mot de passe','mdp']) || '').toString(),
-    role: normalizeRoleValue(pickField(row, ['role','rôle','profil']) || 'student'),
-    school: supabaseSchoolsToText(pickField(row, ['school','ecole','école','ecoles','écoles','schools','schools_autorisees']) || ''),
-    campus: splitAccessValues(pickField(row, ['campus','region','regions','regions_autorisees','campus_autorises','campus_autorisees']) || '').join(', '),
-    region: splitAccessValues(pickField(row, ['campus','region','regions','regions_autorisees','campus_autorises','campus_autorisees']) || '').join(', '),
-    regions_autorisees: splitAccessValues(row.campus_autorises || row.campus_autorisees || row.regions_autorisees || row.regions || row.campus || row.region),
-    schools_autorisees: getSchoolsArray(Array.isArray(row.schools_autorisees) ? row.schools_autorisees.join(', ') : (row.schools_autorisees || row.school || row.ecoles || row.schools || '')),
-    phone: pickField(row, ['phone','telephone','téléphone','tel']) || '',
+    firstName,
+    lastName,
+    email,
+    password: (pickField(row, ['password','mot_de_passe','mot de passe','mdp','Mot de passe']) || '').toString(),
+    role: normalizeRoleValue(pickField(row, ['role','rôle','profil','type_compte','type de compte']) || 'student'),
+    school: supabaseSchoolsToText(rawSchools),
+    campus: splitAccessValues(rawCampus).join(', '),
+    region: splitAccessValues(rawCampus).join(', '),
+    regions_autorisees: splitAccessValues(row.campus_autorises || row.campus_autorisees || row.regions_autorisees || row.regions || row.campus || row.region || rawCampus),
+    schools_autorisees: getSchoolsArray(Array.isArray(row.schools_autorisees) ? row.schools_autorisees.join(', ') : (row.schools_autorisees || row.school || row.ecoles || row.schools || rawSchools || '')),
+    phone: pickField(row, ['phone','telephone','téléphone','tel','Téléphone','Telephone']) || '',
     locked: Boolean(row.locked)
   };
 }
@@ -2258,10 +2268,13 @@ async function refreshUsersFromSupabase(){
   const { data, error } = await supabaseClient.from('utilisateurs').select('*');
   if(error){ console.warn('Utilisateurs Supabase non chargés', error); return false; }
   if(Array.isArray(data)){
-    const remoteUsers = data.map(mapSupabaseUserToApp).filter(u => u.email)
-      .sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||''));
+    const remoteUsers = data
+      .map(mapSupabaseUserToApp)
+      .filter(u => u.email || u.firstName || u.lastName || u.supabase_id)
+      .sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||'') || (a.email||'').localeCompare(b.email||''));
+    // La page Utilisateurs doit refléter toute la table Supabase, sans filtre école/campus.
     USERS = remoteUsers;
-    ensureDefaultUsers();
+    SUPABASE_USERS_LAST_LOAD_AT = Date.now();
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
     return true;
   }
@@ -2569,7 +2582,19 @@ async function refreshFromSupabaseAndRender(silent=true, reason='manual'){
   return loaded;
 }
 function setupSupabaseRealtime(){
-  if(!supabaseClient || SUPABASE_REALTIME_CHANNEL) return;
+  if(!supabaseClient) return;
+  clearInterval(SUPABASE_PERIODIC_REFRESH_TIMER);
+
+  if(EDH_SUPABASE_AUTO_REFRESH_MS && EDH_SUPABASE_AUTO_REFRESH_MS > 0){
+    SUPABASE_PERIODIC_REFRESH_TIMER = setInterval(() => refreshFromSupabaseAndRender(true, 'polling'), EDH_SUPABASE_AUTO_REFRESH_MS);
+  }
+
+  if(!EDH_SUPABASE_REALTIME_ENABLED){
+    setSupabaseStatus('ok', 'Supabase : connecté · sync sûre activée');
+    return;
+  }
+
+  if(SUPABASE_REALTIME_CHANNEL) return;
   try {
     SUPABASE_REALTIME_CHANNEL = supabaseClient
       .channel('edh-forums-live-sync')
@@ -2581,8 +2606,6 @@ function setupSupabaseRealtime(){
         if(status === 'SUBSCRIBED') setSupabaseStatus('ok', 'Supabase : synchronisation temps réel active');
       });
   } catch(err){ console.warn('Realtime Supabase non activé', err); }
-  clearInterval(SUPABASE_PERIODIC_REFRESH_TIMER);
-  SUPABASE_PERIODIC_REFRESH_TIMER = setInterval(() => refreshFromSupabaseAndRender(true, 'polling'), 60000);
 }
 function eventIdCandidates(eventObj){
   if(!eventObj) return [];
@@ -3325,6 +3348,15 @@ function bootstrapSeasonStorage(){
   }
   loadSeasonData(S.season);
 }
+function saveSessionOnly(){
+  // Sauvegarde uniquement la session courante.
+  // Important : ne déclenche aucun push global vers Supabase à la connexion.
+  safeLocalStorageSet('edh_current_season_v1', S.season || DEFAULT_SEASON);
+  safeLocalStorageSet('edh_student_profile_v2', JSON.stringify(S.studentProfile || null));
+  safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+  safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
+  safeLocalStorageSet('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
+}
 function saveLocalData(){
   safeLocalStorageSet('edh_current_season_v1', S.season || DEFAULT_SEASON);
   safeLocalStorageSet('edh_students_v2', JSON.stringify(STUDENTS));
@@ -3352,8 +3384,14 @@ function saveLocalData(){
 function ensureDefaultUsers(){
   if(!Array.isArray(USERS)) USERS = [];
   if(!Array.isArray(DELETED_DEFAULT_USER_IDS)) DELETED_DEFAULT_USER_IDS = [];
+  // Version opérationnelle : on ne réinjecte plus de comptes démo locaux.
+  // Les seuls utilisateurs affichés / modifiables doivent venir de Supabase
+  // ou des comptes réellement créés via l’interface.
   if(!ALLOW_DEMO_ACCOUNTS) return;
-  const defaults = [];
+  const defaults = [
+    {id:'USR_ADMIN', firstName:'Admin', lastName:'EDH', email:'admin', password:'edhadmin', role:'collaborateur', school:'', phone:'', locked:true},
+    {id:'USR_DEMO_STUDENT', firstName:'Étudiant', lastName:'Démo', email:'student', password:'edhstudent', role:'student', school:'EFAP', phone:'0600000000', locked:false}
+  ];
   defaults.forEach(def => {
     if(def.id !== 'USR_ADMIN' && DELETED_DEFAULT_USER_IDS.includes(def.id)) return;
     const existingIndex = USERS.findIndex(u => (u.email || '').toLowerCase() === def.email.toLowerCase() || u.id === def.id);
@@ -4541,7 +4579,7 @@ function showPage(page){
   else if(page==='calendrier'){ S.calView='list'; document.getElementById('vtb-list').className='vtb active'; document.getElementById('vtb-grid').className='vtb'; document.getElementById('cal-list-view').style.display='block'; document.getElementById('cal-grid-view').style.display='none'; renderCalList(); }
   else if(page==='students') renderStudentsPage();
   else if(page==='registrations') renderRegistrationsPage();
-  else if(page==='users') renderUsersPage();
+  else if(page==='users') { renderUsersPage(); }
   else if(page==='reporting') { renderReportingPage(); }
   else if(page==='leads') renderLeadsPage();
   else if(page==='inscriptions') renderInscriptionPage();
@@ -4798,14 +4836,12 @@ function updateVisibleSchoolNavigation(){
 function setRole(role){
   S.role = role;
   const roleSwitch = document.getElementById('role-switch');
-  if(roleSwitch) roleSwitch.value = role;
+  if(roleSwitch) roleSwitch.value = 'collaborateur';
   document.querySelectorAll('[data-role="collaborateur"]').forEach(el=>el.style.display = roleIsInternal(role) ? '' : 'none');
   document.querySelectorAll('[data-role="student"]').forEach(el=>el.style.display = normalizeRoleValue(role) === 'student' ? '' : 'none');
   populateStaticSelects();
   updateVisibleSchoolNavigation();
-  document.getElementById('role-hint').textContent = normalizeRoleValue(role) === 'student'
-    ? "Mode étudiant : visiteur, accès aux événements et inscription uniquement."
-    : "Mode collaborateur : admin, accès complet à la plateforme.";
+  document.getElementById('role-hint').textContent = "Espace collaborateur : accès réservé aux comptes collaborateurs et administrateurs.";
   const cu = currentUser();
   const label = document.getElementById('current-user-label');
   if(label){
@@ -4822,20 +4858,12 @@ function setRole(role){
 }
 
 function updateLoginHelp(){
-  const role = document.getElementById('login-role')?.value || 'collaborateur';
-  const box = document.getElementById('login-help-box');
-  if(!box) return;
-  if(role === 'collaborateur'){
-    box.innerHTML = '<strong>Connexion Supabase</strong><br>Utilise un compte présent dans la table <code>utilisateurs</code> avec un rôle collaborateur, admin campus ou admin global.<br><br>Pour le premier accès, exécute le fichier SQL fourni : il crée un compte admin de départ à modifier ensuite.';
-  } else {
-    box.innerHTML = '<strong>Connexion étudiant</strong><br>Utilise l’adresse mail et le mot de passe créés par un administrateur dans l’espace <strong>Utilisateurs</strong>.';
-  }
+  const roleInput = document.getElementById('login-role');
+  if(roleInput) roleInput.value = 'collaborateur';
 }
 
 function fillDemoLogin(){
-  document.getElementById('login-username').value = 'admin@edh.local';
-  document.getElementById('login-password').value = '';
-  showToast('Les comptes démo locaux sont désactivés. Utilise un compte Supabase.', 'error');
+  showToast('Les identifiants démo sont désactivés.', 'error');
 }
 
 function openLoginModal(){
@@ -4881,19 +4909,20 @@ async function submitLogin(){
 
     if(!found) return showToast("Identifiants incorrects ou compte non synchronisé", 'error');
 
-    S.currentUserId = found.id;
-    setRole(found.role || requestedRole);
-    if(normalizeRoleValue(found.role || requestedRole) === 'student'){
-      S.studentProfile = { firstName: found.firstName || '', lastName: found.lastName || '', email: found.email || '', phone: found.phone || '', school: getSchoolsArray(found.school)[0] || 'EFAP' };
-    } else {
-      S.studentProfile = null;
+    const normalizedRole = normalizeRoleValue(found.role || requestedRole);
+    if(!roleIsInternal(normalizedRole)){
+      return showToast("Accès réservé aux collaborateurs et administrateurs.", 'error');
     }
+
+    S.currentUserId = found.id;
+    setRole(normalizedRole);
+    S.studentProfile = null;
 
     // On ferme immédiatement le pop-up. Supabase ne doit jamais bloquer l'interface.
     closeLoginModal();
-    showToast(roleIsInternal(found.role || requestedRole) ? 'Connexion collaborateur réussie' : 'Connexion étudiant réussie');
+    showToast('Connexion espace collaborateur réussie');
 
-    saveLocalData();
+    saveSessionOnly();
     populateStaticSelects();
     updateSchoolFilterCounts();
     refreshCurrentPage();
@@ -4908,50 +4937,93 @@ async function submitLogin(){
 }
 
 
+function getAllUsersForAdmin(){
+  return Array.isArray(USERS) ? USERS.slice() : [];
+}
+
 function filteredUsers(){
   const q = (document.getElementById('user-search')?.value || '').toLowerCase().trim();
   const role = document.getElementById('user-role-filter')?.value || '';
   const school = document.getElementById('user-school-filter')?.value || '';
-  return getVisibleUsers().filter(u=>{
-    const qOk = !q || `${u.firstName||''} ${u.lastName||''}`.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
-    const roleOk = !role || (u.role||'student') === role;
-    const schoolOk = !school || schoolMatches(u.school, school) || userSchoolAccess(u).includes(school);
+  return getAllUsersForAdmin().filter(u=>{
+    const full = `${u.firstName||''} ${u.lastName||''}`.toLowerCase();
+    const qOk = !q || full.includes(q) || (u.email||'').toLowerCase().includes(q) || (u.phone||'').toLowerCase().includes(q);
+    const roleOk = !role || normalizeRoleValue(u.role||'student') === normalizeRoleValue(role);
+    const userSchools = getSchoolsArray(u.school || (Array.isArray(u.schools_autorisees) ? u.schools_autorisees.join(', ') : u.schools_autorisees));
+    const schoolOk = !school || userSchools.includes(school);
     return qOk && roleOk && schoolOk;
-  }).sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||''));
+  }).sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||'') || (a.email||'').localeCompare(b.email||''));
 }
 
-function renderUsersPage(){
+async function reloadUsersFromSupabaseAndRender(){
+  if(!isAdminMode()) return showToast('Accès réservé aux collaborateurs', 'error');
+  if(!supabaseClient) return showToast('Client Supabase non initialisé', 'error');
+  if(SUPABASE_USERS_PAGE_REFRESHING) return;
+  SUPABASE_USERS_PAGE_REFRESHING = true;
+  setSupabaseStatus('syncing', 'Supabase : chargement utilisateurs…');
+  try {
+    const ok = await refreshUsersFromSupabase();
+    if(ok){
+      renderUsersPage(false);
+      setSupabaseStatus('ok', `Supabase : utilisateurs chargés · ${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}`);
+      showToast(`${USERS.length} utilisateur(s) chargé(s) depuis Supabase`);
+    } else {
+      setSupabaseStatus('error', 'Supabase : utilisateurs non chargés');
+      showToast('Impossible de charger la table utilisateurs depuis Supabase', 'error');
+    }
+  } catch(err){
+    console.error('Erreur rechargement utilisateurs:', err);
+    setSupabaseStatus('error', 'Supabase : erreur utilisateurs');
+    showToast('Erreur utilisateurs Supabase : ' + getSupabaseErrorMessage(err), 'error');
+  } finally {
+    SUPABASE_USERS_PAGE_REFRESHING = false;
+  }
+}
+
+function renderUsersPage(autoRefresh=true){
+  if(autoRefresh && supabaseClient && isAdminMode() && !SUPABASE_USERS_PAGE_REFRESHING && (!SUPABASE_USERS_LAST_LOAD_AT || Date.now() - SUPABASE_USERS_LAST_LOAD_AT > 15000)){
+    SUPABASE_USERS_PAGE_REFRESHING = true;
+    refreshUsersFromSupabase().then(ok => {
+      if(ok) renderUsersPage(false);
+    }).catch(err => console.warn('Auto-refresh utilisateurs impossible', err)).finally(() => {
+      SUPABASE_USERS_PAGE_REFRESHING = false;
+    });
+  }
+
   const rows = filteredUsers();
+  const allUsers = getAllUsersForAdmin();
   const counts = {
-    total: getVisibleUsers().length,
-    admins: getVisibleUsers().filter(u=>roleIsInternal(u.role)).length,
-    students: getVisibleUsers().filter(u=>normalizeRoleValue(u.role)==='student').length,
-    linked: getVisibleUsers().filter(u=>u.school).length
+    total: allUsers.length,
+    admins: allUsers.filter(u=>roleIsInternal(u.role)).length,
+    students: allUsers.filter(u=>normalizeRoleValue(u.role)==='student').length,
+    linked: allUsers.filter(u=>getSchoolsArray(u.school || (Array.isArray(u.schools_autorisees) ? u.schools_autorisees.join(', ') : u.schools_autorisees)).length).length
   };
   document.getElementById('users-kpis').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">Total comptes</div><div class="kpi-value">${counts.total}</div><div class="kpi-meta">Utilisateurs enregistrés</div></div>
-    <div class="kpi-card"><div class="kpi-label">Collaborateurs</div><div class="kpi-value">${counts.admins}</div><div class="kpi-meta">Accès admin</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total comptes</div><div class="kpi-value">${counts.total}</div><div class="kpi-meta">Toute la table utilisateurs</div></div>
+    <div class="kpi-card"><div class="kpi-label">Collaborateurs</div><div class="kpi-value">${counts.admins}</div><div class="kpi-meta">Admin global / campus / collaborateur</div></div>
     <div class="kpi-card"><div class="kpi-label">Étudiants</div><div class="kpi-value">${counts.students}</div><div class="kpi-meta">Accès visiteur</div></div>
     <div class="kpi-card"><div class="kpi-label">Rattachés à une école</div><div class="kpi-value">${counts.linked}</div><div class="kpi-meta">EFAP / ICART / CREAD / BRASSART</div></div>`;
-  document.getElementById('users-count').textContent = `${rows.length} utilisateur(s)`;
-  document.getElementById('users-tbody').innerHTML = rows.length ? rows.map(u=>`
+  document.getElementById('users-count').textContent = `${rows.length} utilisateur(s) affiché(s) / ${counts.total} en base locale`;
+  document.getElementById('users-tbody').innerHTML = rows.length ? rows.map(u=>{
+    const schools = getSchoolsArray(u.school || (Array.isArray(u.schools_autorisees) ? u.schools_autorisees.join(', ') : u.schools_autorisees));
+    const campus = splitAccessValues(u.campus || u.region || u.regions_autorisees).join(', ');
+    return `
     <tr>
-      <td><strong>${u.firstName || ''} ${u.lastName || ''}</strong></td>
-      <td>${u.email || '—'}</td>
+      <td><strong>${escapeHtml(`${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Utilisateur sans nom')}</strong></td>
+      <td>${escapeHtml(u.email || '—')}</td>
       <td>${roleLabel(u.role)}</td>
-      <td>${schoolTags(u.school || userSchoolAccess(u).join(', ')) || '—'}</td>
-      <td>${escapeHtml(splitAccessValues(u.campus || u.region || u.regions_autorisees).join(', ') || '—')}</td>
-      <td>${u.phone || '—'}</td>
+      <td>${schoolTags(schools.join(', ')) || '—'}</td>
+      <td>${escapeHtml(campus || '—')}</td>
+      <td>${escapeHtml(u.phone || '—')}</td>
       <td>
         <div class="small-actions">
           <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" onclick="openUserModal('${u.id}')">Modifier</button>
           ${(u.email||'') !== 'admin' ? `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openCredentialsEmail('${u.id}')">Email identifiants</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteUser('${u.id}')">Supprimer</button>` : '<span style="font-size:11px;color:var(--text3)">Compte principal non supprimable</span>'}
         </div>
       </td>
-    </tr>
-  `).join('') : `<tr><td colspan="7"><div class="empty-state"><p>Aucun utilisateur trouvé. Clique sur “Ajouter un utilisateur” pour créer un compte d’accès.</p></div></td></tr>`;
+    </tr>`;
+  }).join('') : `<tr><td colspan="7"><div class="empty-state"><p>Aucun utilisateur trouvé. Clique sur “Recharger Supabase” pour relire toute la table utilisateurs.</p></div></td></tr>`;
 }
-
 
 function selectedUserSchools(){
   return checkedValues('uf-schools');
