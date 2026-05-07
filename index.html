@@ -575,6 +575,27 @@ td strong { color: var(--text); font-weight: 600; }
 .divider { height: 1px; background: var(--border); margin: 16px 0; }
 
 
+
+.sync-status {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.35;
+}
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gray);
+  flex-shrink: 0;
+}
+.sync-status.ok .sync-dot { background: var(--green); }
+.sync-status.syncing .sync-dot { background: var(--yellow); }
+.sync-status.error .sync-dot { background: var(--red); }
+
 /* ── ROLE SWITCH ── */
 .sidebar-footer {
   border-top: 1px solid var(--border);
@@ -843,6 +864,7 @@ td strong { color: var(--text); font-weight: 600; }
       </select>
       <div class="role-hint" id="role-hint">Mode collaborateur : vues internes, lycées, étudiants et gestion des forums.</div>
       <div class="login-footer-note" id="current-user-label" style="margin-top:8px">Aucun utilisateur connecté</div>
+      <div class="sync-status syncing" id="supabase-status"><span class="sync-dot"></span><span id="supabase-status-label">Supabase : initialisation…</span></div>
     </div>
   </div>
 </aside>
@@ -1473,6 +1495,7 @@ td strong { color: var(--text); font-weight: 600; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Outlook / Teams
       </button>
+      <button class="btn btn-danger" id="detail-delete-event-btn" style="display:none">Supprimer événement</button>
       <button class="btn btn-primary" id="detail-edit-btn">Modifier</button>
     </div>
   </div>
@@ -1913,7 +1936,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V6-2026-05-06-visible-errors-login-lycee";
+const APP_PATCH_VERSION = "V10-2026-05-07-supabase-multiuser-operationnel";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -1963,6 +1986,7 @@ let STUDENTS = [];
 let REGISTRATIONS = [];
 let USERS = [];
 let DELETED_DEFAULT_USER_IDS = [];
+let DELETED_EVENT_IDS = [];
 let IMPORT_STUDENT_ROWS = [];
 let IMPORT_STUDENT_HEADERS = [];
 let IMPORT_USER_ROWS = [];
@@ -1978,13 +2002,18 @@ const DEFAULT_SEASON = '2025-2026';
 // ══════════════════════════════════════
 // URL projet Supabase : ne pas mettre /rest/v1/ ici.
 const SUPABASE_PROJECT_URL = 'https://qyeroclflrxdxjagpjtn.supabase.co';
-const SUPABASE_PUBLIC_KEY = 'sb_publishable_nzGmxvWviHYpB_nHHjbySg_CjaEYgI8';
+const SUPABASE_PUBLIC_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXJvY2xmbHJ4ZHhqYWdwanRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNzI3OTksImV4cCI6MjA5Mjk0ODc5OX0.Jh5r7BWsxgfFdRBRYGEbd310pxlXx9HtKGVaQWGD_Wk';
 const SUPABASE_ENABLED = Boolean(window.supabase && SUPABASE_PROJECT_URL && SUPABASE_PUBLIC_KEY);
 const supabaseClient = SUPABASE_ENABLED ? window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_PUBLIC_KEY) : null;
 let SUPABASE_SYNC_READY = false;
 let SUPABASE_SYNC_TIMER = null;
 let SUPABASE_IS_PUSHING = false;
 let SUPABASE_LAST_LOAD_AT = 0;
+let SUPABASE_IS_LOADING = false;
+let SUPABASE_REALTIME_CHANNEL = null;
+let SUPABASE_REMOTE_REFRESH_TIMER = null;
+let SUPABASE_PERIODIC_REFRESH_TIMER = null;
+const ALLOW_DEMO_ACCOUNTS = false;
 
 const SEASON_FIELDS = ['statut','date','heure','formation','ecoles','commentaire','ancien_etudiant','participants','prospect_global','term'];
 let CURRENT_PUBLIC_LEAD_EVENT_ID = null;
@@ -2034,7 +2063,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V8-2026-05-06-login-rapide-supabase-bg';
+window.EDH_APP_VERSION = 'V10-2026-05-07-supabase-multiuser-operationnel';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2198,10 +2227,11 @@ function mapAppUserToSupabase(u){
 }
 async function refreshUsersFromSupabase(){
   if(!supabaseClient) return false;
-  const { data, error } = await supabaseClient.from('utilisateurs').select('id,app_id,first_name,last_name,email,password,role,school,campus,region,regions_autorisees,schools_autorisees,phone,locked').order('last_name', { ascending:true });
+  const { data, error } = await supabaseClient.from('utilisateurs').select('*');
   if(error){ console.warn('Utilisateurs Supabase non chargés', error); return false; }
   if(Array.isArray(data)){
-    const remoteUsers = data.map(mapSupabaseUserToApp).filter(u => u.email);
+    const remoteUsers = data.map(mapSupabaseUserToApp).filter(u => u.email)
+      .sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||''));
     USERS = remoteUsers;
     ensureDefaultUsers();
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
@@ -2259,16 +2289,10 @@ async function findUserForLogin(username, password){
   const pass = (password || '').toString().trim();
   if(!login || !pass) return null;
 
-  // V8 : connexion rapide. On valide d'abord avec le cache local minimal déjà présent
-  // pour éviter d'attendre Supabase à chaque connexion. Supabase est ensuite resynchronisé
-  // en arrière-plan et reste la source de vérité pour les données partagées.
-  ensureDefaultUsers();
-  const localFound = USERS.find(u => (((u.email || '').toLowerCase() === login) || (login === 'admin' && (u.email || '') === 'admin')) && (u.password || '') === pass);
-  if(localFound) return localFound;
-
+  // Version opérationnelle : Supabase est prioritaire pour éviter les comptes locaux divergents.
   if(supabaseClient){
     try {
-      const { data, error } = await supabaseClient.from('utilisateurs').select('id,app_id,first_name,last_name,email,password,role,school,campus,region,regions_autorisees,schools_autorisees,phone,locked').eq('email', login).eq('password', pass).limit(1);
+      const { data, error } = await supabaseClient.from('utilisateurs').select('*').eq('email', login).eq('password', pass).limit(1);
       if(!error && Array.isArray(data) && data.length){
         const remoteUser = mapSupabaseUserToApp(data[0]);
         const idx = USERS.findIndex(u => (u.email || '').toLowerCase() === remoteUser.email || u.id === remoteUser.id);
@@ -2279,14 +2303,18 @@ async function findUserForLogin(username, password){
       if(error) console.warn('Connexion Supabase utilisateurs ignorée', error);
     } catch(err){ console.warn('Connexion Supabase utilisateurs impossible', err); }
   }
-  ensureDefaultUsers();
-  return USERS.find(u => (((u.email || '').toLowerCase() === login) || (login === 'admin' && (u.email || '') === 'admin')) && (u.password || '') === pass) || null;
+
+  if(!supabaseClient || ALLOW_DEMO_ACCOUNTS){
+    ensureDefaultUsers();
+    return USERS.find(u => (((u.email || '').toLowerCase() === login) || (login === 'admin' && (u.email || '') === 'admin')) && (u.password || '') === pass) || null;
+  }
+  return null;
 }
 function mapSupabaseRegistrationToApp(row){
   return { id: String(row.app_id || row.id || nextRegistrationId()), supabase_id: row.id || null, eventId: row.event_app_id || row.event_id || row.lycee_id || row.eventId || '', eventName: row.event_name || row.evenement || row.lycee || '', school: normalizeSchoolName(row.school || row.ecole) || row.school || row.ecole || '', firstName: row.first_name || row.firstname || row.prenom || row.firstName || '', lastName: row.last_name || row.lastname || row.nom || row.lastName || '', email: row.email || '', phone: row.phone || row.telephone || '', notes: row.notes || row.commentaire || '', userId: row.user_app_id || row.user_id || row.userId || null, createdAt: row.created_at || row.createdAt || new Date().toISOString() };
 }
 function mapAppRegistrationToSupabase(r){
-  const ev = LYCEES.find(l => l.id === r.eventId) || {};
+  const ev = findCalendarEventById(r.eventId) || {};
   return { app_id: normalizeSupabaseText(r.id), event_app_id: normalizeSupabaseText(r.eventId), event_name: normalizeSupabaseText(r.eventName || ev.nom), school: normalizeSupabaseText(r.school), first_name: normalizeSupabaseText(r.firstName), last_name: normalizeSupabaseText(r.lastName), email: normalizeSupabaseText(r.email), phone: normalizeSupabaseText(r.phone), notes: normalizeSupabaseText(r.notes), user_app_id: normalizeSupabaseText(r.userId), created_at: normalizeSupabaseText(r.createdAt || new Date().toISOString()) };
 }
 async function fetchOptionalTable(table, mapper){
@@ -2333,11 +2361,260 @@ async function deleteOptionalTable(table, column, value){
   const { error } = await supabaseClient.from(table).delete().eq(column, value);
   if(error) console.warn(`Suppression Supabase ignorée (${table})`, error);
 }
+
+function parseSupabaseJson(value, fallback){
+  if(value === undefined || value === null || value === '') return fallback;
+  if(Array.isArray(value) || (typeof value === 'object' && value !== null)) return value;
+  try { return JSON.parse(value); } catch(e) { return fallback; }
+}
+function eventIdSetFor(eventObj){ return new Set(eventIdCandidates(eventObj).map(String)); }
+function registrationBelongsToEvent(reg, eventObj){
+  const ids = eventIdSetFor(eventObj);
+  return ids.has(String(reg.eventId || '')) || (reg.eventName && normalizeLyceeName(reg.eventName) === normalizeLyceeName(eventObj?.nom));
+}
+function leadBelongsToEvent(lead, eventObj){
+  const ids = eventIdSetFor(eventObj);
+  return ids.has(String(lead.eventId || '')) || (lead.eventName && normalizeLyceeName(lead.eventName) === normalizeLyceeName(eventObj?.nom));
+}
+function registrationsForSupabaseEvent(eventObj){
+  const canonical = canonicalEventId(eventObj) || eventObj?.id || '';
+  return (REGISTRATIONS || []).filter(r => registrationBelongsToEvent(r, eventObj)).map(r => ({
+    ...r,
+    eventId: canonical,
+    eventName: r.eventName || eventObj?.nom || ''
+  }));
+}
+function leadsForSupabaseEvent(eventObj){
+  const canonical = canonicalEventId(eventObj) || eventObj?.id || '';
+  return (LEADS || []).filter(l => leadBelongsToEvent(l, eventObj)).map(l => ({
+    ...l,
+    eventId: canonical,
+    eventName: l.eventName || eventObj?.nom || ''
+  }));
+}
+function reportingForSupabaseEvent(eventObj){
+  const result = {};
+  const ids = eventIdSetFor(eventObj);
+  Object.entries(REPORTING_DATA || {}).forEach(([key, value]) => {
+    const parts = key.split('__');
+    const school = parts.pop();
+    const eventId = parts.join('__');
+    if(ids.has(String(eventId))) result[school] = value;
+  });
+  return result;
+}
+function clearLocalExtrasForEvent(eventObj){
+  const ids = eventIdSetFor(eventObj);
+  REGISTRATIONS = (REGISTRATIONS || []).filter(r => !ids.has(String(r.eventId || '')));
+  LEADS = (LEADS || []).filter(l => !ids.has(String(l.eventId || '')));
+  Object.keys(REPORTING_DATA || {}).forEach(key => {
+    const parts = key.split('__');
+    parts.pop();
+    if(ids.has(parts.join('__'))) delete REPORTING_DATA[key];
+  });
+}
+function applyEventExtrasFromSupabaseRow(row, eventObj){
+  if(!row || !eventObj) return;
+  const canonical = canonicalEventId(eventObj) || eventObj.id || '';
+  clearLocalExtrasForEvent(eventObj);
+
+  const remoteRegs = parseSupabaseJson(row.registrations_json ?? row.inscriptions_json ?? row.registrations, []);
+  if(Array.isArray(remoteRegs)){
+    remoteRegs.forEach((r, index) => REGISTRATIONS.push({
+      id: String(r.id || r.app_id || `REG_REMOTE_${row.id || canonical}_${index}`),
+      supabase_id: r.supabase_id || null,
+      eventId: canonical,
+      eventName: r.eventName || r.event_name || eventObj.nom || '',
+      school: normalizeSchoolName(r.school || r.ecole) || r.school || r.ecole || '',
+      firstName: r.firstName || r.first_name || r.prenom || '',
+      lastName: r.lastName || r.last_name || r.nom || '',
+      email: (r.email || '').toString().toLowerCase(),
+      phone: r.phone || r.telephone || '',
+      notes: r.notes || r.commentaire || '',
+      userId: r.userId || r.user_app_id || null,
+      forcedByAdmin: Boolean(r.forcedByAdmin),
+      createdAt: r.createdAt || r.created_at || new Date().toISOString()
+    }));
+  }
+
+  const remoteLeads = parseSupabaseJson(row.leads_json ?? row.leads, []);
+  if(Array.isArray(remoteLeads)){
+    remoteLeads.forEach((l, index) => LEADS.push({
+      id: String(l.id || l.app_id || `LEAD_REMOTE_${row.id || canonical}_${index}`),
+      season: l.season || row.saison || S.season,
+      eventId: canonical,
+      eventName: l.eventName || l.event_name || eventObj.nom || '',
+      lycee: l.lycee || eventObj.nom || '',
+      ville: l.ville || eventObj.ville || '',
+      firstName: l.firstName || l.first_name || l.prenom || '',
+      lastName: l.lastName || l.last_name || l.nom || '',
+      email: (l.email || '').toString().toLowerCase(),
+      phone: l.phone || l.telephone || '',
+      level: l.level || l.niveau || '',
+      school: normalizeSchoolName(l.school || l.ecole) || l.school || l.ecole || '',
+      notes: l.notes || l.commentaire || '',
+      source: l.source || 'QR public',
+      createdAt: l.createdAt || l.created_at || new Date().toISOString()
+    }));
+  }
+
+  const remoteReporting = parseSupabaseJson(row.reporting_json ?? row.reporting, {});
+  if(remoteReporting && typeof remoteReporting === 'object' && !Array.isArray(remoteReporting)){
+    Object.entries(remoteReporting).forEach(([school, record]) => {
+      const cleanSchool = normalizeSchoolName(school) || school;
+      if(cleanSchool) REPORTING_DATA[getReportKey(canonical, cleanSchool)] = record || {};
+    });
+  }
+}
+async function saveEventExtrasToSupabase(eventObj){
+  if(!eventObj) return { ok:false, skipped:true, message:'Événement introuvable' };
+  return saveEventDirectToSupabase(eventObj);
+}
+async function saveStudentDirectToSupabase(student){
+  if(!supabaseClient || !student) return { ok:false, skipped:true, message:'Client Supabase non initialisé' };
+  let payload = mapAppStudentToSupabase(student);
+  try {
+    let existingId = student.supabase_id || null;
+    if(!existingId && payload.email){
+      const { data: existing, error: findError } = await supabaseClient.from('etudiants').select('id').eq('email', payload.email).limit(1);
+      if(findError) throw findError;
+      existingId = existing && existing.length ? existing[0].id : null;
+    }
+    if(!existingId && payload.app_id){
+      const { data: existing, error: findError } = await supabaseClient.from('etudiants').select('id').eq('app_id', payload.app_id).limit(1);
+      if(!findError && existing && existing.length) existingId = existing[0].id;
+    }
+    for(let attempt=0; attempt<10; attempt++){
+      const response = existingId
+        ? await supabaseClient.from('etudiants').update(payload).eq('id', existingId)
+        : await supabaseClient.from('etudiants').insert([payload]).select('id').single();
+      if(!response.error){
+        student.supabase_id = existingId || response.data?.id || null;
+        return { ok:true, id:student.supabase_id };
+      }
+      const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
+      if(cleaned){ payload = cleaned; continue; }
+      throw response.error;
+    }
+    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet étudiant' };
+  } catch(err){
+    console.error('Erreur sauvegarde étudiant Supabase:', err);
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+  }
+}
+async function deleteStudentDirectFromSupabase(student){
+  if(!supabaseClient || !student) return { ok:false, skipped:true };
+  try {
+    if(student.supabase_id){
+      const { error } = await supabaseClient.from('etudiants').delete().eq('id', student.supabase_id);
+      if(error) throw error;
+      return { ok:true };
+    }
+    if(student.id) await deleteOptionalTable('etudiants', 'app_id', student.id);
+    if(student.email) await deleteOptionalTable('etudiants', 'email', student.email);
+    return { ok:true };
+  } catch(err){
+    console.error('Erreur suppression étudiant Supabase:', err);
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+  }
+}
+function setSupabaseStatus(state, label){
+  const el = document.getElementById('supabase-status');
+  const txt = document.getElementById('supabase-status-label');
+  if(el) el.className = 'sync-status ' + (state || 'syncing');
+  if(txt) txt.textContent = label || '';
+}
+function scheduleRemoteReload(reason='remote-change'){
+  if(!supabaseClient || SUPABASE_IS_PUSHING || SUPABASE_IS_LOADING) return;
+  clearTimeout(SUPABASE_REMOTE_REFRESH_TIMER);
+  SUPABASE_REMOTE_REFRESH_TIMER = setTimeout(() => refreshFromSupabaseAndRender(true, reason), 700);
+}
+async function refreshFromSupabaseAndRender(silent=true, reason='manual'){
+  if(!supabaseClient || SUPABASE_IS_PUSHING) return false;
+  const loaded = await loadFromSupabase({ silent, reason });
+  if(loaded){
+    populateStaticSelects();
+    populateDepts();
+    updateSchoolFilterCounts();
+    refreshCurrentPage();
+  }
+  return loaded;
+}
+function setupSupabaseRealtime(){
+  if(!supabaseClient || SUPABASE_REALTIME_CHANNEL) return;
+  try {
+    SUPABASE_REALTIME_CHANNEL = supabaseClient
+      .channel('edh-forums-live-sync')
+      .on('postgres_changes', { event:'*', schema:'public', table:'lycees' }, () => scheduleRemoteReload('lycees'))
+      .on('postgres_changes', { event:'*', schema:'public', table:'evenements' }, () => scheduleRemoteReload('evenements'))
+      .on('postgres_changes', { event:'*', schema:'public', table:'etudiants' }, () => scheduleRemoteReload('etudiants'))
+      .on('postgres_changes', { event:'*', schema:'public', table:'utilisateurs' }, () => scheduleRemoteReload('utilisateurs'))
+      .subscribe((status) => {
+        if(status === 'SUBSCRIBED') setSupabaseStatus('ok', 'Supabase : synchronisation temps réel active');
+      });
+  } catch(err){ console.warn('Realtime Supabase non activé', err); }
+  clearInterval(SUPABASE_PERIODIC_REFRESH_TIMER);
+  SUPABASE_PERIODIC_REFRESH_TIMER = setInterval(() => refreshFromSupabaseAndRender(true, 'polling'), 60000);
+}
+function eventIdCandidates(eventObj){
+  if(!eventObj) return [];
+  return [eventObj.id, eventObj.id_forum, eventObj.eventId, eventObj.supabase_event_id]
+    .filter(v => v !== undefined && v !== null && String(v).trim() !== '')
+    .map(v => String(v));
+}
+function canonicalEventId(eventObj){
+  return eventIdCandidates(eventObj)[0] || '';
+}
+function eventNaturalKey(eventObj){
+  return `${normalizeLyceeName(eventObj?.nom || eventObj?.lycee || '')}__${(eventObj?.ville || '').toString().trim().toLowerCase()}__${cleanDateForSupabase(eventObj?.date) || ''}`;
+}
+function eventDeletionMarkers(eventObj){
+  if(!eventObj) return [];
+  // On marque surtout la combinaison lycée + ville + date, et l'id Supabase de l'événement s'il existe.
+  // On évite de bloquer définitivement l'id du lycée, car un nouveau forum peut être créé plus tard pour le même établissement.
+  return [eventNaturalKey(eventObj), eventObj.supabase_event_id].filter(Boolean).map(String);
+}
+function isDeletedEvent(eventObj){
+  const deleted = new Set((DELETED_EVENT_IDS || []).map(String));
+  return eventDeletionMarkers(eventObj).some(id => deleted.has(id));
+}
+function markEventAsNotDeleted(eventObj){
+  const ids = new Set([...eventDeletionMarkers(eventObj), ...eventIdCandidates(eventObj)].filter(Boolean).map(String));
+  DELETED_EVENT_IDS = (DELETED_EVENT_IDS || []).filter(id => !ids.has(String(id)));
+}
+function addDeletedEventMarker(eventObj){
+  const markers = eventDeletionMarkers(eventObj);
+  markers.forEach(id => { if(!DELETED_EVENT_IDS.includes(id)) DELETED_EVENT_IDS.push(id); });
+}
+function eventBaseLycee(eventObj){
+  if(!eventObj) return null;
+  const ids = new Set(eventIdCandidates(eventObj));
+  return (LYCEES || []).find(l => eventIdCandidates(l).some(id => ids.has(id)))
+    || (LYCEES || []).find(l => normalizeLyceeName(l.nom) === normalizeLyceeName(eventObj.nom || eventObj.lycee) && (l.ville || '').toString().trim().toLowerCase() === (eventObj.ville || '').toString().trim().toLowerCase())
+    || null;
+}
+function findCalendarEventById(id){
+  if(!id) return null;
+  const sid = String(id);
+  const directLycee = (LYCEES || []).find(l => eventIdCandidates(l).includes(sid));
+  if(directLycee) return directLycee;
+  const fromSchoolForums = SCHOOL_FORUMS ? Object.values(SCHOOL_FORUMS).flat().map(mergeForumRow) : [];
+  const directForum = fromSchoolForums.find(l => eventIdCandidates(l).includes(sid));
+  if(directForum) return directForum;
+  return allCalendarEvents().find(l => eventIdCandidates(l).includes(sid)) || null;
+}
 function allCalendarEvents(){
   const fromLycees = getVisibleLycees();
   const fromSchoolForums = SCHOOL_FORUMS ? Object.values(SCHOOL_FORUMS).flat().map(mergeForumRow).filter(l => canSeeRecord(l)) : [];
   const seen = new Set();
-  return [...fromLycees, ...fromSchoolForums].filter(l => isValidatedEvent(l) && l.date).filter(l => { const key = l.id || l.id_forum || `${normalizeLyceeName(l.nom)}__${(l.ville||'').toLowerCase()}__${l.date||''}`; if(seen.has(key)) return false; seen.add(key); return true; });
+  return [...fromLycees, ...fromSchoolForums]
+    .filter(l => isValidatedEvent(l) && l.date && !isDeletedEvent(l))
+    .filter(l => {
+      const key = canonicalEventId(l) || eventNaturalKey(l);
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 function openAddEventModal(){
   openAddModal();
@@ -2347,7 +2624,7 @@ function openAddEventModal(){
 function appLyceeKey(l){ return `${normalizeLyceeName(l.nom)}__${(l.ville||'').toString().trim().toLowerCase()}`; }
 function mapSupabaseLyceeToApp(row){
   return {
-    id: row.id ? String(row.id) : nextId(),
+    id: String(row.app_id || row.id || nextId()),
     supabase_id: row.id || null,
     nom: row.nom || '',
     ville: row.ville || '',
@@ -2374,6 +2651,7 @@ function mapSupabaseLyceeToApp(row){
 }
 function mapAppLyceeToSupabase(l){
   return {
+    app_id: normalizeSupabaseText(l.id),
     nom: normalizeSupabaseText(l.nom),
     ville: normalizeSupabaseText(l.ville),
     departement: normalizeSupabaseText(l.departement),
@@ -2387,14 +2665,15 @@ function mapAppLyceeToSupabase(l){
     contact_nom: normalizeSupabaseText(l.organisateur || l.contact_nom),
     contact_email: normalizeSupabaseText(l.mail_ecole || l.contact_email),
     contact_telephone: normalizeSupabaseText(l.tel_ecole || l.contact_telephone),
-    commentaire: normalizeSupabaseText(l.commentaire)
+    commentaire: normalizeSupabaseText(l.commentaire),
+    updated_at: new Date().toISOString()
   };
 }
 async function saveLyceeDirectToSupabase(localLycee){
   if(!supabaseClient){
     return { ok:false, skipped:true, message:'Client Supabase non initialisé' };
   }
-  const payload = mapAppLyceeToSupabase(localLycee);
+  let payload = mapAppLyceeToSupabase(localLycee);
   if(!payload.nom || !payload.ville){
     return { ok:false, skipped:true, message:'Nom et ville requis' };
   }
@@ -2412,23 +2691,19 @@ async function saveLyceeDirectToSupabase(localLycee){
       existingId = existing && existing.length ? existing[0].id : null;
     }
 
-    if(existingId){
-      const { error } = await supabaseClient
-        .from('lycees')
-        .update(payload)
-        .eq('id', existingId);
-      if(error) throw error;
-      localLycee.supabase_id = existingId;
-    } else {
-      const { data, error } = await supabaseClient
-        .from('lycees')
-        .insert([payload])
-        .select('id')
-        .single();
-      if(error) throw error;
-      localLycee.supabase_id = data?.id || null;
+    for(let attempt=0; attempt<10; attempt++){
+      const response = existingId
+        ? await supabaseClient.from('lycees').update(payload).eq('id', existingId)
+        : await supabaseClient.from('lycees').insert([payload]).select('id').single();
+      if(!response.error){
+        localLycee.supabase_id = existingId || response.data?.id || null;
+        return { ok:true, id: localLycee.supabase_id };
+      }
+      const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
+      if(cleaned){ payload = cleaned; continue; }
+      throw response.error;
     }
-    return { ok:true, id: localLycee.supabase_id };
+    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder ce lycée' };
   } catch(err){
     console.error('Erreur sauvegarde directe lycée Supabase:', err);
     return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
@@ -2465,13 +2740,20 @@ async function deleteLyceeDirectFromSupabase(localLycee){
 
 function mapSupabaseEventToSeasonRow(row){
   return {
-    nom: row.lycee || '',
+    nom: row.lycee || row.nom || '',
     ville: row.ville || '',
     date: cleanDateForSupabase(row.date),
+    heure: row.heure || row.horaire || null,
+    formation: row.formation || row.formations || null,
     statut: row.statut || 'Participation Validée',
+    region: row.region || null,
+    campus: row.campus || null,
+    ecoles: row.ecoles || row.schools || null,
     commentaire: row.commentaire || null,
+    participants: row.participants || row.etudiants || 'Aucun étudiant',
     prospect_global: row.prospects ?? null,
-    term: row.terminale ?? null
+    term: row.terminale ?? null,
+    supabase_event_id: row.id || null
   };
 }
 function getReportTotalsForEvent(l){
@@ -2504,6 +2786,13 @@ function mapAppEventToSupabase(l){
     region: normalizeSupabaseText(l.region),
     campus: normalizeSupabaseText(l.campus),
     ecoles: normalizeSupabaseText(l.ecoles || 'tout le monde'),
+    heure: normalizeSupabaseText(l.heure),
+    formation: normalizeSupabaseText(l.formation),
+    adresse: normalizeSupabaseText(l.adresse),
+    contact_nom: normalizeSupabaseText(l.organisateur || l.contact_nom),
+    contact_email: normalizeSupabaseText(l.mail_ecole || l.mail_organisateur || l.contact_email),
+    contact_telephone: normalizeSupabaseText(l.tel_ecole || l.tel_organisateur || l.contact_telephone),
+    participants: normalizeSupabaseText(l.participants),
     prospects: normalizeSupabaseNumber(t.prospects),
     seconde: normalizeSupabaseNumber(t.seconde),
     premiere: normalizeSupabaseNumber(t.premiere),
@@ -2512,23 +2801,97 @@ function mapAppEventToSupabase(l){
     candidats: normalizeSupabaseNumber(t.candidats),
     admis: normalizeSupabaseNumber(t.admis),
     inscrits: normalizeSupabaseNumber(t.inscrits),
-    commentaire: normalizeSupabaseText(l.commentaire)
+    commentaire: normalizeSupabaseText(l.commentaire),
+    registrations_json: registrationsForSupabaseEvent(l),
+    reporting_json: reportingForSupabaseEvent(l),
+    leads_json: leadsForSupabaseEvent(l),
+    updated_at: new Date().toISOString()
   };
 }
-async function loadFromSupabase(){
-  if(!supabaseClient) return false;
+function eventShouldSyncToSupabase(l){
+  return Boolean(l && (cleanDateForSupabase(l.date) || isValidatedEvent(l)));
+}
+async function saveEventDirectToSupabase(localEvent){
+  if(!supabaseClient || !eventShouldSyncToSupabase(localEvent)) return { ok:false, skipped:true, message:'Aucun événement à synchroniser' };
+  let payload = mapAppEventToSupabase(localEvent);
+  if(!payload.lycee || !payload.saison) return { ok:false, skipped:true, message:'Lycée et saison requis' };
   try {
+    let existingId = localEvent.supabase_event_id || null;
+    if(!existingId){
+      let query = supabaseClient.from('evenements').select('id')
+        .eq('lycee', payload.lycee)
+        .eq('ville', payload.ville || '')
+        .eq('saison', payload.saison);
+      if(payload.date) query = query.eq('date', payload.date); else query = query.is('date', null);
+      const { data: existing, error: findError } = await query.limit(1);
+      if(findError) throw findError;
+      existingId = existing && existing.length ? existing[0].id : null;
+    }
+    const missingColumns = [];
+    for(let attempt=0; attempt<12; attempt++){
+      const response = existingId
+        ? await supabaseClient.from('evenements').update(payload).eq('id', existingId)
+        : await supabaseClient.from('evenements').insert([payload]).select('id').single();
+      if(!response.error){
+        if(!existingId) localEvent.supabase_event_id = response.data?.id || null;
+        else localEvent.supabase_event_id = existingId;
+        return { ok:true, id: localEvent.supabase_event_id, missingColumns };
+      }
+      const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
+      if(cleaned){
+        const missing = getMissingSupabaseColumn(response.error);
+        if(missing) missingColumns.push(missing);
+        payload = cleaned;
+        continue;
+      }
+      throw response.error;
+    }
+    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet événement' };
+  } catch(err){
+    console.error('Erreur sauvegarde événement Supabase:', err);
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+  }
+}
+async function deleteEventDirectFromSupabase(localEvent){
+  if(!supabaseClient || !localEvent) return { ok:false, skipped:true };
+  try {
+    const row = mapAppEventToSupabase(localEvent);
+    if(localEvent.supabase_event_id){
+      const { error } = await supabaseClient.from('evenements').delete().eq('id', localEvent.supabase_event_id);
+      if(error) throw error;
+    }
+    if(row.lycee && row.saison){
+      let query = supabaseClient.from('evenements').delete().eq('lycee', row.lycee).eq('ville', row.ville || '').eq('saison', row.saison);
+      if(row.date) query = query.eq('date', row.date);
+      const { error } = await query;
+      if(error) throw error;
+    }
+    localEvent.supabase_event_id = null;
+    return { ok:true };
+  } catch(err){
+    console.error('Erreur suppression événement Supabase:', err);
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+  }
+}
+async function loadFromSupabase(options = {}){
+  if(!supabaseClient) { setSupabaseStatus('error', 'Supabase : client non initialisé'); return false; }
+  if(SUPABASE_IS_LOADING) return true;
+  SUPABASE_IS_LOADING = true;
+  const silent = Boolean(options.silent);
+  try {
+    setSupabaseStatus('syncing', 'Supabase : synchronisation…');
     const { data: remoteLycees, error: lyceeError } = await supabaseClient.from('lycees').select('*').order('nom', { ascending: true });
     if(lyceeError) throw lyceeError;
 
     if(Array.isArray(remoteLycees)){
-      const mapped = remoteLycees.map(mapSupabaseLyceeToApp);
-      // Supabase est prioritaire : si la table est vide ou si des lignes ont été supprimées dans Supabase,
-      // on remplace l'état local au lieu de réécrire l'ancien localStorage dans la base.
-      LYCEES = mapped;
+      LYCEES = remoteLycees.map(mapSupabaseLyceeToApp);
       safeLocalStorageSet('edh_master_lycees_v1', JSON.stringify(LYCEES.map(stableLyceePart)));
-      saveSeasonData(S.season);
     }
+
+    // Supabase devient la source de vérité pour les données multi-utilisateurs liées aux événements.
+    REGISTRATIONS = [];
+    REPORTING_DATA = {};
+    LEADS = [];
 
     const { data: remoteEvents, error: eventError } = await supabaseClient
       .from('evenements')
@@ -2536,32 +2899,64 @@ async function loadFromSupabase(){
       .eq('saison', S.season || DEFAULT_SEASON);
     if(eventError) throw eventError;
 
-    if(Array.isArray(remoteEvents) && remoteEvents.length){
+    if(Array.isArray(remoteEvents)){
       const byKey = new Map(LYCEES.map(l => [appLyceeKey(l), l]));
       remoteEvents.forEach(row => {
         const seasonRow = mapSupabaseEventToSeasonRow(row);
         const key = appLyceeKey(seasonRow);
         const base = byKey.get(key);
-        if(base){ Object.assign(base, seasonRow, { id: base.id, supabase_event_id: row.id || null }); }
-        // Important : on ne recrée pas un lycée local à partir d'un événement orphelin.
-        // Si le lycée a été supprimé dans Supabase, l'événement associé ne doit pas le faire réapparaître dans le listing.
+        if(base){
+          Object.assign(base, seasonRow, { id: base.id, supabase_event_id: row.id || null });
+          applyEventExtrasFromSupabaseRow(row, base);
+        } else {
+          // Événement orphelin : on le rend quand même ouvrable dans le calendrier au lieu d'afficher "événement introuvable".
+          const orphan = {
+            id: 'EVT_' + String(row.id || Date.now()),
+            supabase_event_id: row.id || null,
+            supabase_id: null,
+            nom: seasonRow.nom || row.nom || row.lycee || 'Événement',
+            ville: seasonRow.ville || row.ville || '',
+            cp: row.code_postal || row.cp || '',
+            departement: row.departement || '',
+            type: row.type || '',
+            adresse: row.adresse || '',
+            organisateur: row.contact_nom || '',
+            mail_ecole: row.contact_email || '',
+            tel_ecole: row.contact_telephone || '',
+            ancien_etudiant: row.anciens || 'Aucun étudiant',
+            participants: row.participants || 'Aucun étudiant',
+            ...seasonRow
+          };
+          LYCEES.push(orphan);
+          applyEventExtrasFromSupabaseRow(row, orphan);
+        }
       });
     }
 
-    const remoteStudents = await fetchFirstOptionalTable(['etudiants','students','nos_etudiants','nos_etudiants_edh'], mapSupabaseStudentToApp);
-    if(remoteStudents.length) STUDENTS = remoteStudents;
+    const { data: remoteStudents, error: studentError } = await supabaseClient.from('etudiants').select('*');
+    if(studentError) console.warn('Étudiants Supabase non chargés', studentError);
+    else if(Array.isArray(remoteStudents)) STUDENTS = remoteStudents.map(mapSupabaseStudentToApp);
+
     await refreshUsersFromSupabase();
-    const remoteRegistrations = await fetchOptionalTable('inscriptions', mapSupabaseRegistrationToApp);
-    if(remoteRegistrations.length) REGISTRATIONS = remoteRegistrations;
 
     SUPABASE_SYNC_READY = true;
     SUPABASE_LAST_LOAD_AT = Date.now();
-    showToast('Connexion Supabase active');
+    saveSeasonData(S.season);
+    safeLocalStorageSet('edh_students_v2', JSON.stringify(STUDENTS));
+    safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+    safeLocalStorageSet('edh_registrations_v2', JSON.stringify(REGISTRATIONS));
+    safeLocalStorageSet('edh_reporting_v1', JSON.stringify(REPORTING_DATA));
+    safeLocalStorageSet('edh_leads_v1', JSON.stringify(LEADS || []));
+    setSupabaseStatus('ok', `Supabase : connecté · ${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}`);
+    if(!silent) showToast('Connexion Supabase active : données partagées chargées');
     return true;
   } catch(err){
     console.error('Erreur Supabase load:', err);
-    showToast('Connexion Supabase impossible : données locales utilisées', 'error');
+    setSupabaseStatus('error', 'Supabase : erreur de synchronisation');
+    if(!silent) showToast('Connexion Supabase impossible : données locales utilisées', 'error');
     return false;
+  } finally {
+    SUPABASE_IS_LOADING = false;
   }
 }
 async function seedLyceesToSupabase(){
@@ -2569,12 +2964,12 @@ async function seedLyceesToSupabase(){
   return;
 }
 function queueSupabaseSave(){
-  if(!SUPABASE_SYNC_READY || !supabaseClient || SUPABASE_IS_PUSHING) return;
+  if(!supabaseClient || SUPABASE_IS_PUSHING) return;
   clearTimeout(SUPABASE_SYNC_TIMER);
   SUPABASE_SYNC_TIMER = setTimeout(pushToSupabase, 900);
 }
 async function pushToSupabase(){
-  if(!supabaseClient || !SUPABASE_SYNC_READY) return;
+  if(!supabaseClient) return;
   SUPABASE_IS_PUSHING = true;
   try {
     // Les lycées ne sont plus poussés globalement depuis le localStorage.
@@ -2582,25 +2977,15 @@ async function pushToSupabase(){
 
     const events = (LYCEES || []).filter(l => l.date || isValidatedEvent(l) || Object.keys(REPORTING_DATA || {}).some(k => k.startsWith(String(l.id) + '__')));
     for(const l of events){
-      const row = mapAppEventToSupabase(l);
-      if(!row.lycee || !row.saison) continue;
-      let query = supabaseClient.from('evenements').select('id').eq('lycee', row.lycee).eq('ville', row.ville || '').eq('saison', row.saison);
-      if(row.date) query = query.eq('date', row.date); else query = query.is('date', null);
-      const { data: existing, error: findError } = await query.limit(1);
-      if(findError) throw findError;
-      if(existing && existing.length){
-        await supabaseClient.from('evenements').update(row).eq('id', existing[0].id);
-      } else {
-        await supabaseClient.from('evenements').insert([row]);
-      }
+      const eventResult = await saveEventDirectToSupabase(l);
+      if(!eventResult.ok && !eventResult.skipped) console.warn('Événement non synchronisé:', l.nom, eventResult.message || eventResult.error);
     }
 
-    await upsertFirstOptionalTable(['etudiants','students','nos_etudiants','nos_etudiants_edh'], (STUDENTS || []).map(mapAppStudentToSupabase));
+    await upsertFirstOptionalTable(['etudiants'], (STUDENTS || []).map(mapAppStudentToSupabase));
     for(const user of (USERS || []).filter(u => u.id !== 'USR_ADMIN')){
       const userResult = await saveUserDirectToSupabase(user);
       if(!userResult.ok && !userResult.skipped) console.warn('Utilisateur non synchronisé:', user.email, userResult.message || userResult.error);
     }
-    await upsertOptionalTable('inscriptions', (REGISTRATIONS || []).map(mapAppRegistrationToSupabase));
   } catch(err){
     console.error('Erreur Supabase save:', err);
     showToast('Sauvegarde Supabase impossible : ' + getSupabaseErrorMessage(err), 'error');
@@ -2829,16 +3214,16 @@ function currentStudentRegistrations(){
         && (!S.studentProfile.school || (r.school || '') === (S.studentProfile.school || ''));
     }
     return false;
-  }).sort((a,b)=>new Date((LYCEES.find(e=>e.id===a.eventId)||{}).date || 0)-new Date((LYCEES.find(e=>e.id===b.eventId)||{}).date || 0));
+  }).sort((a,b)=>new Date((findCalendarEventById(a.eventId)||{}).date || 0)-new Date((findCalendarEventById(b.eventId)||{}).date || 0));
 }
 
 function openRegistrationModal(eventId){
   if(normalizeRoleValue(S.role) !== 'student') return showToast("Accès réservé au mode étudiant", 'error');
   const lookupWrap = document.getElementById('admin-student-lookup-wrap');
   if(lookupWrap) lookupWrap.style.display = 'none';
-  const event = allCalendarEvents().find(l => l.id === eventId || l.id_forum === eventId) || LYCEES.find(l => l.id === eventId);
+  const event = findCalendarEventById(eventId);
   if(!event) return showToast("Évènement introuvable", 'error');
-  S.selectedEventId = eventId;
+  S.selectedEventId = canonicalEventId(event) || eventId;
   const school = getStudentSelectedSchool();
   const schoolSelect = document.getElementById('modal-reg-school');
   const eventSchools = getSchoolsArray(event.ecoles);
@@ -2921,20 +3306,20 @@ function saveLocalData(){
   safeLocalStorageSet('edh_student_profile_v2', JSON.stringify(S.studentProfile || null));
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
+  safeLocalStorageSet('edh_deleted_event_ids_v1', JSON.stringify(DELETED_EVENT_IDS || []));
   safeLocalStorageSet('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
   safeLocalStorageSet('edh_lycees_v2', JSON.stringify(LYCEES));
   safeLocalStorageSet('edh_reporting_v1', JSON.stringify(REPORTING_DATA));
   safeLocalStorageSet('edh_registrations_v2', JSON.stringify(REGISTRATIONS));
   safeLocalStorageSet('edh_leads_v1', JSON.stringify(LEADS || []));
-  queueSupabaseSave();
+  // Cache local uniquement : Supabase reste la source partagée.
 }
+
 function ensureDefaultUsers(){
   if(!Array.isArray(USERS)) USERS = [];
   if(!Array.isArray(DELETED_DEFAULT_USER_IDS)) DELETED_DEFAULT_USER_IDS = [];
-  const defaults = [
-    {id:'USR_ADMIN', firstName:'Admin', lastName:'EDH', email:'admin', password:'edhadmin', role:'collaborateur', school:'', phone:'', locked:true},
-    {id:'USR_DEMO_STUDENT', firstName:'Étudiant', lastName:'Démo', email:'student', password:'edhstudent', role:'student', school:'EFAP', phone:'0600000000', locked:false}
-  ];
+  if(!ALLOW_DEMO_ACCOUNTS) return;
+  const defaults = [];
   defaults.forEach(def => {
     if(def.id !== 'USR_ADMIN' && DELETED_DEFAULT_USER_IDS.includes(def.id)) return;
     const existingIndex = USERS.findIndex(u => (u.email || '').toLowerCase() === def.email.toLowerCase() || u.id === def.id);
@@ -2967,12 +3352,14 @@ function loadLocalData
     USERS = JSON.parse(localStorage.getItem('edh_users_v3') || '[]');
     if(Array.isArray(USERS)) USERS = USERS.map(minimalUserForStorage);
     DELETED_DEFAULT_USER_IDS = JSON.parse(localStorage.getItem('edh_deleted_default_user_ids_v1') || '[]');
+    DELETED_EVENT_IDS = JSON.parse(localStorage.getItem('edh_deleted_event_ids_v1') || '[]');
     REPORTING_DATA = JSON.parse(localStorage.getItem('edh_reporting_v1') || '{}');
     LEADS = JSON.parse(localStorage.getItem('edh_leads_v1') || '[]');
     bootstrapSeasonStorage();
     ensureDefaultUsers();
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
     safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
+    safeLocalStorageSet('edh_deleted_event_ids_v1', JSON.stringify(DELETED_EVENT_IDS || []));
     S.currentUserId = JSON.parse(localStorage.getItem('edh_current_user_v3') || 'null');
     const savedProfile = JSON.parse(localStorage.getItem('edh_student_profile_v2') || 'null');
     S.studentProfile = savedProfile;
@@ -2996,6 +3383,7 @@ function loadLocalData
     REGISTRATIONS = [];
     USERS = [];
     DELETED_DEFAULT_USER_IDS = [];
+    DELETED_EVENT_IDS = [];
     LEADS = [];
     ensureDefaultUsers();
     S.studentProfile = null;
@@ -3336,7 +3724,7 @@ function renderCalList(){
       ${evs.map(l=>{
         const dt=new Date(l.date);
         const dayName=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][dt.getDay()];
-        return `<div class="cal-list-item" onclick="openDetail('${l.id}')">
+        return `<div class="cal-list-item" onclick="openDetail('${canonicalEventId(l)}')">
           <div class="cal-list-date">
             <div class="cal-list-day">${dt.getDate()}</div>
             <div class="cal-list-month-short">${dayName} ${MONTHS[dt.getMonth()].substring(0,3)}</div>
@@ -3347,12 +3735,13 @@ function renderCalList(){
             <div class="cal-list-schools">${schoolTags(l.ecoles)}</div>
           </div>
           <div class="cal-list-actions" onclick="event.stopPropagation()">
-            ${normalizeRoleValue(S.role) === 'student' ? `<button class="btn btn-primary" style="padding:5px 10px;font-size:11px" onclick="openRegistrationModal('${l.id}')">Je m'inscris</button>` : ''}
-            <button class="btn-ics" onclick="openMapsRoute('${l.id}')">
+            ${normalizeRoleValue(S.role) === 'student' ? `<button class="btn btn-primary" style="padding:5px 10px;font-size:11px" onclick="openRegistrationModal('${canonicalEventId(l)}')">Je m'inscris</button>` : ''}
+            <button class="btn-ics" onclick="openMapsRoute('${canonicalEventId(l)}')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-4.4 7-11a7 7 0 10-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
               Itinéraire
             </button>
-            <button class="btn-ics" onclick="downloadSingleICS('${l.id}')">
+            ${isAdminMode() ? `<button class="btn btn-danger" style="padding:5px 10px;font-size:11px" onclick="deleteEvent('${canonicalEventId(l)}')">Supprimer</button>` : ''}
+            <button class="btn-ics" onclick="downloadSingleICS('${canonicalEventId(l)}')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Outlook / Teams
             </button>
@@ -3398,7 +3787,7 @@ function renderCalGrid(){
         const sc=SCHOOLS.find(s=>(e.ecoles||'').includes(s)||e.ecoles==='tout le monde');
         const clr=sc?SCHOOL_COLOR[sc]:'#2563eb';
         const bg=sc?SCHOOL_BG[sc]:'#eff4ff';
-        return `<span class="cal-event-chip" style="background:${bg};color:${clr}" onclick="event.stopPropagation();openDetail('${e.id}')" title="${e.nom}">${e.nom.substring(0,20)}</span>`;
+        return `<span class="cal-event-chip" style="background:${bg};color:${clr}" onclick="event.stopPropagation();openDetail('${canonicalEventId(e)}')" title="${e.nom}">${e.nom.substring(0,20)}</span>`;
       }).join('')}
       ${evs.length>3?`<span style="font-size:10px;color:var(--text3)">+${evs.length-3} autres</span>`:''}
     </div>`;
@@ -3458,7 +3847,7 @@ function downloadICS(content, filename){
 }
 
 function downloadSingleICS(id){
-  const l=allCalendarEvents().find(x=>x.id===id || x.id_forum===id) || LYCEES.find(x=>x.id===id);
+  const l=findCalendarEventById(id);
   if(!l||!l.date) return showToast('Aucune date définie pour ce lycée','error');
   downloadICS(makeICS([l]), `EDH_Evenement_${l.nom.replace(/[^a-zA-Z0-9]/g,'_')}.ics`);
 }
@@ -3498,6 +3887,8 @@ function updateReportField(eventId, school, field, value){
   if(field === 'statut'){
     rec[field] = value;
     saveLocalData();
+    const eventObj = findCalendarEventById(eventId);
+    saveEventExtrasToSupabase(eventObj).catch(err => showToast('Reporting local enregistré, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error'));
     renderReportingPage();
     return;
   }
@@ -3519,6 +3910,8 @@ function updateReportField(eventId, school, field, value){
     return;
   }
   saveLocalData();
+  const eventObj = findCalendarEventById(eventId);
+  saveEventExtrasToSupabase(eventObj).catch(err => showToast('Reporting local enregistré, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error'));
   renderReportingPage();
 }
 function reportInput(eventId, school, field, value){
@@ -3543,6 +3936,7 @@ function createReporting(){
     });
   });
   saveLocalData();
+  events.forEach(event => saveEventExtrasToSupabase(event).catch(err => console.warn('Reporting non synchronisé', err)));
   renderReportingPage();
   showToast(created ? `${created} ligne(s) de reporting créée(s)` : 'Le reporting est déjà à jour');
 }
@@ -3552,8 +3946,8 @@ function isValidatedEvent(l){
 }
 
 function getValidatedEventsForReporting(){
-  const fromLycees = getVisibleLycees().filter(l => isValidatedEvent(l));
-  const fromSchoolForums = SCHOOL_FORUMS ? Object.values(SCHOOL_FORUMS).flat().map(mergeForumRow).filter(l => isValidatedEvent(l) && canSeeRecord(l)) : [];
+  const fromLycees = getVisibleLycees().filter(l => isValidatedEvent(l) && !isDeletedEvent(l));
+  const fromSchoolForums = SCHOOL_FORUMS ? Object.values(SCHOOL_FORUMS).flat().map(mergeForumRow).filter(l => isValidatedEvent(l) && canSeeRecord(l) && !isDeletedEvent(l)) : [];
   let events = [...fromLycees, ...fromSchoolForums];
   const seen = new Set();
   return events.filter(e => {
@@ -3586,7 +3980,7 @@ function getMapsTrainUrl(eventObj){
   return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
 }
 function openMapsRoute(eventId){
-  const eventObj = LYCEES.find(l => l.id === eventId);
+  const eventObj = findCalendarEventById(eventId);
   if(!eventObj) return showToast('Évènement introuvable', 'error');
   window.open(getMapsTrainUrl(eventObj), '_blank');
 }
@@ -3772,9 +4166,9 @@ function qrImageUrl(url){ return `https://api.qrserver.com/v1/create-qr-code/?si
 function populateLeadEvents(){
   const sel = document.getElementById('lead-event-select'); if(!sel) return;
   const current = sel.value;
-  const events = getVisibleLycees().filter(l=>isValidatedEvent(l) || l.date).sort((a,b)=>new Date(a.date||'2999-12-31')-new Date(b.date||'2999-12-31'));
-  sel.innerHTML = events.map(l=>`<option value="${escapeHtml(l.id)}">${escapeHtml(fmtDate(l.date))} — ${escapeHtml(l.nom)} (${escapeHtml(l.ville||'')})</option>`).join('');
-  if(current && events.some(e=>e.id===current)) sel.value = current;
+  const events = allCalendarEvents().sort((a,b)=>new Date(a.date||'2999-12-31')-new Date(b.date||'2999-12-31'));
+  sel.innerHTML = events.map(l=>`<option value="${escapeHtml(canonicalEventId(l))}">${escapeHtml(fmtDate(l.date))} — ${escapeHtml(l.nom)} (${escapeHtml(l.ville||'')})</option>`).join('');
+  if(current && events.some(e=>canonicalEventId(e)===current)) sel.value = current;
 }
 function renderQrPreview(){
   const id = document.getElementById('lead-event-select')?.value || '';
@@ -3782,18 +4176,18 @@ function renderQrPreview(){
   const input = document.getElementById('lead-qr-url'); if(input) input.value = url;
   const box = document.getElementById('lead-qr-preview'); if(box) box.innerHTML = url ? `<img src="${qrImageUrl(url)}" alt="QR code lead">` : 'QR';
 }
-function prefillLeadEvent(){ const event = LYCEES.find(l=>l.id===document.getElementById('lead-event-select')?.value); if(event){ const schools=getSchoolsArray(event.ecoles); if(schools[0]) document.getElementById('lead-school').value=schools[0]; } }
+function prefillLeadEvent(){ const event = findCalendarEventById(document.getElementById('lead-event-select')?.value); if(event){ const schools=getSchoolsArray(event.ecoles); if(schools[0]) document.getElementById('lead-school').value=schools[0]; } }
 function openLeadForEvent(eventId){ showPage('leads'); setTimeout(()=>{ const sel=document.getElementById('lead-event-select'); if(sel){ sel.value=eventId; renderQrPreview(); prefillLeadEvent(); } },0); }
 function renderLeadsPage(){
   populateLeadEvents(); renderQrPreview(); prefillLeadEvent(); loadLeadWebhookUrl();
   const body = document.getElementById('leads-tbody'); const count = document.getElementById('leads-count');
   const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
   if(count) count.textContent = `${rows.length} lead(s)`;
-  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=LYCEES.find(e=>e.id===l.eventId)||{}; return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(ev.nom||l.eventName||'—')}</td><td>${escapeHtml(ev.nom||'—')}</td><td><strong>${escapeHtml((l.firstName||'')+' '+(l.lastName||''))}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="9"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
+  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(ev.nom||l.eventName||'—')}</td><td>${escapeHtml(ev.nom||'—')}</td><td><strong>${escapeHtml((l.firstName||'')+' '+(l.lastName||''))}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="9"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
 }
 function saveLeadFromForm(){
   const eventId = document.getElementById('lead-event-select')?.value || '';
-  const ev = LYCEES.find(l=>l.id===eventId) || {};
+  const ev = findCalendarEventById(eventId) || {};
   const firstName = (document.getElementById('lead-firstname')?.value||'').trim();
   const lastName = (document.getElementById('lead-lastname')?.value||'').trim();
   const email = (document.getElementById('lead-email')?.value||'').trim().toLowerCase();
@@ -3801,14 +4195,14 @@ function saveLeadFromForm(){
   const obj = {id:'LEAD'+Date.now(), eventId, eventName:ev.nom||'', firstName,lastName,email, phone:(document.getElementById('lead-phone')?.value||'').trim(), level:document.getElementById('lead-level')?.value||'', school:document.getElementById('lead-school')?.value||'', notes:(document.getElementById('lead-notes')?.value||'').trim(), createdAt:new Date().toISOString()};
   LEADS.unshift(obj);
   ['lead-firstname','lead-lastname','lead-email','lead-phone','lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  saveLocalData(); renderLeadsPage(); renderDashboardV2(); showToast('Lead ajouté et centralisé');
+  saveLocalData(); saveEventExtrasToSupabase(ev).catch(err => showToast('Lead local enregistré, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error')); renderLeadsPage(); renderDashboardV2(); showToast('Lead ajouté et centralisé');
 }
-function deleteLead(id){ if(!confirm('Supprimer ce lead ?')) return; LEADS = LEADS.filter(l=>l.id!==id); saveLocalData(); renderLeadsPage(); renderDashboardV2(); showToast('Lead supprimé'); }
+function deleteLead(id){ if(!confirm('Supprimer ce lead ?')) return; const oldLead = LEADS.find(l=>l.id===id); const ev = oldLead ? findCalendarEventById(oldLead.eventId) : null; LEADS = LEADS.filter(l=>l.id!==id); saveLocalData(); saveEventExtrasToSupabase(ev).catch(err => showToast('Lead supprimé localement, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error')); renderLeadsPage(); renderDashboardV2(); showToast('Lead supprimé'); }
 function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
 function downloadQrCode(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return; const a=document.createElement('a'); a.href=qrImageUrl(url); a.download='QR_leads_evenement.png'; a.target='_blank'; a.click(); }
 function openLeadPublicForm(){ const url=document.getElementById('lead-qr-url')?.value||''; if(url) window.open(url,'_blank'); }
-function downloadLeadsExcel(){ const rows=LEADS.map(l=>{ const ev=LYCEES.find(e=>e.id===l.eventId)||{}; return {Date:l.createdAt, Evenement:ev.nom||l.eventName, Ville:ev.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Niveau:l.level, Ecole:l.school, Notes:l.notes}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,'EDH_leads_QR.xlsx'); }
-function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!lead) return; const ev=LYCEES.find(e=>e.id===lead.eventId)||{}; window.location.href=`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Suite à notre échange - Groupe EDH')}&body=${encodeURIComponent(`Bonjour ${lead.firstName},\n\nMerci pour ton échange avec nous lors de l'événement ${ev.nom||''}.\n\nNous restons disponibles si tu souhaites recevoir plus d'informations sur ${lead.school||'nos écoles'}.\n\nBien cordialement,\nGroupe EDH`)}`; }
+function downloadLeadsExcel(){ const rows=LEADS.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; return {Date:l.createdAt, Evenement:ev.nom||l.eventName, Ville:ev.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Niveau:l.level, Ecole:l.school, Notes:l.notes}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,'EDH_leads_QR.xlsx'); }
+function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!lead) return; const ev=findCalendarEventById(lead.eventId)||{}; window.location.href=`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Suite à notre échange - Groupe EDH')}&body=${encodeURIComponent(`Bonjour ${lead.firstName},\n\nMerci pour ton échange avec nous lors de l'événement ${ev.nom||''}.\n\nNous restons disponibles si tu souhaites recevoir plus d'informations sur ${lead.school||'nos écoles'}.\n\nBien cordialement,\nGroupe EDH`)}`; }
 function mailRecipient(event){ return event.mail_organisateur || event.mail_ecole || ''; }
 function mailContactName(event){ return event.organisateur || 'Madame, Monsieur'; }
 function emailTemplates(event, type){
@@ -3824,19 +4218,19 @@ function emailTemplates(event, type){
   return templates[type] || templates.prospection;
 }
 function openMailModal(eventId, type='prospection'){
-  MAIL_CONTEXT_ID = eventId; const ev=LYCEES.find(l=>l.id===eventId); if(!ev) return showToast('Événement introuvable','error');
+  MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
   document.getElementById('email-template-type').value=type;
   document.getElementById('email-to').value=mailRecipient(ev);
   document.getElementById('email-modal-title').textContent='Préparer un mail automatique';
   document.getElementById('email-modal-subtitle').textContent=`${ev.nom||''} · ${ev.ville||''}`;
   renderEmailPreview(); document.getElementById('modal-email').classList.add('open');
 }
-function renderEmailPreview(){ const ev=LYCEES.find(l=>l.id===MAIL_CONTEXT_ID)||{}; const type=document.getElementById('email-template-type')?.value||'prospection'; const tpl=emailTemplates(ev,type); document.getElementById('email-subject').value=tpl.subject; document.getElementById('email-preview').textContent=tpl.body; }
+function renderEmailPreview(){ const ev=findCalendarEventById(MAIL_CONTEXT_ID)||{}; const type=document.getElementById('email-template-type')?.value||'prospection'; const tpl=emailTemplates(ev,type); document.getElementById('email-subject').value=tpl.subject; document.getElementById('email-preview').textContent=tpl.body; }
 function copyEmailPreview(){ const text=document.getElementById('email-preview')?.textContent||''; navigator.clipboard?.writeText(text); showToast('Mail copié'); }
 function sendPreparedEmail(){ const to=document.getElementById('email-to')?.value||''; const subject=document.getElementById('email-subject')?.value||''; const body=document.getElementById('email-preview')?.textContent||''; if(!to) return showToast('Aucun email destinataire renseigné','error'); window.location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
 function openLeadHashIfNeeded(){
   const m = window.location.hash.match(/lead=([^&]+)/); if(!m) return false;
-  const eventId = decodeURIComponent(m[1]); const ev = LYCEES.find(l=>l.id===eventId); if(!ev) return;
+  const eventId = decodeURIComponent(m[1]); const ev = findCalendarEventById(eventId); if(!ev) return;
   showPage('leads'); setTimeout(()=>{ const sel=document.getElementById('lead-event-select'); if(sel){ sel.value=eventId; renderQrPreview(); prefillLeadEvent(); } },0); return true;
 }
 
@@ -3844,8 +4238,8 @@ function openLeadHashIfNeeded(){
 // DETAIL MODAL
 // ══════════════════════════════════════
 function openDetail(id){
-  const l=LYCEES.find(x=>x.id===id);
-  if(!l) return;
+  const l=findCalendarEventById(id);
+  if(!l) return showToast('Évènement introuvable', 'error');
   document.getElementById('detail-title').textContent=l.nom||'—';
   document.getElementById('detail-subtitle').textContent=`${l.ville||''} ${l.cp||''} · ${l.departement||''} · ${l.type?l.type.toLowerCase().includes('priv')?'Privé':'Public':''}`;
 
@@ -3891,16 +4285,21 @@ function openDetail(id){
     </div>`:''}
   `;
 
-  document.getElementById('detail-route-btn').onclick = ()=>openMapsRoute(l.id);
-  document.getElementById('detail-mail-btn').onclick = ()=>openMailModal(l.id,'prospection');
-  document.getElementById('detail-qr-btn').onclick = ()=>openLeadForEvent(l.id);
+  document.getElementById('detail-route-btn').onclick = ()=>openMapsRoute(canonicalEventId(l) || id);
+  document.getElementById('detail-mail-btn').onclick = ()=>openMailModal(canonicalEventId(l) || id,'prospection');
+  document.getElementById('detail-qr-btn').onclick = ()=>openLeadForEvent(canonicalEventId(l) || id);
   document.getElementById('detail-ics-btn').onclick = l.date
-    ? ()=>downloadSingleICS(l.id)
+    ? ()=>downloadSingleICS(canonicalEventId(l) || id)
     : ()=>showToast('Aucune date définie pour ce lycée','error');
 
   const editBtn = document.getElementById('detail-edit-btn');
   editBtn.style.display = isAdminMode() ? '' : 'none';
-  editBtn.onclick = ()=>{ closeModal('modal-detail'); openEdit(id); };
+  editBtn.onclick = ()=>{ closeModal('modal-detail'); openEdit(canonicalEventId(l) || id); };
+  const delEventBtn = document.getElementById('detail-delete-event-btn');
+  if(delEventBtn){
+    delEventBtn.style.display = isAdminMode() && l.date ? '' : 'none';
+    delEventBtn.onclick = ()=>{ closeModal('modal-detail'); deleteEvent(canonicalEventId(l) || id); };
+  }
   document.getElementById('modal-detail').classList.add('open');
 }
 
@@ -3909,9 +4308,11 @@ function openDetail(id){
 // ══════════════════════════════════════
 function openEdit(id){
   if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
-  S.editingId = id;
-  const l = LYCEES.find(x=>x.id===id);
-  document.getElementById('edit-modal-title').textContent = l ? 'Modifier un lycée' : 'Ajouter un lycée';
+  const eventCandidate = findCalendarEventById(id);
+  const baseLycee = eventBaseLycee(eventCandidate) || (LYCEES || []).find(x=>x.id===id) || null;
+  const l = baseLycee || eventCandidate;
+  S.editingId = baseLycee?.id || canonicalEventId(eventCandidate) || id;
+  document.getElementById('edit-modal-title').textContent = l ? 'Modifier un lycée / événement' : 'Ajouter un lycée';
   if(l){
     document.getElementById('f-nom').value=l.nom||'';
     document.getElementById('f-ville').value=l.ville||'';
@@ -3987,12 +4388,18 @@ async function saveForm(){
       LYCEES[idx]={...LYCEES[idx],...obj};
       savedLycee = LYCEES[idx];
       successLabel = 'Lycée mis à jour';
+    } else {
+      obj.id = S.editingId || nextId();
+      LYCEES.unshift(obj);
+      savedLycee = obj;
+      successLabel = 'Événement ajouté au listing';
     }
   } else {
     obj.id=nextId();
     LYCEES.unshift(obj);
     savedLycee = obj;
   }
+  markEventAsNotDeleted(savedLycee);
 
   if(!savedLycee) return showToast('Lycée introuvable', 'error');
 
@@ -4009,19 +4416,21 @@ async function saveForm(){
 
   // Synchronisation Supabase en arrière-plan. L'erreur reste visible au-dessus de tous les pop-up.
   (async () => {
-    const directSave = await saveLyceeDirectToSupabase(savedLycee);
-    if(directSave.ok){
+    const lyceeSave = await saveLyceeDirectToSupabase(savedLycee);
+    const eventSave = eventShouldSyncToSupabase(savedLycee) ? await saveEventDirectToSupabase(savedLycee) : { ok:true, skipped:true };
+    if(lyceeSave.ok && (eventSave.ok || eventSave.skipped)){
       const previousPushState2 = SUPABASE_IS_PUSHING;
       SUPABASE_IS_PUSHING = true;
       saveLocalData();
       SUPABASE_IS_PUSHING = previousPushState2;
-      showToast(successLabel + ' dans Supabase');
+      showToast(eventSave.skipped ? successLabel + ' dans Supabase' : successLabel + ' + événement enregistrés dans Supabase');
     } else {
-      console.error('Sauvegarde lycée Supabase refusée:', directSave.error || directSave.message || directSave);
-      showToast(successLabel + ' localement, mais pas dans Supabase : ' + (directSave.message || 'erreur inconnue'), 'error');
+      console.error('Sauvegarde Supabase refusée:', { lyceeSave, eventSave });
+      const msg = !lyceeSave.ok ? lyceeSave.message : eventSave.message;
+      showToast(successLabel + ' localement, mais pas complètement dans Supabase : ' + (msg || 'erreur inconnue'), 'error');
     }
   })().catch(err => {
-    console.error('Erreur sauvegarde lycée Supabase:', err);
+    console.error('Erreur sauvegarde Supabase:', err);
     showToast(successLabel + ' localement, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error');
   });
 }
@@ -4288,7 +4697,7 @@ async function sendLeadToWebhook(lead){
   } catch(e){ return {sent:false, reason:'fetch_error'}; }
 }
 async function submitPublicLead(){
-  const ev = LYCEES.find(l=>l.id===CURRENT_PUBLIC_LEAD_EVENT_ID) || {};
+  const ev = findCalendarEventById(CURRENT_PUBLIC_LEAD_EVENT_ID) || {};
   const firstName=(document.getElementById('public-lead-firstname')?.value||'').trim();
   const lastName=(document.getElementById('public-lead-lastname')?.value||'').trim();
   const email=(document.getElementById('public-lead-email')?.value||'').trim().toLowerCase();
@@ -4297,6 +4706,7 @@ async function submitPublicLead(){
   const dup = LEADS.findIndex(l => l.eventId===lead.eventId && (l.email||'').toLowerCase()===email);
   if(dup>-1) LEADS[dup] = {...LEADS[dup], ...lead, id:LEADS[dup].id}; else LEADS.unshift(lead);
   saveLocalData();
+  await saveEventExtrasToSupabase(ev);
   await sendLeadToWebhook(lead);
   document.getElementById('public-lead-success')?.classList.add('show');
   ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -4363,16 +4773,16 @@ function updateLoginHelp(){
   const box = document.getElementById('login-help-box');
   if(!box) return;
   if(role === 'collaborateur'){
-    box.innerHTML = '<strong>Compte admin par défaut</strong><br>Identifiant : <code>admin</code><br>Mot de passe : <code>edhadmin</code><br><br>Les autres comptes collaborateurs et étudiants sont créés depuis l’espace <strong>Utilisateurs</strong> puis synchronisés avec Supabase.';
+    box.innerHTML = '<strong>Connexion Supabase</strong><br>Utilise un compte présent dans la table <code>utilisateurs</code> avec un rôle collaborateur, admin campus ou admin global.<br><br>Pour le premier accès, exécute le fichier SQL fourni : il crée un compte admin de départ à modifier ensuite.';
   } else {
-    box.innerHTML = '<strong>Compte étudiant de démonstration</strong><br>Identifiant : <code>student</code><br>Mot de passe : <code>edhstudent</code><br><br>Ou connecte-toi avec l\'adresse mail et le mot de passe créés par un administrateur.';
+    box.innerHTML = '<strong>Connexion étudiant</strong><br>Utilise l’adresse mail et le mot de passe créés par un administrateur dans l’espace <strong>Utilisateurs</strong>.';
   }
 }
 
 function fillDemoLogin(){
-  const role = document.getElementById('login-role')?.value || 'collaborateur';
-  document.getElementById('login-username').value = role === 'collaborateur' ? 'admin' : 'student';
-  document.getElementById('login-password').value = role === 'collaborateur' ? 'edhadmin' : 'edhstudent';
+  document.getElementById('login-username').value = 'admin@edh.local';
+  document.getElementById('login-password').value = '';
+  showToast('Les comptes démo locaux sont désactivés. Utilise un compte Supabase.', 'error');
 }
 
 function openLoginModal(){
@@ -4416,16 +4826,6 @@ async function submitLogin(){
   try {
     let found = await findUserForLogin(user, pass);
 
-    if(!found && user === 'student' && pass === 'edhstudent'){
-      found = {id:'USR_DEMO_STUDENT', firstName:'Étudiant', lastName:'Démo', email:'student', password:'edhstudent', role:'student', school:'EFAP', phone:'0600000000'};
-      const idx = USERS.findIndex(u => u.id === found.id || (u.email||'').toLowerCase() === 'student');
-      if(idx > -1) USERS[idx] = found; else USERS.unshift(found);
-    }
-    if(!found && user === 'admin' && pass === 'edhadmin'){
-      found = {id:'USR_ADMIN', firstName:'Admin', lastName:'EDH', email:'admin', password:'edhadmin', role:'collaborateur', school:'', phone:''};
-      const idx = USERS.findIndex(u => u.id === found.id || (u.email||'').toLowerCase() === 'admin');
-      if(idx > -1) USERS[idx] = found; else USERS.unshift(found);
-    }
     if(!found) return showToast("Identifiants incorrects ou compte non synchronisé", 'error');
 
     S.currentUserId = found.id;
@@ -4860,7 +5260,7 @@ function openStudentModal(id=''){
   document.getElementById('modal-student').classList.add('open');
 }
 
-function saveStudent(){
+async function saveStudent(){
   if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
   const firstName = document.getElementById('sf-firstname').value.trim();
   const lastName = document.getElementById('sf-lastname').value.trim();
@@ -4881,11 +5281,13 @@ function saveStudent(){
     notes: document.getElementById('sf-notes').value.trim()
   };
   const idx = STUDENTS.findIndex(x=>x.id===obj.id);
-  if(idx > -1) STUDENTS[idx] = obj; else STUDENTS.unshift(obj);
+  if(idx > -1){ obj.supabase_id = STUDENTS[idx].supabase_id || null; STUDENTS[idx] = obj; } else STUDENTS.unshift(obj);
+  const supaResult = await saveStudentDirectToSupabase(obj);
   saveLocalData();
   closeModal('modal-student');
   renderStudentsPage();
-  showToast('Étudiant enregistré');
+  if(supaResult.ok || supaResult.skipped) showToast('Étudiant enregistré dans Supabase');
+  else showToast('Étudiant enregistré localement, mais pas dans Supabase : ' + (supaResult.message || 'erreur'), 'error');
 }
 
 function downloadStudentsCSV(){
@@ -4927,7 +5329,7 @@ function renderInscriptionPage(){
     return;
   }
   list.innerHTML = regs.length ? regs.map(r => {
-    const event = LYCEES.find(l => l.id === r.eventId) || {};
+    const event = findCalendarEventById(r.eventId) || {};
     return `<div class="event-card">
       <div class="event-top">
         <div>
@@ -4960,7 +5362,7 @@ function renderInscriptionPage(){
 function renderInscriptionBox(){
   const box = document.getElementById('student-registration-box');
   const school = document.getElementById('student-access-school')?.value || 'EFAP';
-  const event = LYCEES.find(l => l.id === S.selectedEventId);
+  const event = findCalendarEventById(S.selectedEventId);
   if(!event){
     box.innerHTML = 'Sélectionne d\'abord un événement.';
     return;
@@ -5013,9 +5415,9 @@ function fillAdminStudentFromLookup(value){
 }
 function openAdminRegistrationModal(eventId, school=''){
   if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
-  const event = allCalendarEvents().find(l => l.id === eventId || l.id_forum === eventId) || LYCEES.find(l => l.id === eventId);
+  const event = findCalendarEventById(eventId);
   if(!event) return showToast("Évènement introuvable", 'error');
-  S.selectedEventId = event.id || event.id_forum || eventId;
+  S.selectedEventId = canonicalEventId(event) || eventId;
   const visibleSchools = schoolsVisibleForCurrentUser();
   const eventSchools = getSchoolsArray(event.ecoles).filter(sc => visibleSchools.includes(sc));
   document.getElementById('registration-modal-title').textContent = "Inscrire un étudiant";
@@ -5042,12 +5444,12 @@ function openAdminRegistrationModal(eventId, school=''){
 function unregisterRegistration(regId, forced=false){
   const reg = REGISTRATIONS.find(r => r.id === regId);
   if(!reg) return showToast('Inscription introuvable', 'error');
-  const event = LYCEES.find(l => l.id === reg.eventId) || {nom: reg.eventName || 'cet évènement'};
+  const event = findCalendarEventById(reg.eventId) || {nom: reg.eventName || 'cet évènement'};
   const label = `${reg.firstName || ''} ${reg.lastName || ''}`.trim() || reg.email || 'cet étudiant';
   if(!confirm(`${forced ? 'Désinscrire de force' : 'Désinscrire'} ${label} de l’évènement « ${event.nom} » ?`)) return;
   REGISTRATIONS = REGISTRATIONS.filter(r => r.id !== regId);
-  deleteOptionalTable('inscriptions', 'app_id', regId);
   saveLocalData();
+  saveEventExtrasToSupabase(event).catch(err => showToast('Désinscription locale enregistrée, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error'));
   refreshCurrentPage();
   if(document.getElementById('page-inscriptions')?.classList.contains('active')) renderInscriptionPage();
   if(document.getElementById('page-registrations')?.classList.contains('active')) renderRegistrationsPage();
@@ -5063,8 +5465,8 @@ function unregisterCurrentStudent(regId){
 
 
 function saveRegistration(){
-  const event = allCalendarEvents().find(l => l.id === S.selectedEventId || l.id_forum === S.selectedEventId) || LYCEES.find(l => l.id === S.selectedEventId);
-  if(!event) return;
+  const event = findCalendarEventById(S.selectedEventId);
+  if(!event) return showToast('Évènement introuvable', 'error');
   const firstName = (document.getElementById('modal-reg-firstname')?.value || '').trim();
   const lastName = (document.getElementById('modal-reg-lastname')?.value || '').trim();
   const email = (document.getElementById('modal-reg-email')?.value || '').trim().toLowerCase();
@@ -5075,8 +5477,8 @@ function saveRegistration(){
 
   if(normalizeRoleValue(S.role) === 'student') S.studentProfile = { firstName, lastName, email, phone, school };
 
-  const existingRegIndex = REGISTRATIONS.findIndex(r => r.eventId === event.id && (r.email||'').toLowerCase() === email && (r.school||'') === school);
-  const regObj = { id: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].id : nextRegistrationId(), eventId: event.id, eventName: event.nom, school, firstName, lastName, email, phone, notes, forcedByAdmin: S.role === 'collaborateur', createdAt: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].createdAt : new Date().toISOString(), userId: normalizeRoleValue(S.role) === 'student' ? (S.currentUserId || null) : null };
+  const existingRegIndex = REGISTRATIONS.findIndex(r => r.eventId === (canonicalEventId(event) || event.id) && (r.email||'').toLowerCase() === email && (r.school||'') === school);
+  const regObj = { id: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].id : nextRegistrationId(), eventId: (canonicalEventId(event) || event.id), eventName: event.nom, school, firstName, lastName, email, phone, notes, forcedByAdmin: S.role === 'collaborateur', createdAt: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].createdAt : new Date().toISOString(), userId: normalizeRoleValue(S.role) === 'student' ? (S.currentUserId || null) : null };
   if(existingRegIndex > -1) REGISTRATIONS[existingRegIndex] = regObj;
   else REGISTRATIONS.unshift(regObj);
 
@@ -5090,6 +5492,7 @@ function saveRegistration(){
   }
 
   saveLocalData();
+  saveEventExtrasToSupabase(event).catch(err => showToast('Inscription locale enregistrée, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error'));
   closeModal('modal-registration');
   renderInscriptionPage();
   renderRegistrationsPage();
@@ -5099,7 +5502,7 @@ function saveRegistration(){
 }
 
 
-function clearContacts(id){
+async function clearContacts(id){
   if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
   const l = LYCEES.find(x=>x.id===id);
   if(!l) return;
@@ -5109,9 +5512,57 @@ function clearContacts(id){
   l.mail_ecole = null;
   l.tel_ecole = null;
   l.adresse = null;
+  const supaResult = await saveLyceeDirectToSupabase(l);
   saveLocalData();
   refreshCurrentPage();
-  showToast('Coordonnées supprimées');
+  if(supaResult.ok || supaResult.skipped) showToast('Coordonnées supprimées');
+  else showToast('Coordonnées supprimées localement, mais pas dans Supabase : ' + (supaResult.message || 'erreur'), 'error');
+}
+
+async function deleteEvent(id){
+  if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
+  const eventObj = findCalendarEventById(id);
+  if(!eventObj) return showToast('Évènement introuvable', 'error');
+  const label = `${eventObj.nom || 'cet événement'}${eventObj.date ? ' du ' + fmtDate(eventObj.date) : ''}`;
+  if(!confirm(`Supprimer uniquement l’événement « ${label} » ?
+
+Le lycée restera dans le listing, mais la date, le statut validé, le reporting et les inscriptions liées à cet événement seront retirés.`)) return;
+
+  const base = eventBaseLycee(eventObj);
+  const target = base || eventObj;
+  const remoteDelete = await deleteEventDirectFromSupabase(target);
+  addDeletedEventMarker(eventObj);
+  addDeletedEventMarker(target);
+
+  const ids = new Set([...eventIdCandidates(eventObj), ...eventIdCandidates(target)].filter(Boolean));
+  if(base){
+    base.statut = 'A contacter';
+    base.date = null;
+    base.heure = null;
+    base.formation = null;
+    base.participants = 'Aucun étudiant';
+    base.prospect_global = null;
+    base.term = null;
+    base.supabase_event_id = null;
+    await saveLyceeDirectToSupabase(base);
+  }
+  Object.keys(SCHOOL_FORUMS || {}).forEach(k => {
+    SCHOOL_FORUMS[k] = (SCHOOL_FORUMS[k] || []).filter(row => !eventIdCandidates(row).some(rowId => ids.has(rowId)) && eventNaturalKey(row) !== eventNaturalKey(eventObj));
+  });
+  REGISTRATIONS = REGISTRATIONS.filter(r => !ids.has(String(r.eventId)));
+  LEADS = LEADS.filter(l => !ids.has(String(l.eventId)));
+  Object.keys(REPORTING_DATA || {}).forEach(key => {
+    const eventId = String(key).split('__').slice(0, -1).join('__');
+    if(ids.has(eventId)) delete REPORTING_DATA[key];
+  });
+
+  const previousPushState = SUPABASE_IS_PUSHING;
+  SUPABASE_IS_PUSHING = true;
+  saveLocalData();
+  SUPABASE_IS_PUSHING = previousPushState;
+  refreshCurrentPage();
+  if(remoteDelete.ok || remoteDelete.skipped) showToast('Événement supprimé du calendrier');
+  else showToast('Événement supprimé en local, mais pas dans Supabase : ' + (remoteDelete.message || 'erreur'), 'error');
 }
 
 async function deleteLycee(id){
@@ -5120,6 +5571,10 @@ async function deleteLycee(id){
   if(!l) return;
   if(!confirm(`Supprimer définitivement le lycée « ${l.nom} » ?`)) return;
   const remoteDelete = await deleteLyceeDirectFromSupabase(l);
+  addDeletedEventMarker(l);
+  Object.keys(SCHOOL_FORUMS || {}).forEach(k => {
+    SCHOOL_FORUMS[k] = (SCHOOL_FORUMS[k] || []).filter(row => !eventIdCandidates(row).includes(String(id)) && eventNaturalKey(row) !== eventNaturalKey(l));
+  });
   LYCEES = LYCEES.filter(x=>x.id!==id);
   REGISTRATIONS = REGISTRATIONS.filter(r=>r.eventId!==id);
   const previousPushState = SUPABASE_IS_PUSHING;
@@ -5132,13 +5587,13 @@ async function deleteLycee(id){
   else showToast('Lycée supprimé en local, mais pas dans Supabase : ' + (remoteDelete.message || 'erreur'), 'error');
 }
 
-function deleteStudent(id){
+async function deleteStudent(id){
   if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
   const st = STUDENTS.find(x=>x.id===id);
   if(!st) return showToast('Étudiant introuvable', 'error');
   if(!confirm('Supprimer définitivement le profil de ' + (st.firstName || '') + ' ' + (st.lastName || '') + ' de la base “Nos étudiants” ?')) return;
   STUDENTS = STUDENTS.filter(x=>x.id!==id);
-  deleteFirstOptionalTable(['etudiants','students','nos_etudiants','nos_etudiants_edh'], 'app_id', id);
+  const supaDelete = await deleteStudentDirectFromSupabase(st);
   saveLocalData();
   closeModal('modal-student');
   renderStudentsPage();
@@ -5147,7 +5602,8 @@ function deleteStudent(id){
     renderSchoolTable();
     renderSchoolReporting();
   }
-  showToast('Profil étudiant supprimé définitivement');
+  if(supaDelete.ok || supaDelete.skipped) showToast('Profil étudiant supprimé définitivement');
+  else showToast('Profil étudiant supprimé localement, mais pas dans Supabase : ' + (supaDelete.message || 'erreur'), 'error');
 }
 
 function deleteStudentFromModal(){
@@ -5160,7 +5616,7 @@ function populateRegistrationEventFilter(){
   if(!sel) return;
   const current = sel.value;
   const events = allCalendarEvents().sort((a,b)=>new Date(a.date)-new Date(b.date));
-  sel.innerHTML = '<option value="">Tous les évènements</option>' + events.map(e=>`<option value="${e.id}">${e.nom} · ${fmtDate(e.date)}</option>`).join('');
+  sel.innerHTML = '<option value="">Tous les évènements</option>' + events.map(e=>`<option value="${canonicalEventId(e)}">${e.nom} · ${fmtDate(e.date)}</option>`).join('');
   sel.value = current;
 }
 
@@ -5169,7 +5625,7 @@ function renderRegistrationsPage(){
   const q = (document.getElementById('registration-search')?.value || '').toLowerCase().trim();
   const school = document.getElementById('registration-school-filter')?.value || '';
   const eventId = document.getElementById('registration-event-filter')?.value || '';
-  const events = allCalendarEvents().filter(l=>(!eventId || l.id===eventId || l.id_forum===eventId) && (!school || schoolMatches(l.ecoles, school)))
+  const events = allCalendarEvents().filter(l=>(!eventId || canonicalEventId(l)===eventId || l.id===eventId || l.id_forum===eventId) && (!school || schoolMatches(l.ecoles, school)))
     .filter(l=> !q || (l.nom||'').toLowerCase().includes(q) || (l.ville||'').toLowerCase().includes(q))
     .sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
   const rows = [];
@@ -5372,20 +5828,23 @@ async function init(){
   updateLoginHelp();
   if(!openedFromQr) openLoginModal();
 
-  // Synchronisation en arrière-plan : elle ne bloque plus l'affichage ni la connexion.
-  setTimeout(async () => {
-    try {
-      const supabaseLoaded = await loadFromSupabase();
-      if(!supabaseLoaded) restoreEmbeddedLyceesIfEmpty();
-      populateStaticSelects();
-      populateDepts();
-      updateSchoolFilterCounts();
-      refreshCurrentPage();
-    } catch(err){
-      console.error('Erreur chargement Supabase initial en arrière-plan:', err);
-      showToast('Connexion Supabase impossible : données locales utilisées', 'error');
-    }
-  }, 80);
+  // Synchronisation opérationnelle multi-utilisateurs : Supabase est chargé puis écouté en temps réel.
+  if(supabaseClient){
+    SUPABASE_SYNC_READY = true;
+    setupSupabaseRealtime();
+    setTimeout(async () => {
+      try {
+        const supabaseLoaded = await refreshFromSupabaseAndRender(false, 'initial');
+        if(!supabaseLoaded) restoreEmbeddedLyceesIfEmpty();
+      } catch(err){
+        console.error('Erreur chargement Supabase initial en arrière-plan:', err);
+        setSupabaseStatus('error', 'Supabase : erreur de chargement');
+        showToast('Connexion Supabase impossible : données locales utilisées', 'error');
+      }
+    }, 80);
+  } else {
+    setSupabaseStatus('error', 'Supabase : SDK ou clé absent');
+  }
 }
 </script>
 
