@@ -1297,6 +1297,7 @@ td strong { color: var(--text); font-weight: 600; }
         </div>
         <div class="small-actions">
           <button class="btn btn-outline" onclick="reloadUsersFromSupabaseAndRender()">Recharger Supabase</button>
+          <button class="btn btn-outline" onclick="diagnoseUsersSupabaseAccess()">Tester accès utilisateurs</button>
           <button class="btn btn-outline" onclick="downloadUsersExcel()">Exporter Excel</button>
           <button class="btn btn-outline" onclick="openImportUsersModal()">Importer Excel</button>
           <button class="btn btn-primary" onclick="openUserModal()">Ajouter un utilisateur</button>
@@ -1930,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V14-2026-05-07-espace-collaborateur";
+const APP_PATCH_VERSION = "V15-2026-05-07-fix-utilisateurs-supabase";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2067,7 +2068,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V14-2026-05-07-espace-collaborateur';
+window.EDH_APP_VERSION = 'V15-2026-05-07-fix-utilisateurs-supabase';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2263,22 +2264,43 @@ function mapAppUserToSupabase(u){
     locked: Boolean(u.locked)
   };
 }
-async function refreshUsersFromSupabase(){
-  if(!supabaseClient) return false;
-  const { data, error } = await supabaseClient.from('utilisateurs').select('*');
-  if(error){ console.warn('Utilisateurs Supabase non chargés', error); return false; }
-  if(Array.isArray(data)){
-    const remoteUsers = data
-      .map(mapSupabaseUserToApp)
-      .filter(u => u.email || u.firstName || u.lastName || u.supabase_id)
-      .sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||'') || (a.email||'').localeCompare(b.email||''));
-    // La page Utilisateurs doit refléter toute la table Supabase, sans filtre école/campus.
-    USERS = remoteUsers;
-    SUPABASE_USERS_LAST_LOAD_AT = Date.now();
-    safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
-    return true;
+async function fetchUtilisateursRows(){
+  if(!supabaseClient) throw new Error('Client Supabase non initialisé : vérifie le SDK, l’URL projet et la clé anon.');
+  const response = await supabaseClient.from('utilisateurs').select('*');
+  if(response.error){
+    console.error('Erreur SELECT public.utilisateurs:', response.error);
+    throw response.error;
   }
-  return false;
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+async function refreshUsersFromSupabase(){
+  const rows = await fetchUtilisateursRows();
+  const remoteUsers = rows
+    .map(mapSupabaseUserToApp)
+    .filter(u => u.email || u.firstName || u.lastName || u.supabase_id)
+    .sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||'') || (a.email||'').localeCompare(b.email||''));
+  // La page Utilisateurs doit refléter toute la table Supabase, sans filtre école/campus.
+  USERS = remoteUsers;
+  SUPABASE_USERS_LAST_LOAD_AT = Date.now();
+  safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+  return true;
+}
+
+async function diagnoseUsersSupabaseAccess(){
+  if(!isAdminMode()) return showToast('Accès réservé aux collaborateurs', 'error');
+  if(!supabaseClient) return showToast('Client Supabase non initialisé : SDK, URL ou clé anon absent.', 'error');
+  setSupabaseStatus('syncing', 'Supabase : test utilisateurs…');
+  try {
+    const rows = await fetchUtilisateursRows();
+    setSupabaseStatus('ok', `Supabase : utilisateurs OK · ${rows.length} ligne(s)`);
+    showToast(`Accès utilisateurs OK : ${rows.length} ligne(s) visibles depuis Supabase`);
+  } catch(err){
+    const msg = getSupabaseErrorMessage(err);
+    setSupabaseStatus('error', 'Supabase : accès utilisateurs refusé');
+    showToast('Accès utilisateurs refusé : ' + msg, 'error');
+    alert('La table utilisateurs ne peut pas être lue par l’application.\n\nErreur Supabase :\n' + msg + '\n\nÀ corriger : exécute le fichier SQL V15 fourni dans Supabase SQL Editor.');
+  }
 }
 async function saveUserDirectToSupabase(user){
   if(!supabaseClient) return { ok:false, skipped:true, message:'Client Supabase non initialisé' };
@@ -4969,7 +4991,7 @@ async function reloadUsersFromSupabaseAndRender(){
       showToast(`${USERS.length} utilisateur(s) chargé(s) depuis Supabase`);
     } else {
       setSupabaseStatus('error', 'Supabase : utilisateurs non chargés');
-      showToast('Impossible de charger la table utilisateurs depuis Supabase', 'error');
+      showToast('Table utilisateurs non chargée : aucune donnée retournée par Supabase', 'error');
     }
   } catch(err){
     console.error('Erreur rechargement utilisateurs:', err);
