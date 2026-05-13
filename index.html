@@ -2004,6 +2004,8 @@ let SUPABASE_SYNC_READY = false;
 let SUPABASE_SYNC_TIMER = null;
 let SUPABASE_IS_PUSHING = false;
 let SUPABASE_LAST_LOAD_AT = 0;
+const USER_SELECT_COLUMNS = 'id,app_id,first_name,last_name,email,password,role,school,phone,locked,regions_autorisees,schools_autorisees,region,campus,updated_at';
+const USER_LIGHT_SELECT_COLUMNS = 'id,app_id,first_name,last_name,email,role,school,phone,locked,regions_autorisees,schools_autorisees,region,campus,updated_at';
 let SUPABASE_IS_LOADING = false;
 let SUPABASE_REALTIME_CHANNEL = null;
 let SUPABASE_REMOTE_REFRESH_TIMER = null;
@@ -2068,7 +2070,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V15-2026-05-07-fix-utilisateurs-supabase';
+window.EDH_APP_VERSION = 'V18-2026-05-13-utilisateurs-timeout-hotfix';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2267,12 +2269,30 @@ function mapAppUserToSupabase(u){
 }
 async function fetchUtilisateursRows(){
   if(!supabaseClient) throw new Error('Client Supabase non initialisé : vérifie le SDK, l’URL projet et la clé anon.');
-  const response = await supabaseClient.from('utilisateurs').select('*');
-  if(response.error){
-    console.error('Erreur SELECT public.utilisateurs:', response.error);
-    throw response.error;
+
+  // V18 : la table utilisateurs peut dépasser le statement_timeout si on fait un select('*') global
+  // ou si d'anciennes policies RLS ralentissent le SELECT. On lit donc uniquement les colonnes utiles,
+  // par petits lots. Cela évite aussi de bloquer tout le chargement de l'application.
+  const pageSize = 100;
+  const maxRows = 3000;
+  const rows = [];
+  for(let start = 0; start < maxRows; start += pageSize){
+    const end = start + pageSize - 1;
+    const response = await supabaseClient
+      .from('utilisateurs')
+      .select(USER_SELECT_COLUMNS)
+      .range(start, end);
+
+    if(response.error){
+      console.error('Erreur SELECT public.utilisateurs:', response.error);
+      throw response.error;
+    }
+
+    const chunk = Array.isArray(response.data) ? response.data : [];
+    rows.push(...chunk);
+    if(chunk.length < pageSize) break;
   }
-  return Array.isArray(response.data) ? response.data : [];
+  return rows;
 }
 
 async function refreshUsersFromSupabase(){
@@ -2300,7 +2320,7 @@ async function diagnoseUsersSupabaseAccess(){
     const msg = getSupabaseErrorMessage(err);
     setSupabaseStatus('error', 'Supabase : accès utilisateurs refusé');
     showToast('Accès utilisateurs refusé : ' + msg, 'error');
-    alert('La table utilisateurs ne peut pas être lue par l’application.\n\nErreur Supabase :\n' + msg + '\n\nÀ corriger : exécute le fichier SQL V15 fourni dans Supabase SQL Editor.');
+    alert('La table utilisateurs ne peut pas être lue par l’application.\n\nErreur Supabase :\n' + msg + '\n\nÀ corriger : exécute le SQL V19 utilisateurs-timeout dans Supabase SQL Editor, puis recharge avec ?resetCache=1.');
   }
 }
 function userSupabaseFailureAdvice(err){
@@ -2401,7 +2421,12 @@ async function findUserForLogin(username, password){
   // Version opérationnelle : Supabase est prioritaire pour éviter les comptes locaux divergents.
   if(supabaseClient){
     try {
-      const { data, error } = await supabaseClient.from('utilisateurs').select('*').eq('email', login).eq('password', pass).limit(1);
+      const { data, error } = await supabaseClient
+        .from('utilisateurs')
+        .select(USER_SELECT_COLUMNS)
+        .eq('email', login)
+        .eq('password', pass)
+        .limit(1);
       if(!error && Array.isArray(data) && data.length){
         const remoteUser = mapSupabaseUserToApp(data[0]);
         const idx = USERS.findIndex(u => (u.email || '').toLowerCase() === remoteUser.email || u.id === remoteUser.id);
@@ -5087,7 +5112,7 @@ async function reloadUsersFromSupabaseAndRender(){
   } catch(err){
     console.error('Erreur rechargement utilisateurs:', err);
     setSupabaseStatus('error', 'Supabase : erreur utilisateurs');
-    showToast('Erreur utilisateurs Supabase : ' + getSupabaseErrorMessage(err), 'error');
+    showToast('Erreur utilisateurs Supabase : ' + userSupabaseFailureAdvice(err), 'error');
   } finally {
     SUPABASE_USERS_PAGE_REFRESHING = false;
   }
