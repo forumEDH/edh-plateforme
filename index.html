@@ -2270,29 +2270,15 @@ function mapAppUserToSupabase(u){
 async function fetchUtilisateursRows(){
   if(!supabaseClient) throw new Error('Client Supabase non initialisé : vérifie le SDK, l’URL projet et la clé anon.');
 
-  // V18 : la table utilisateurs peut dépasser le statement_timeout si on fait un select('*') global
-  // ou si d'anciennes policies RLS ralentissent le SELECT. On lit donc uniquement les colonnes utiles,
-  // par petits lots. Cela évite aussi de bloquer tout le chargement de l'application.
-  const pageSize = 100;
-  const maxRows = 3000;
-  const rows = [];
-  for(let start = 0; start < maxRows; start += pageSize){
-    const end = start + pageSize - 1;
-    const response = await supabaseClient
-      .from('utilisateurs')
-      .select(USER_SELECT_COLUMNS)
-      .range(start, end);
-
-    if(response.error){
-      console.error('Erreur SELECT public.utilisateurs:', response.error);
-      throw response.error;
-    }
-
-    const chunk = Array.isArray(response.data) ? response.data : [];
-    rows.push(...chunk);
-    if(chunk.length < pageSize) break;
+  // V19 : lecture utilisateurs via RPC SECURITY DEFINER.
+  // Objectif : contourner les timeouts causés par d’anciennes policies RLS ou un SELECT REST trop lent.
+  // À installer côté Supabase avec le fichier SQL V20.
+  const response = await supabaseClient.rpc('edh_get_utilisateurs');
+  if(response.error){
+    console.error('Erreur RPC edh_get_utilisateurs:', response.error);
+    throw response.error;
   }
-  return rows;
+  return Array.isArray(response.data) ? response.data : [];
 }
 
 async function refreshUsersFromSupabase(){
@@ -2350,66 +2336,32 @@ async function fetchUserRowByEmail(email){
 
 async function saveUserDirectToSupabase(user){
   if(!supabaseClient) return { ok:false, skipped:false, message:'Client Supabase non initialisé : impossible de créer un utilisateur partagé.' };
-  let payload = mapAppUserToSupabase(user);
+  const payload = mapAppUserToSupabase(user);
   if(!payload.email || !payload.password) return { ok:false, skipped:false, message:'Email et mot de passe requis' };
-  const missingColumns = [];
-
-  async function runWrite(currentPayload){
-    // 1) Priorité à l'ID Supabase réel quand il est connu.
-    if(user.supabase_id){
-      return await supabaseClient.from('utilisateurs').update(currentPayload).eq('id', user.supabase_id);
-    }
-
-    // 2) Si l'app_id existe déjà, on met à jour via app_id.
-    if(currentPayload.app_id){
-      const byApp = await supabaseClient.from('utilisateurs').update(currentPayload).eq('app_id', currentPayload.app_id).select('id').limit(1);
-      if(!byApp.error && Array.isArray(byApp.data) && byApp.data.length){
-        user.supabase_id = byApp.data[0].id || null;
-        return { error:null, data:byApp.data[0] };
-      }
-      if(byApp.error && !String(getSupabaseErrorMessage(byApp.error)).toLowerCase().includes('multiple')) return byApp;
-    }
-
-    // 3) Si l'email existe déjà, on met à jour via email.
-    const byEmail = await supabaseClient.from('utilisateurs').update(currentPayload).eq('email', currentPayload.email).select('id').limit(1);
-    if(!byEmail.error && Array.isArray(byEmail.data) && byEmail.data.length){
-      user.supabase_id = byEmail.data[0].id || null;
-      return { error:null, data:byEmail.data[0] };
-    }
-    if(byEmail.error) return byEmail;
-
-    // 4) Sinon, on crée une nouvelle ligne. Pas de sauvegarde locale si cette étape échoue.
-    const inserted = await supabaseClient.from('utilisateurs').insert([currentPayload]).select('id').single();
-    if(!inserted.error){
-      user.supabase_id = inserted.data?.id || null;
-    }
-    return inserted;
-  }
-
   try {
-    for(let attempt=0; attempt<10; attempt++){
-      const response = await runWrite(payload);
-      if(!response.error){
-        if(!user.supabase_id && response.data?.id) user.supabase_id = response.data.id;
-        if(missingColumns.length){
-          showToast('Utilisateur sauvegardé. Colonnes Supabase ignorées car absentes : ' + missingColumns.join(', '), 'success');
-        }
-        return { ok:true, id:user.supabase_id, missingColumns };
-      }
-
-      const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
-      if(cleaned){
-        const missing = getMissingSupabaseColumn(response.error);
-        if(missing) missingColumns.push(missing);
-        payload = cleaned;
-        continue;
-      }
-
-      throw response.error;
-    }
-    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet utilisateur' };
+    // V19 : écriture utilisateurs via RPC SECURITY DEFINER.
+    // Cela évite les échecs liés aux policies RLS côté REST pendant la phase bêta interne.
+    const { data, error } = await supabaseClient.rpc('edh_upsert_utilisateur', {
+      p_app_id: payload.app_id,
+      p_first_name: payload.first_name,
+      p_last_name: payload.last_name,
+      p_email: payload.email,
+      p_password: payload.password,
+      p_role: payload.role,
+      p_school: payload.school,
+      p_phone: payload.phone,
+      p_locked: payload.locked,
+      p_regions_autorisees: payload.regions_autorisees || [],
+      p_schools_autorisees: payload.schools_autorisees || [],
+      p_region: payload.region,
+      p_campus: payload.campus
+    });
+    if(error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if(row?.id) user.supabase_id = row.id;
+    return { ok:true, id:user.supabase_id };
   } catch(err){
-    console.error('Erreur sauvegarde utilisateur Supabase:', err);
+    console.error('Erreur sauvegarde utilisateur Supabase RPC:', err);
     return { ok:false, error:err, message:userSupabaseFailureAdvice(err) };
   }
 }
@@ -2418,24 +2370,27 @@ async function findUserForLogin(username, password){
   const pass = (password || '').toString().trim();
   if(!login || !pass) return null;
 
-  // Version opérationnelle : Supabase est prioritaire pour éviter les comptes locaux divergents.
+  // V19 : connexion via RPC. Cela évite le SELECT direct sur public.utilisateurs,
+  // qui peut partir en timeout 57014 si les policies RLS sont cassées.
   if(supabaseClient){
     try {
-      const { data, error } = await supabaseClient
-        .from('utilisateurs')
-        .select(USER_SELECT_COLUMNS)
-        .eq('email', login)
-        .eq('password', pass)
-        .limit(1);
-      if(!error && Array.isArray(data) && data.length){
-        const remoteUser = mapSupabaseUserToApp(data[0]);
+      const { data, error } = await supabaseClient.rpc('edh_login_utilisateur', {
+        p_email: login,
+        p_password: pass
+      });
+      if(error) throw error;
+      const rows = Array.isArray(data) ? data : [];
+      if(rows.length){
+        const remoteUser = mapSupabaseUserToApp(rows[0]);
         const idx = USERS.findIndex(u => (u.email || '').toLowerCase() === remoteUser.email || u.id === remoteUser.id);
         if(idx > -1) USERS[idx] = remoteUser; else USERS.unshift(remoteUser);
         safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
         return remoteUser;
       }
-      if(error) console.warn('Connexion Supabase utilisateurs ignorée', error);
-    } catch(err){ console.warn('Connexion Supabase utilisateurs impossible', err); }
+    } catch(err){
+      console.warn('Connexion RPC utilisateurs impossible', err);
+      showToast('Connexion utilisateurs Supabase impossible : ' + getSupabaseErrorMessage(err), 'error');
+    }
   }
 
   if(!supabaseClient || ALLOW_DEMO_ACCOUNTS){
@@ -5268,6 +5223,17 @@ async function deleteUser(id){
   try {
     setSupabaseStatus('syncing', 'Supabase : suppression utilisateur…');
     if(!supabaseClient) throw new Error('Client Supabase non initialisé');
+    const rpcDelete = await supabaseClient.rpc('edh_delete_utilisateur', { p_email: u.email || null, p_app_id: u.id || null });
+    if(rpcDelete.error) throw rpcDelete.error;
+    const deletedByRpc = rpcDelete.data === true || rpcDelete.data === 'true' || rpcDelete.data === 1;
+    if(deletedByRpc){
+      USERS = USERS.filter(x=>x.id!==id);
+      safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+      setSupabaseStatus('ok', 'Supabase : utilisateur supprimé');
+      renderUsersPage();
+      showToast('Compte supprimé de Supabase');
+      return;
+    }
     let deleted = false;
     if(u.supabase_id){
       const { error } = await supabaseClient.from('utilisateurs').delete().eq('id', u.supabase_id);
