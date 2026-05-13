@@ -1931,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V15-2026-05-07-fix-utilisateurs-supabase";
+const APP_PATCH_VERSION = "V16-2026-05-07-users-supabase-required";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2261,7 +2261,8 @@ function mapAppUserToSupabase(u){
     regions_autorisees: splitAccessValues(u.regions_autorisees || u.campus || u.region),
     schools_autorisees: userSchoolAccess(u),
     phone: normalizeSupabaseText(u.phone),
-    locked: Boolean(u.locked)
+    locked: Boolean(u.locked),
+    updated_at: new Date().toISOString()
   };
 }
 async function fetchUtilisateursRows(){
@@ -2302,30 +2303,74 @@ async function diagnoseUsersSupabaseAccess(){
     alert('La table utilisateurs ne peut pas être lue par l’application.\n\nErreur Supabase :\n' + msg + '\n\nÀ corriger : exécute le fichier SQL V15 fourni dans Supabase SQL Editor.');
   }
 }
+function userSupabaseFailureAdvice(err){
+  const msg = getSupabaseErrorMessage(err || {});
+  const low = msg.toLowerCase();
+  if(low.includes('row-level security') || low.includes('permission denied') || low.includes('42501')){
+    return msg + ' — Cause probable : les droits RLS de la table utilisateurs bloquent INSERT/UPDATE avec la clé anon. Exécute le correctif SQL V17 bêta interne.';
+  }
+  if(low.includes('duplicate key') || low.includes('23505')){
+    return msg + ' — Cause probable : un compte existe déjà avec cet email. Recharge la table Utilisateurs puis modifie le compte existant.';
+  }
+  if(low.includes('schema cache') || low.includes('pgrst204') || low.includes('could not find')){
+    return msg + ' — Cause probable : le cache de schéma Supabase n’est pas à jour ou une colonne manque. Lance notify pgrst, reload schema ou recharge le projet Supabase.';
+  }
+  if(low.includes('timeout') || low.includes('econnrefused') || low.includes('connection terminated')){
+    return msg + ' — Cause probable : la base Supabase ne répond pas correctement. Ferme les anciens onglets, teste select now(), puis redémarre la base si besoin.';
+  }
+  return msg;
+}
+
+async function fetchUserRowByEmail(email){
+  if(!supabaseClient || !email) return null;
+  const { data, error } = await supabaseClient.from('utilisateurs').select('*').eq('email', String(email).toLowerCase()).limit(1);
+  if(error) throw error;
+  return Array.isArray(data) && data.length ? data[0] : null;
+}
+
 async function saveUserDirectToSupabase(user){
-  if(!supabaseClient) return { ok:false, skipped:true, message:'Client Supabase non initialisé' };
+  if(!supabaseClient) return { ok:false, skipped:false, message:'Client Supabase non initialisé : impossible de créer un utilisateur partagé.' };
   let payload = mapAppUserToSupabase(user);
-  if(!payload.email || !payload.password) return { ok:false, skipped:true, message:'Email et mot de passe requis' };
-  try {
-    let existingId = user.supabase_id || null;
-    if(!existingId){
-      const { data: existing, error: findError } = await supabaseClient.from('utilisateurs').select('id').eq('email', payload.email).limit(1);
-      if(findError) throw findError;
-      existingId = existing && existing.length ? existing[0].id : null;
+  if(!payload.email || !payload.password) return { ok:false, skipped:false, message:'Email et mot de passe requis' };
+  const missingColumns = [];
+
+  async function runWrite(currentPayload){
+    // 1) Priorité à l'ID Supabase réel quand il est connu.
+    if(user.supabase_id){
+      return await supabaseClient.from('utilisateurs').update(currentPayload).eq('id', user.supabase_id);
     }
 
-    // Certaines bases Supabase n'ont pas encore toutes les colonnes ajoutées côté HTML
-    // ex : campus. On tente la sauvegarde, puis on retire automatiquement la colonne
-    // absente signalée par PostgREST (PGRST204) et on réessaie.
-    const missingColumns = [];
-    for(let attempt=0; attempt<8; attempt++){
-      const response = existingId
-        ? await supabaseClient.from('utilisateurs').update(payload).eq('id', existingId)
-        : await supabaseClient.from('utilisateurs').insert([payload]).select('id').single();
+    // 2) Si l'app_id existe déjà, on met à jour via app_id.
+    if(currentPayload.app_id){
+      const byApp = await supabaseClient.from('utilisateurs').update(currentPayload).eq('app_id', currentPayload.app_id).select('id').limit(1);
+      if(!byApp.error && Array.isArray(byApp.data) && byApp.data.length){
+        user.supabase_id = byApp.data[0].id || null;
+        return { error:null, data:byApp.data[0] };
+      }
+      if(byApp.error && !String(getSupabaseErrorMessage(byApp.error)).toLowerCase().includes('multiple')) return byApp;
+    }
 
+    // 3) Si l'email existe déjà, on met à jour via email.
+    const byEmail = await supabaseClient.from('utilisateurs').update(currentPayload).eq('email', currentPayload.email).select('id').limit(1);
+    if(!byEmail.error && Array.isArray(byEmail.data) && byEmail.data.length){
+      user.supabase_id = byEmail.data[0].id || null;
+      return { error:null, data:byEmail.data[0] };
+    }
+    if(byEmail.error) return byEmail;
+
+    // 4) Sinon, on crée une nouvelle ligne. Pas de sauvegarde locale si cette étape échoue.
+    const inserted = await supabaseClient.from('utilisateurs').insert([currentPayload]).select('id').single();
+    if(!inserted.error){
+      user.supabase_id = inserted.data?.id || null;
+    }
+    return inserted;
+  }
+
+  try {
+    for(let attempt=0; attempt<10; attempt++){
+      const response = await runWrite(payload);
       if(!response.error){
-        if(!existingId) user.supabase_id = response.data?.id || null;
-        else user.supabase_id = existingId;
+        if(!user.supabase_id && response.data?.id) user.supabase_id = response.data.id;
         if(missingColumns.length){
           showToast('Utilisateur sauvegardé. Colonnes Supabase ignorées car absentes : ' + missingColumns.join(', '), 'success');
         }
@@ -2339,12 +2384,13 @@ async function saveUserDirectToSupabase(user){
         payload = cleaned;
         continue;
       }
+
       throw response.error;
     }
     return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet utilisateur' };
   } catch(err){
     console.error('Erreur sauvegarde utilisateur Supabase:', err);
-    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+    return { ok:false, error:err, message:userSupabaseFailureAdvice(err) };
   }
 }
 async function findUserForLogin(username, password){
@@ -2949,33 +2995,49 @@ async function deleteEventDirectFromSupabase(localEvent){
   }
 }
 async function loadFromSupabase(options = {}){
-  if(!supabaseClient) { setSupabaseStatus('error', 'Supabase : client non initialisé'); return false; }
+  if(!supabaseClient) {
+    setSupabaseStatus('error', 'Supabase : client non initialisé');
+    showToast('Supabase non initialisé : vérifie le SDK, l’URL projet et la clé anon.', 'error');
+    return false;
+  }
   if(SUPABASE_IS_LOADING) return true;
   SUPABASE_IS_LOADING = true;
   const silent = Boolean(options.silent);
-  try {
-    setSupabaseStatus('syncing', 'Supabase : synchronisation…');
-    const { data: remoteLycees, error: lyceeError } = await supabaseClient.from('lycees').select('*').order('nom', { ascending: true });
-    if(lyceeError) throw lyceeError;
+  const errors = [];
+  const loadedTables = [];
 
-    if(Array.isArray(remoteLycees)){
-      LYCEES = remoteLycees.map(mapSupabaseLyceeToApp);
+  function recordTableError(table, err){
+    const msg = getSupabaseErrorMessage(err);
+    console.error(`Erreur chargement Supabase table ${table}:`, err);
+    errors.push(`${table} → ${msg}`);
+  }
+
+  try {
+    setSupabaseStatus('syncing', 'Supabase : test des tables…');
+
+    // 1) LYCÉES — si cette table bloque, on n'arrête pas tout : on garde les autres diagnostics.
+    const lyceeResponse = await supabaseClient.from('lycees').select('*').order('nom', { ascending: true });
+    if(lyceeResponse.error){
+      recordTableError('lycees', lyceeResponse.error);
+    } else {
+      LYCEES = Array.isArray(lyceeResponse.data) ? lyceeResponse.data.map(mapSupabaseLyceeToApp) : [];
       SCHOOL_FORUMS = {};
       DELETED_EVENT_IDS = [];
+      loadedTables.push(`lycees:${LYCEES.length}`);
     }
 
-    // Supabase devient la source de vérité pour les données multi-utilisateurs liées aux événements.
-    REGISTRATIONS = [];
-    REPORTING_DATA = {};
-    LEADS = [];
-
-    const { data: remoteEvents, error: eventError } = await supabaseClient
+    // 2) ÉVÉNEMENTS — Supabase est la source unique des événements. On ne vide les données locales que si la table répond.
+    const eventResponse = await supabaseClient
       .from('evenements')
       .select('*')
       .eq('saison', S.season || DEFAULT_SEASON);
-    if(eventError) throw eventError;
-
-    if(Array.isArray(remoteEvents)){
+    if(eventResponse.error){
+      recordTableError('evenements', eventResponse.error);
+    } else {
+      REGISTRATIONS = [];
+      REPORTING_DATA = {};
+      LEADS = [];
+      const remoteEvents = Array.isArray(eventResponse.data) ? eventResponse.data : [];
       const byKey = new Map(LYCEES.map(l => [appLyceeKey(l), l]));
       remoteEvents.forEach(row => {
         const seasonRow = mapSupabaseEventToSeasonRow(row);
@@ -2985,7 +3047,6 @@ async function loadFromSupabase(options = {}){
           Object.assign(base, seasonRow, { id: base.id, supabase_event_id: row.id || null });
           applyEventExtrasFromSupabaseRow(row, base);
         } else {
-          // Événement orphelin : on le rend quand même ouvrable dans le calendrier au lieu d'afficher "événement introuvable".
           const orphan = {
             id: 'EVT_' + String(row.id || Date.now()),
             supabase_event_id: row.id || null,
@@ -3007,25 +3068,52 @@ async function loadFromSupabase(options = {}){
           applyEventExtrasFromSupabaseRow(row, orphan);
         }
       });
+      loadedTables.push(`evenements:${remoteEvents.length}`);
     }
 
-    const { data: remoteStudents, error: studentError } = await supabaseClient.from('etudiants').select('*');
-    if(studentError) console.warn('Étudiants Supabase non chargés', studentError);
-    else if(Array.isArray(remoteStudents)) STUDENTS = remoteStudents.map(mapSupabaseStudentToApp);
+    // 3) ÉTUDIANTS
+    const studentResponse = await supabaseClient.from('etudiants').select('*');
+    if(studentResponse.error){
+      recordTableError('etudiants', studentResponse.error);
+    } else {
+      STUDENTS = Array.isArray(studentResponse.data) ? studentResponse.data.map(mapSupabaseStudentToApp) : [];
+      loadedTables.push(`etudiants:${STUDENTS.length}`);
+    }
 
-    await refreshUsersFromSupabase();
+    // 4) UTILISATEURS — indispensable pour l'espace collaborateur, mais on affiche l'erreur exacte si ça bloque.
+    try {
+      await refreshUsersFromSupabase();
+      loadedTables.push(`utilisateurs:${USERS.length}`);
+    } catch(userErr){
+      recordTableError('utilisateurs', userErr);
+    }
+
+    SUPABASE_LAST_LOAD_AT = Date.now();
+    if(errors.length){
+      SUPABASE_SYNC_READY = loadedTables.length > 0;
+      const short = errors[0];
+      setSupabaseStatus('error', 'Supabase : erreur sur ' + errors.map(e => e.split(' → ')[0]).join(', '));
+      if(!silent){
+        showToast('Supabase partiellement chargé : ' + short, 'error');
+        alert('Supabase ne charge pas correctement toutes les tables.\n\nTables chargées : ' + (loadedTables.join(', ') || 'aucune') + '\n\nErreurs :\n- ' + errors.join('\n- ') + '\n\nCela vient généralement des droits RLS, d’une table absente, ou d’une base Supabase qui ne répond pas.');
+      }
+      return loadedTables.length > 0;
+    }
 
     SUPABASE_SYNC_READY = true;
-    SUPABASE_LAST_LOAD_AT = Date.now();
     safeLocalStorageSet('edh_students_v2', JSON.stringify(STUDENTS));
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
-    setSupabaseStatus('ok', `Supabase : connecté · ${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}`);
+    setSupabaseStatus('ok', `Supabase : connecté · ${loadedTables.join(' · ')}`);
     if(!silent) showToast('Connexion Supabase active : données partagées chargées');
     return true;
   } catch(err){
-    console.error('Erreur Supabase load:', err);
-    setSupabaseStatus('error', 'Supabase : erreur de synchronisation');
-    if(!silent) showToast('Connexion Supabase impossible : données locales utilisées', 'error');
+    const msg = getSupabaseErrorMessage(err);
+    console.error('Erreur Supabase load globale:', err);
+    setSupabaseStatus('error', 'Supabase : connexion impossible');
+    if(!silent){
+      showToast('Supabase inaccessible : ' + msg, 'error');
+      alert('Connexion Supabase impossible.\n\nErreur exacte :\n' + msg + '\n\nÀ vérifier : connexion internet, statut du projet Supabase, URL projet, clé anon, puis test SQL select now();');
+    }
     return false;
   } finally {
     SUPABASE_IS_LOADING = false;
@@ -4911,7 +4999,10 @@ async function syncAfterLoginInBackground(){
       return;
     }
     const supabaseReloaded = await loadFromSupabase();
-    if(!supabaseReloaded) restoreEmbeddedLyceesIfEmpty();
+    if(!supabaseReloaded) {
+      setSupabaseStatus('error', 'Supabase : données non chargées');
+      return;
+    }
     populateStaticSelects();
     updateSchoolFilterCounts();
     refreshCurrentPage();
@@ -5106,21 +5197,33 @@ async function saveUser(){
   const duplicate = USERS.find(u => (u.email || '').toLowerCase() === email && u.id !== S.editingUserId);
   if(duplicate) return showToast('Un compte utilise déjà cette adresse mail', 'error');
 
-  const obj = { id: S.editingUserId || nextUserId(), firstName, lastName, email, password, role, school, campus: region, region, regions_autorisees: regions, schools_autorisees: selectedSchools, phone };
+  const idx = USERS.findIndex(u => u.id === S.editingUserId);
+  const existing = idx > -1 ? USERS[idx] : null;
+  const obj = {
+    id: S.editingUserId || nextUserId(),
+    supabase_id: existing?.supabase_id || null,
+    firstName, lastName, email, password, role, school,
+    campus: region, region, regions_autorisees: regions, schools_autorisees: selectedSchools, phone,
+    locked: Boolean(existing?.locked)
+  };
 
-  const idx = USERS.findIndex(u => u.id === obj.id);
-  if(idx > -1){ obj.supabase_id = USERS[idx].supabase_id || null; USERS[idx] = obj; }
-  else USERS.unshift(obj);
-
+  setSupabaseStatus('syncing', 'Supabase : sauvegarde utilisateur…');
   const supaResult = await saveUserDirectToSupabase(obj);
-  if(!supaResult.ok && !supaResult.skipped){
-    saveLocalData();
-    renderUsersPage();
-    return showToast('Utilisateur enregistré localement mais pas dans Supabase : ' + (supaResult.message || 'erreur inconnue'), 'error');
+  if(!supaResult.ok){
+    setSupabaseStatus('error', 'Supabase : utilisateur non enregistré');
+    const msg = supaResult.message || 'erreur inconnue';
+    console.error('Utilisateur non enregistré dans Supabase:', msg, supaResult.error || '');
+    alert('Le compte utilisateur n’a PAS été enregistré.\n\nRien n’a été ajouté localement pour éviter les faux comptes visibles uniquement sur ton navigateur.\n\nErreur Supabase :\n' + msg);
+    return showToast('Utilisateur non enregistré : Supabase a refusé l’écriture', 'error');
   }
 
-  await refreshUsersFromSupabase();
-  saveLocalData();
+  if(idx > -1) USERS[idx] = obj;
+  else USERS.unshift(obj);
+
+  try { await refreshUsersFromSupabase(); }
+  catch(e){ console.warn('Rechargement utilisateurs après sauvegarde impossible', e); }
+  safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+  setSupabaseStatus('ok', 'Supabase : utilisateur enregistré');
   document.getElementById('user-search').value = '';
   document.getElementById('user-role-filter').value = '';
   document.getElementById('user-school-filter').value = '';
@@ -5136,18 +5239,41 @@ async function deleteUser(id){
   const u = USERS.find(x=>x.id===id);
   if(!u) return showToast('Utilisateur introuvable', 'error');
   if((u.email||'') === 'admin' || u.id === 'USR_ADMIN') return showToast('Le compte admin principal ne peut pas être supprimé', 'error');
-  if(!confirm('Supprimer définitivement le compte de ' + (u.firstName || '') + ' ' + (u.lastName || '') + ' de la base ?')) return;
+  if(!confirm('Supprimer définitivement le compte de ' + (u.firstName || '') + ' ' + (u.lastName || '') + ' de Supabase ?')) return;
+  try {
+    setSupabaseStatus('syncing', 'Supabase : suppression utilisateur…');
+    if(!supabaseClient) throw new Error('Client Supabase non initialisé');
+    let deleted = false;
+    if(u.supabase_id){
+      const { error } = await supabaseClient.from('utilisateurs').delete().eq('id', u.supabase_id);
+      if(error) throw error;
+      deleted = true;
+    }
+    if(!deleted && u.email){
+      const { error } = await supabaseClient.from('utilisateurs').delete().eq('email', (u.email || '').toLowerCase());
+      if(error) throw error;
+      deleted = true;
+    }
+    if(!deleted){
+      const { error } = await supabaseClient.from('utilisateurs').delete().eq('app_id', id);
+      if(error) throw error;
+    }
+  } catch(err){
+    const msg = userSupabaseFailureAdvice(err);
+    setSupabaseStatus('error', 'Supabase : suppression refusée');
+    alert('Le compte n’a PAS été supprimé localement car Supabase a refusé la suppression.\n\nErreur Supabase :\n' + msg);
+    return showToast('Suppression annulée : Supabase a refusé l’écriture', 'error');
+  }
   USERS = USERS.filter(x=>x.id!==id);
-  await deleteOptionalTable('utilisateurs', 'app_id', id);
-  if(u.email) await deleteOptionalTable('utilisateurs', 'email', (u.email || '').toLowerCase());
   if(id === 'USR_DEMO_STUDENT' && !DELETED_DEFAULT_USER_IDS.includes(id)) DELETED_DEFAULT_USER_IDS.push(id);
   REGISTRATIONS = REGISTRATIONS.map(r => r.userId === id ? { ...r, userId: null } : r);
   if(S.currentUserId === id){ S.currentUserId = null; S.studentProfile = null; }
-  saveLocalData();
+  safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   closeModal('modal-user'); closeModal('modal-email');
   renderUsersPage();
   renderSchoolUsers();
-  showToast('Compte utilisateur supprimé définitivement');
+  setSupabaseStatus('ok', 'Supabase : utilisateur supprimé');
+  showToast('Compte utilisateur supprimé définitivement dans Supabase');
 }
 
 function deleteUserFromModal(){
