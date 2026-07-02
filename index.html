@@ -3011,41 +3011,51 @@ async function deleteEventDirectFromSupabase(localEvent){
 async function fetchLyceesForActiveSeason(){
   const season = S.season || DEFAULT_SEASON;
 
-  // V23 : source unique du listing. Supabase fait la jointure lycees + lycees_suivi_annuel.
-  // Cela évite toute contamination entre 2025-2026 et les autres années.
-  const rpcResponse = await supabaseClient.rpc('edh_get_lycees_for_saison', {
-    p_annee_scolaire: season
-  });
+  // V24 : le listing ne doit JAMAIS dépendre de la table annuelle.
+  // On lit toujours le référentiel lycees, puis on applique le suivi de la saison si disponible.
+  // Si lycees_suivi_annuel/RPC/RLS bloque, les lycées restent visibles et repassent en "A contacter".
+  const lyceeResponse = await supabaseClient
+    .from('lycees')
+    .select('*')
+    .order('nom', { ascending: true });
 
-  if(!rpcResponse.error && Array.isArray(rpcResponse.data)){
-    return { data: rpcResponse.data, error: null, source: 'rpc' };
+  if(lyceeResponse.error){
+    return { data: null, error: lyceeResponse.error, source: 'lycees' };
   }
 
-  console.warn('RPC edh_get_lycees_for_saison indisponible, fallback jointure JS', rpcResponse.error);
-
-  const lyceeResponse = await supabaseClient.from('lycees').select('*').order('nom', { ascending: true });
-  if(lyceeResponse.error) return { data: null, error: lyceeResponse.error, source: 'lycees' };
-
+  let suiviRows = [];
   const suiviResponse = await supabaseClient
     .from('lycees_suivi_annuel')
     .select('*')
     .eq('annee_scolaire', season);
 
-  if(suiviResponse.error) return { data: null, error: suiviResponse.error, source: 'suivi' };
+  if(suiviResponse.error){
+    console.warn('Suivi annuel non lisible : affichage du référentiel avec statut par défaut', suiviResponse.error);
+  } else {
+    suiviRows = Array.isArray(suiviResponse.data) ? suiviResponse.data : [];
+  }
 
-  const suiviByLyceeId = new Map((suiviResponse.data || []).map(s => [String(s.lycee_id), s]));
+  const suiviByLyceeId = new Map(suiviRows.map(s => [String(s.lycee_id), s]));
+
   const joined = (lyceeResponse.data || []).map(l => {
     const suivi = suiviByLyceeId.get(String(l.id));
+    const fallbackStatut = season === DEFAULT_SEASON
+      ? (l.statut || 'A contacter')
+      : 'A contacter';
+    const fallbackCommentaire = season === DEFAULT_SEASON
+      ? (l.commentaire || '')
+      : '';
+
     return {
       ...l,
       annee_scolaire: season,
-      statut: suivi?.statut || 'A contacter',
-      commentaire: suivi?.commentaire || '',
+      statut: suivi?.statut || fallbackStatut,
+      commentaire: suivi?.commentaire || fallbackCommentaire,
       suivi_id: suivi?.id || null
     };
   });
 
-  return { data: joined, error: null, source: 'fallback' };
+  return { data: joined, error: null, source: suiviRows.length ? 'lycees+suivi' : 'lycees-default' };
 }
 
 async function loadFromSupabase(options = {}){
@@ -3054,7 +3064,11 @@ async function loadFromSupabase(options = {}){
     showToast('Supabase non initialisé : vérifie le SDK, l’URL projet et la clé anon.', 'error');
     return false;
   }
-  if(SUPABASE_IS_LOADING) return true;
+  if(SUPABASE_IS_LOADING){
+    // V24 : évite qu'un changement d'année rende l'ancien résultat en cours de chargement.
+    await new Promise(resolve => setTimeout(resolve, 250));
+    if(SUPABASE_IS_LOADING) return false;
+  }
   SUPABASE_IS_LOADING = true;
   const silent = Boolean(options.silent);
   const errors = [];
@@ -3076,6 +3090,13 @@ async function loadFromSupabase(options = {}){
       recordTableError(lyceeResponse.source || 'lycees', lyceeResponse.error);
     } else {
       LYCEES = Array.isArray(lyceeResponse.data) ? lyceeResponse.data.map(mapSupabaseLyceeToApp) : [];
+      // V24 : snapshot du suivi réellement chargé pour empêcher les événements
+      // de réécrire le statut/commentaire d'une autre année.
+      activeSuiviByLyceeId = new Map(
+        LYCEES
+          .filter(l => l.supabase_id)
+          .map(l => [String(l.supabase_id), { statut: l.statut || 'A contacter', commentaire: l.commentaire || '' }])
+      );
       SCHOOL_FORUMS = {};
       DELETED_EVENT_IDS = [];
       loadedTables.push(`lycees:${LYCEES.length}`);
