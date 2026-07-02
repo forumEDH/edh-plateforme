@@ -1991,6 +1991,8 @@ let IMPORT_REPORTING_HEADERS = [];
 let REPORTING_DATA = {};
 let LEADS = [];
 const DEFAULT_SEASON = '2025-2026';
+const DEFAULT_LYCEE_STATUS = 'A contacter';
+const LYCEE_ANNUAL_TABLE = 'lycees_suivi_annuel';
 
 // ══════════════════════════════════════
 // SUPABASE CONFIGURATION
@@ -2721,10 +2723,11 @@ function openAddEventModal(){
   document.getElementById('f-statut').value = 'Participation Validée';
 }
 function appLyceeKey(l){ return `${normalizeLyceeName(l.nom)}__${(l.ville||'').toString().trim().toLowerCase()}`; }
-function mapSupabaseLyceeToApp(row){
+function mapSupabaseLyceeToApp(row, annualRow = null){
   return {
     id: String(row.app_id || row.id || nextId()),
     supabase_id: row.id || null,
+    supabase_suivi_id: annualRow?.id || null,
     nom: row.nom || '',
     ville: row.ville || '',
     cp: row.code_postal || '',
@@ -2733,12 +2736,13 @@ function mapSupabaseLyceeToApp(row){
     adresse: row.adresse || '',
     region: row.region || '',
     campus: row.campus || '',
-    statut: row.statut || 'A contacter',
+    statut: annualRow?.statut || DEFAULT_LYCEE_STATUS,
+    score_annuel: annualRow?.score ?? null,
     ecoles: row.ecoles || 'tout le monde',
     organisateur: row.contact_nom || '',
     mail_ecole: row.contact_email || '',
     tel_ecole: row.contact_telephone || '',
-    commentaire: row.commentaire || '',
+    commentaire: annualRow?.commentaire || '',
     ancien_etudiant: row.anciens || 'Aucun étudiant',
     date: null,
     heure: null,
@@ -2749,6 +2753,8 @@ function mapSupabaseLyceeToApp(row){
   };
 }
 function mapAppLyceeToSupabase(l){
+  // Table référentiel : données communes à toutes les années.
+  // Ne pas envoyer statut / commentaire / année_scolaire ici.
   return {
     app_id: normalizeSupabaseText(l.id),
     nom: normalizeSupabaseText(l.nom),
@@ -2759,14 +2765,39 @@ function mapAppLyceeToSupabase(l){
     region: normalizeSupabaseText(l.region),
     campus: normalizeSupabaseText(l.campus),
     type: normalizeSupabaseText(l.type),
-    statut: normalizeSupabaseText(l.statut || 'A contacter'),
     ecoles: normalizeSupabaseText(l.ecoles || 'tout le monde'),
     contact_nom: normalizeSupabaseText(l.organisateur || l.contact_nom),
     contact_email: normalizeSupabaseText(l.mail_ecole || l.contact_email),
     contact_telephone: normalizeSupabaseText(l.tel_ecole || l.contact_telephone),
-    commentaire: normalizeSupabaseText(l.commentaire),
     updated_at: new Date().toISOString()
   };
+}
+function mapAppLyceeAnnualToSupabase(l, lyceeId = null){
+  return {
+    lycee_id: lyceeId || l.supabase_id || null,
+    annee_scolaire: normalizeSupabaseText(S.season || DEFAULT_SEASON),
+    statut: normalizeSupabaseText(l.statut || DEFAULT_LYCEE_STATUS),
+    commentaire: normalizeSupabaseText(l.commentaire),
+    score: normalizeSupabaseNumber(l.score_annuel),
+    updated_at: new Date().toISOString()
+  };
+}
+async function saveLyceeAnnualDirectToSupabase(localLycee){
+  if(!supabaseClient || !localLycee?.supabase_id) return { ok:false, skipped:true, message:'Lycée Supabase introuvable pour le suivi annuel' };
+  let payload = mapAppLyceeAnnualToSupabase(localLycee, localLycee.supabase_id);
+  try {
+    const { data, error } = await supabaseClient
+      .from(LYCEE_ANNUAL_TABLE)
+      .upsert(payload, { onConflict: 'lycee_id,annee_scolaire' })
+      .select('id')
+      .single();
+    if(error) throw error;
+    localLycee.supabase_suivi_id = data?.id || localLycee.supabase_suivi_id || null;
+    return { ok:true, id: localLycee.supabase_suivi_id };
+  } catch(err){
+    console.error('Erreur sauvegarde suivi annuel lycée Supabase:', err);
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+  }
 }
 async function saveLyceeDirectToSupabase(localLycee){
   if(!supabaseClient){
@@ -2796,6 +2827,8 @@ async function saveLyceeDirectToSupabase(localLycee){
         : await supabaseClient.from('lycees').insert([payload]).select('id').single();
       if(!response.error){
         localLycee.supabase_id = existingId || response.data?.id || null;
+        const annualResult = await saveLyceeAnnualDirectToSupabase(localLycee);
+        if(!annualResult.ok && !annualResult.skipped) return annualResult;
         return { ok:true, id: localLycee.supabase_id };
       }
       const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
@@ -2995,15 +3028,25 @@ async function loadFromSupabase(options = {}){
   try {
     setSupabaseStatus('syncing', 'Supabase : test des tables…');
 
-    // 1) LYCÉES — si cette table bloque, on n'arrête pas tout : on garde les autres diagnostics.
+    // 1) LYCÉES — référentiel commun + suivi annuel propre à la saison sélectionnée.
     const lyceeResponse = await supabaseClient.from('lycees').select('*').order('nom', { ascending: true });
+    const annualResponse = await supabaseClient
+      .from(LYCEE_ANNUAL_TABLE)
+      .select('*')
+      .eq('annee_scolaire', S.season || DEFAULT_SEASON);
     if(lyceeResponse.error){
       recordTableError('lycees', lyceeResponse.error);
+    } else if(annualResponse.error){
+      recordTableError(LYCEE_ANNUAL_TABLE, annualResponse.error);
     } else {
-      LYCEES = Array.isArray(lyceeResponse.data) ? lyceeResponse.data.map(mapSupabaseLyceeToApp) : [];
+      const annualByLyceeId = new Map((annualResponse.data || []).map(r => [String(r.lycee_id), r]));
+      LYCEES = Array.isArray(lyceeResponse.data)
+        ? lyceeResponse.data.map(row => mapSupabaseLyceeToApp(row, annualByLyceeId.get(String(row.id)) || null))
+        : [];
       SCHOOL_FORUMS = {};
       DELETED_EVENT_IDS = [];
       loadedTables.push(`lycees:${LYCEES.length}`);
+      loadedTables.push(`${LYCEE_ANNUAL_TABLE}:${(annualResponse.data || []).length}`);
     }
 
     // 2) ÉVÉNEMENTS — Supabase est la source unique des événements. On ne vide les données locales que si la table répond.
@@ -4853,15 +4896,20 @@ function initSeasonSelect(){
   const label = document.getElementById('sidebar-season-label');
   if(label) label.textContent = `Forums Lycées · Saison ${(S.season || DEFAULT_SEASON).replace('-', ' – ')}`;
 }
-function changeSeason(season){
-  saveSeasonData(S.season || DEFAULT_SEASON);
+async function changeSeason(season){
+  if(!supabaseClient) saveSeasonData(S.season || DEFAULT_SEASON);
   S.season = season || DEFAULT_SEASON;
   safeLocalStorageSet('edh_current_season_v1', S.season);
-  loadSeasonData(S.season);
   S.search=''; S.statut=[]; S.dept=[]; S.type=''; S.school=''; S.page=1; S.schoolPage=1;
   const search = document.getElementById('global-search'); if(search) search.value='';
   const type = document.getElementById('filter-type'); if(type) type.value='';
-  initSeasonSelect(); populateDepts(); setMultiChecks('filter-statut', []); setMultiChecks('filter-dept', []); updateSchoolFilterCounts();
+  initSeasonSelect();
+  if(supabaseClient){
+    await loadFromSupabase({ silent:false, reason:'season-change' });
+  } else {
+    loadSeasonData(S.season);
+  }
+  populateDepts(); setMultiChecks('filter-statut', []); setMultiChecks('filter-dept', []); updateSchoolFilterCounts();
   refreshCurrentPage();
   showToast(`Saison ${S.season} chargée`);
 }
