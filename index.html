@@ -1931,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V21-2026-07-02-saisons-lycees-suivi-annuel";
+const APP_PATCH_VERSION = "V23-2026-07-02-rpc-lycees-saison";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2070,7 +2070,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V22-2026-07-02-fix-saisons-supabase-no-global-push';
+window.EDH_APP_VERSION = 'V23-2026-07-02-rpc-lycees-saison';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2735,13 +2735,14 @@ function mapSupabaseLyceeToApp(row){
     adresse: row.adresse || '',
     region: row.region || '',
     campus: row.campus || '',
-    statut: 'A contacter',
-    annee_scolaire: S.season || DEFAULT_SEASON,
+    statut: row.statut || 'A contacter',
+    annee_scolaire: row.annee_scolaire || S.season || DEFAULT_SEASON,
+    suivi_id: row.suivi_id || null,
     ecoles: row.ecoles || 'tout le monde',
     organisateur: row.contact_nom || '',
     mail_ecole: row.contact_email || '',
     tel_ecole: row.contact_telephone || '',
-    commentaire: '',
+    commentaire: row.commentaire || '',
     ancien_etudiant: row.anciens || 'Aucun étudiant',
     date: null,
     heure: null,
@@ -3006,6 +3007,47 @@ async function deleteEventDirectFromSupabase(localEvent){
     return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
   }
 }
+
+async function fetchLyceesForActiveSeason(){
+  const season = S.season || DEFAULT_SEASON;
+
+  // V23 : source unique du listing. Supabase fait la jointure lycees + lycees_suivi_annuel.
+  // Cela évite toute contamination entre 2025-2026 et les autres années.
+  const rpcResponse = await supabaseClient.rpc('edh_get_lycees_for_saison', {
+    p_annee_scolaire: season
+  });
+
+  if(!rpcResponse.error && Array.isArray(rpcResponse.data)){
+    return { data: rpcResponse.data, error: null, source: 'rpc' };
+  }
+
+  console.warn('RPC edh_get_lycees_for_saison indisponible, fallback jointure JS', rpcResponse.error);
+
+  const lyceeResponse = await supabaseClient.from('lycees').select('*').order('nom', { ascending: true });
+  if(lyceeResponse.error) return { data: null, error: lyceeResponse.error, source: 'lycees' };
+
+  const suiviResponse = await supabaseClient
+    .from('lycees_suivi_annuel')
+    .select('*')
+    .eq('annee_scolaire', season);
+
+  if(suiviResponse.error) return { data: null, error: suiviResponse.error, source: 'suivi' };
+
+  const suiviByLyceeId = new Map((suiviResponse.data || []).map(s => [String(s.lycee_id), s]));
+  const joined = (lyceeResponse.data || []).map(l => {
+    const suivi = suiviByLyceeId.get(String(l.id));
+    return {
+      ...l,
+      annee_scolaire: season,
+      statut: suivi?.statut || 'A contacter',
+      commentaire: suivi?.commentaire || '',
+      suivi_id: suivi?.id || null
+    };
+  });
+
+  return { data: joined, error: null, source: 'fallback' };
+}
+
 async function loadFromSupabase(options = {}){
   if(!supabaseClient) {
     setSupabaseStatus('error', 'Supabase : client non initialisé');
@@ -3028,36 +3070,14 @@ async function loadFromSupabase(options = {}){
   try {
     setSupabaseStatus('syncing', 'Supabase : test des tables…');
 
-    // 1) LYCÉES — si cette table bloque, on n'arrête pas tout : on garde les autres diagnostics.
-    const lyceeResponse = await supabaseClient.from('lycees').select('*').order('nom', { ascending: true });
+    // 1) LYCÉES — V23 : lecture par saison via RPC Supabase.
+    const lyceeResponse = await fetchLyceesForActiveSeason();
     if(lyceeResponse.error){
-      recordTableError('lycees', lyceeResponse.error);
+      recordTableError(lyceeResponse.source || 'lycees', lyceeResponse.error);
     } else {
       LYCEES = Array.isArray(lyceeResponse.data) ? lyceeResponse.data.map(mapSupabaseLyceeToApp) : [];
       SCHOOL_FORUMS = {};
       DELETED_EVENT_IDS = [];
-
-      // V21 : application du suivi annuel de la saison active.
-      // S'il n'existe pas encore de ligne pour une année, on garde par défaut "A contacter".
-      const suiviResponse = await supabaseClient
-        .from('lycees_suivi_annuel')
-        .select('*')
-        .eq('annee_scolaire', S.season || DEFAULT_SEASON);
-      if(suiviResponse.error){
-        recordTableError('lycees_suivi_annuel', suiviResponse.error);
-      } else {
-        activeSuiviByLyceeId = new Map((suiviResponse.data || []).map(s => [String(s.lycee_id), s]));
-        LYCEES = LYCEES.map(l => {
-          const suivi = activeSuiviByLyceeId.get(String(l.supabase_id));
-          return {
-            ...l,
-            statut: suivi?.statut || 'A contacter',
-            commentaire: suivi?.commentaire || '',
-            annee_scolaire: S.season || DEFAULT_SEASON
-          };
-        });
-        loadedTables.push(`suivi:${suiviResponse.data?.length || 0}`);
-      }
       loadedTables.push(`lycees:${LYCEES.length}`);
     }
 
@@ -3079,7 +3099,17 @@ async function loadFromSupabase(options = {}){
         const key = appLyceeKey(seasonRow);
         const base = byKey.get(key);
         if(base){
-          Object.assign(base, seasonRow, { id: base.id, supabase_event_id: row.id || null });
+          // V23 : un événement ne doit jamais écraser le suivi annuel du listing.
+          // On ajoute seulement les champs opérationnels de l'événement.
+          Object.assign(base, {
+            date: seasonRow.date,
+            heure: seasonRow.heure,
+            formation: seasonRow.formation,
+            participants: seasonRow.participants,
+            prospect_global: seasonRow.prospect_global,
+            term: seasonRow.term,
+            supabase_event_id: row.id || null
+          });
           applyEventExtrasFromSupabaseRow(row, base);
         } else {
           const orphan = {
