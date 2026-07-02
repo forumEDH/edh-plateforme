@@ -1931,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V20-2026-07-02-lycees-suivi-annuel-fix";
+const APP_PATCH_VERSION = "V21-2026-07-02-saisons-lycees-suivi-annuel";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2070,7 +2070,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V20-2026-07-02-lycees-suivi-annuel-fix';
+window.EDH_APP_VERSION = 'V18-2026-05-13-utilisateurs-timeout-hotfix';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2722,8 +2722,8 @@ function openAddEventModal(){
 }
 function appLyceeKey(l){ return `${normalizeLyceeName(l.nom)}__${(l.ville||'').toString().trim().toLowerCase()}`; }
 function mapSupabaseLyceeToApp(row){
-  // Table lycees = référentiel permanent.
-  // Le statut/commentaire par année sont appliqués ensuite depuis lycees_suivi_annuel.
+  // IMPORTANT V21 : la table lycees est le référentiel permanent.
+  // Le statut/commentaire ne doivent plus venir de lycees, sinon une année contaminera les autres.
   return {
     id: String(row.app_id || row.id || nextId()),
     supabase_id: row.id || null,
@@ -2752,8 +2752,8 @@ function mapSupabaseLyceeToApp(row){
   };
 }
 function mapAppLyceeToSupabase(l){
-  // Ne jamais pousser statut/commentaire/annee_scolaire dans lycees :
-  // ces champs vivent dans lycees_suivi_annuel pour éviter le mélange entre années.
+  // IMPORTANT V21 : aucun champ annuel ici.
+  // statut / commentaire / annee_scolaire sont sauvegardés dans lycees_suivi_annuel.
   return {
     app_id: normalizeSupabaseText(l.id),
     nom: normalizeSupabaseText(l.nom),
@@ -2771,26 +2771,32 @@ function mapAppLyceeToSupabase(l){
     updated_at: new Date().toISOString()
   };
 }
-function mapAppLyceeSuiviToSupabase(l){
+function mapAppLyceeSuiviAnnuelToSupabase(l){
   return {
     lycee_id: l.supabase_id || null,
-    annee_scolaire: normalizeSupabaseText(S.season || DEFAULT_SEASON),
+    annee_scolaire: S.season || DEFAULT_SEASON,
     statut: normalizeSupabaseText(l.statut || 'A contacter'),
     commentaire: normalizeSupabaseText(l.commentaire),
     date_modification: new Date().toISOString()
   };
 }
-async function saveLyceeSuiviDirectToSupabase(localLycee){
-  if(!supabaseClient || !localLycee?.supabase_id) return { ok:false, skipped:true, message:'Suivi annuel ignoré : lycée Supabase introuvable' };
-  const payload = mapAppLyceeSuiviToSupabase(localLycee);
+async function saveLyceeSuiviAnnuelDirectToSupabase(localLycee){
+  if(!supabaseClient || !localLycee) return { ok:false, skipped:true, message:'Client Supabase non initialisé' };
+  if(!localLycee.supabase_id) return { ok:false, skipped:true, message:'Lycée sans id Supabase : impossible de sauvegarder le suivi annuel' };
+  let payload = mapAppLyceeSuiviAnnuelToSupabase(localLycee);
   try {
-    const { error } = await supabaseClient
-      .from('lycees_suivi_annuel')
-      .upsert([payload], { onConflict: 'lycee_id,annee_scolaire' });
-    if(error) throw error;
-    return { ok:true };
+    for(let attempt=0; attempt<8; attempt++){
+      const response = await supabaseClient
+        .from('lycees_suivi_annuel')
+        .upsert([payload], { onConflict:'lycee_id,annee_scolaire' });
+      if(!response.error) return { ok:true };
+      const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
+      if(cleaned){ payload = cleaned; continue; }
+      throw response.error;
+    }
+    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder le suivi annuel' };
   } catch(err){
-    console.error('Erreur sauvegarde suivi annuel Supabase:', err);
+    console.error('Erreur sauvegarde suivi annuel lycée Supabase:', err);
     return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
   }
 }
@@ -3030,13 +3036,12 @@ async function loadFromSupabase(options = {}){
       SCHOOL_FORUMS = {};
       DELETED_EVENT_IDS = [];
 
-      // 1 bis) SUIVI ANNUEL — applique le statut/commentaire uniquement pour la saison courante.
-      // Si aucune ligne n'existe pour la saison, le lycée reste visible avec le statut vierge "A contacter".
+      // V21 : application du suivi annuel de la saison active.
+      // S'il n'existe pas encore de ligne pour une année, on garde par défaut "A contacter".
       const suiviResponse = await supabaseClient
         .from('lycees_suivi_annuel')
         .select('*')
         .eq('annee_scolaire', S.season || DEFAULT_SEASON);
-
       if(suiviResponse.error){
         recordTableError('lycees_suivi_annuel', suiviResponse.error);
       } else {
@@ -3045,14 +3050,13 @@ async function loadFromSupabase(options = {}){
           const suivi = suiviByLyceeId.get(String(l.supabase_id));
           return {
             ...l,
-            statut: normalizeStatus(suivi?.statut || 'A contacter') || 'A contacter',
+            statut: suivi?.statut || 'A contacter',
             commentaire: suivi?.commentaire || '',
             annee_scolaire: S.season || DEFAULT_SEASON
           };
         });
-        loadedTables.push(`suivi:${(suiviResponse.data || []).length}`);
+        loadedTables.push(`suivi:${suiviResponse.data?.length || 0}`);
       }
-
       loadedTables.push(`lycees:${LYCEES.length}`);
     }
 
@@ -3162,14 +3166,10 @@ async function pushToSupabase(){
   if(!supabaseClient) return;
   SUPABASE_IS_PUSHING = true;
   try {
-    // Les lycées ne sont plus poussés globalement depuis le localStorage.
-    // Création / modification / suppression lycée = synchronisation directe uniquement.
-
-    const events = (LYCEES || []).filter(l => eventShouldSyncToSupabase(l));
-    for(const l of events){
-      const eventResult = await saveEventDirectToSupabase(l);
-      if(!eventResult.ok && !eventResult.skipped) console.warn('Événement non synchronisé:', l.nom, eventResult.message || eventResult.error);
-    }
+    // V21 : aucun push global des événements depuis LYCEES.
+    // Sinon un refresh sur 2029-2030 peut recopier par erreur les événements d'une autre saison
+    // vers la saison active. Les événements sont maintenant sauvegardés uniquement lors d'une
+    // vraie action utilisateur via saveEventDirectToSupabase().
 
     await upsertFirstOptionalTable(['etudiants'], (STUDENTS || []).map(mapAppStudentToSupabase));
     for(const user of (USERS || []).filter(u => u.id !== 'USR_ADMIN')){
@@ -4648,8 +4648,7 @@ async function saveForm(){
   // Synchronisation Supabase en arrière-plan. L'erreur reste visible au-dessus de tous les pop-up.
   (async () => {
     const lyceeSave = await saveLyceeDirectToSupabase(savedLycee);
-    if(lyceeSave.ok && lyceeSave.id && !savedLycee.supabase_id) savedLycee.supabase_id = lyceeSave.id;
-    const suiviSave = lyceeSave.ok ? await saveLyceeSuiviDirectToSupabase(savedLycee) : { ok:false, skipped:true, message:'Suivi annuel non enregistré car lycée non sauvegardé' };
+    const suiviSave = lyceeSave.ok ? await saveLyceeSuiviAnnuelDirectToSupabase(savedLycee) : { ok:false, skipped:true, message:'Référentiel lycée non sauvegardé' };
     const eventSave = eventShouldSyncToSupabase(savedLycee) ? await saveEventDirectToSupabase(savedLycee) : { ok:true, skipped:true };
     if(lyceeSave.ok && (suiviSave.ok || suiviSave.skipped) && (eventSave.ok || eventSave.skipped)){
       const previousPushState2 = SUPABASE_IS_PUSHING;
@@ -4658,7 +4657,7 @@ async function saveForm(){
       SUPABASE_IS_PUSHING = previousPushState2;
       showToast(eventSave.skipped ? successLabel + ' dans Supabase' : successLabel + ' + événement enregistrés dans Supabase');
     } else {
-      console.error('Sauvegarde Supabase refusée:', { lyceeSave, eventSave });
+      console.error('Sauvegarde Supabase refusée:', { lyceeSave, suiviSave, eventSave });
       const msg = !lyceeSave.ok ? lyceeSave.message : (!suiviSave.ok ? suiviSave.message : eventSave.message);
       showToast(successLabel + ' localement, mais pas complètement dans Supabase : ' + (msg || 'erreur inconnue'), 'error');
     }
@@ -4917,6 +4916,8 @@ async function changeSeason(season){
   setMultiChecks('filter-dept', []);
 
   if(supabaseClient){
+    // V21 : en mode Supabase, chaque changement d'année recharge le référentiel lycees
+    // puis applique uniquement le suivi annuel de l'année sélectionnée.
     await refreshFromSupabaseAndRender(false, 'season-change');
   } else {
     loadSeasonData(S.season);
@@ -4924,7 +4925,6 @@ async function changeSeason(season){
     updateSchoolFilterCounts();
     refreshCurrentPage();
   }
-
   showToast(`Saison ${S.season} chargée`);
 }
 function saveLeadWebhookUrl(){ safeLocalStorageSet('edh_lead_webhook_url_v1', document.getElementById('lead-webhook-url')?.value || ''); }
