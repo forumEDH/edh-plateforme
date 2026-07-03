@@ -1005,7 +1005,7 @@ td strong { color: var(--text); font-weight: 600; }
               <th>Score</th>
               <th onclick="sortBy('date')">Date</th>
               <th>Écoles</th>
-              <th>Organisateur</th>
+              <th>Numéro de téléphone</th>
               <th>Actions</th>
             </tr></thead>
             <tbody id="listing-tbody"></tbody>
@@ -1931,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V25-2026-07-03-saisons-racefix";
+const APP_PATCH_VERSION = "V26-2026-07-03-listing-telephone";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -3960,7 +3960,7 @@ function renderListing(){
       <td>${scoreBadge(l)}</td>
       <td>${fmtDate(l.date)}</td>
       <td><div style="display:flex;gap:3px;flex-wrap:wrap">${schoolTags(l.ecoles)}</div></td>
-      <td>${fmt(l.organisateur)}</td>
+      <td>${fmt(l.tel_ecole || l.contact_telephone || l.tel_organisateur || l.telephone)}</td>
       <td onclick="event.stopPropagation()">
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" onclick="openEdit('${l.id}')">Modifier</button>
