@@ -1448,7 +1448,7 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
             <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="lead-phone"></div>
             <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="lead-school" onchange="updateLeadProgramOptions('lead')"><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
             <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="lead-program"></select></div>
-            <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+            <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="lead-level" onchange="updateLeadProgramOptions('lead')"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
             <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="lead-notes" rows="3" placeholder="Question posée, niveau d’intérêt, rappel à prévoir..."></textarea></div>
           </div>
         </div>
@@ -2191,7 +2191,7 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
         <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone" autocomplete="tel"></div>
         <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school" onchange="updateLeadProgramOptions('public')"><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
         <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="public-lead-program"></select></div>
-        <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+        <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level" onchange="updateLeadProgramOptions('public')"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
         <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..."></textarea></div>
       </div>
       <button class="btn btn-primary" id="public-lead-submit-btn" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Envoyer mes coordonnées</button>
@@ -3482,9 +3482,10 @@ async function loadFromSupabase(options = {}){
         lastName: l.lastName || l.last_name || l.nom || '',
         email: (l.email || '').toString().toLowerCase(),
         phone: l.phone || l.telephone || '',
-        level: l.level || l.niveau || '',
-        school: normalizeSchoolName(l.school || l.ecole) || l.school || l.ecole || '',
-        notes: l.notes || l.commentaire || '',
+        level: l.level || l.niveau || l.niveau_etude || '',
+        school: normalizeSchoolName(l.school || l.ecole || l.ecole_interessee) || l.school || l.ecole || l.ecole_interessee || '',
+        program: l.program || l.cursus || l.cursus_souhaite || l.programme || '',
+        notes: l.notes || l.commentaire || l.prise_notes || '',
         source: l.source || 'QR public',
         createdAt: l.createdAt || l.created_at || new Date().toISOString()
       }));
@@ -3603,12 +3604,7 @@ async function loadFromSupabase(options = {}){
       console.warn('Table leads non chargée : les leads intégrés aux événements restent disponibles.', leadResponse.error);
     } else {
       const remoteLeadRows = Array.isArray(leadResponse.data) ? leadResponse.data.map(mapSupabaseLeadToApp) : [];
-      const leadMap = new Map();
-      [...nextLeads, ...remoteLeadRows].forEach(l => {
-        const key = l.supabase_id || l.id || `${l.eventId || ''}__${(l.email || '').toLowerCase()}`;
-        leadMap.set(String(key), l);
-      });
-      nextLeads = Array.from(leadMap.values());
+      nextLeads = dedupeLeadsList([...nextLeads, ...remoteLeadRows]);
       loadedTables.push(`leads:${remoteLeadRows.length}`);
     }
 
@@ -3629,7 +3625,7 @@ async function loadFromSupabase(options = {}){
     DELETED_EVENT_IDS = [];
     REGISTRATIONS = nextRegistrations;
     REPORTING_DATA = nextReportingData;
-    LEADS = nextLeads;
+    LEADS = dedupeLeadsList(nextLeads);
     STUDENTS = nextStudents;
 
     SUPABASE_LAST_LOAD_AT = Date.now();
@@ -3812,7 +3808,41 @@ function canSeeRecord(row,user=currentUser()){
 function getVisibleLycees(){ return (Array.isArray(LYCEES)?LYCEES:[]).filter(l=>canSeeRecord(l)); }
 function getVisibleStudents(){ return (Array.isArray(STUDENTS)?STUDENTS:[]).filter(s=>canSeeRecord({...s, ecoles:s.school, campus:s.campus||s.region})); }
 function getVisibleUsers(){ return Array.isArray(USERS) ? USERS : []; }
-function getVisibleLeads(){ const ids=new Set(getVisibleLycees().flatMap(l=>eventIdCandidates(l))); return (Array.isArray(LEADS)?LEADS:[]).filter(l=>!l.eventId||ids.has(String(l.eventId))||canSeeRecord(l)); }
+function leadDedupKey(l){
+  if(!l) return '';
+  const email = (l.email || '').toString().trim().toLowerCase();
+  const phone = (l.phone || '').toString().replace(/[^0-9+]/g,'');
+  const name = normalizeLyceeName(`${l.firstName || ''} ${l.lastName || ''}`);
+  const eventName = normalizeLyceeName(l.eventName || l.lycee || '');
+  const eventId = String(l.eventId || l.event_app_id || '').trim();
+  const eventPart = eventName || eventId || 'event';
+  const personPart = email || phone || name || String(l.id || l.supabase_id || 'lead');
+  return `${eventPart}__${personPart}`;
+}
+function mergeLeadRecord(a, b){
+  const base = {...(a || {})};
+  const incoming = {...(b || {})};
+  const merged = {...base, ...incoming};
+  ['program','cursus','level','school','phone','notes','eventName','lycee','ville','source'].forEach(k => {
+    if(!incoming[k] && base[k]) merged[k] = base[k];
+  });
+  merged.id = incoming.id || base.id;
+  merged.supabase_id = incoming.supabase_id || base.supabase_id || null;
+  merged.program = incoming.program || incoming.cursus || incoming.cursus_souhaite || base.program || base.cursus || '';
+  merged.level = incoming.level || incoming.niveau_etude || base.level || '';
+  merged.createdAt = incoming.createdAt || base.createdAt || new Date().toISOString();
+  return merged;
+}
+function dedupeLeadsList(list){
+  const map = new Map();
+  (Array.isArray(list) ? list : []).forEach(l => {
+    const key = leadDedupKey(l);
+    if(!key) return;
+    map.set(key, map.has(key) ? mergeLeadRecord(map.get(key), l) : l);
+  });
+  return Array.from(map.values());
+}
+function getVisibleLeads(){ const ids=new Set(getVisibleLycees().flatMap(l=>eventIdCandidates(l))); return dedupeLeadsList((Array.isArray(LEADS)?LEADS:[]).filter(l=>!l.eventId||ids.has(String(l.eventId))||canSeeRecord(l))); }
 
 function normalizeSchoolName(value){
   const raw = (value || '').toString().trim();
@@ -5011,18 +5041,34 @@ function selectedLeadCampus(scope){
   }
   return currentEfapCampus(ev || {});
 }
+function leadSchoolYearLabel(startYear){ return `${startYear}/${startYear+1}`; }
+function leadProgramRuleFromLevel(level){
+  const currentYear = new Date().getFullYear();
+  const clean = String(level || '').toLowerCase();
+  if(clean.includes('term')) return {entryLevel:'1ère année grande école', startYear: currentYear + 1};
+  if(clean.includes('1ère') || clean.includes('1ere') || clean.includes('prem')) return {entryLevel:'1ère année grande école', startYear: currentYear + 2};
+  if(clean.includes('2nde') || clean.includes('seconde')) return {entryLevel:'1ère année grande école', startYear: currentYear + 3};
+  if(clean.includes('bac+1')) return {entryLevel:'2ème année grande école', startYear: currentYear + 1};
+  if(clean.includes('bac+2')) return {entryLevel:'3ème année grande école', startYear: currentYear + 1};
+  return null;
+}
 function buildLeadProgramOptions(scope){
   const schoolEl = document.getElementById(scope === 'public' ? 'public-lead-school' : 'lead-school');
+  const levelEl = document.getElementById(scope === 'public' ? 'public-lead-level' : 'lead-level');
   const school = schoolEl?.value || 'EFAP';
   const campus = selectedLeadCampus(scope) || 'Lille';
   if(!school || school === 'À préciser') return ['À préciser'];
-  const currentYear = new Date().getFullYear();
-  const years = [];
-  for(let y=currentYear; y<=currentYear+6; y++) years.push(`${y}/${y+1}`);
-  const levels = ['1ère année grande école','2ème année grande école','3ème année grande école','4ème année grande école','5ème année grande école'];
-  const options = [];
-  levels.forEach(level => years.forEach(year => options.push(`${school} ${campus} - ${level} - ${year}`)));
-  return options;
+  const rule = leadProgramRuleFromLevel(levelEl?.value || '');
+  if(rule){
+    return [`${school} ${campus} - ${rule.entryLevel} - ${leadSchoolYearLabel(rule.startYear)}`];
+  }
+  const y = new Date().getFullYear() + 1;
+  return [
+    'À préciser',
+    `${school} ${campus} - 1ère année grande école - ${leadSchoolYearLabel(y)}`,
+    `${school} ${campus} - 2ème année grande école - ${leadSchoolYearLabel(y)}`,
+    `${school} ${campus} - 3ème année grande école - ${leadSchoolYearLabel(y)}`
+  ];
 }
 function updateLeadProgramOptions(scope='lead'){
   const select = document.getElementById(scope === 'public' ? 'public-lead-program' : 'lead-program');
@@ -5064,10 +5110,9 @@ async function saveLeadFromForm(){
   const obj = {id:'LEAD'+Date.now(), season:S.season, eventId, eventName:ev.nom||'', lycee:ev.nom||'', ville:ev.ville||'', firstName,lastName,email, phone:(document.getElementById('lead-phone')?.value||'').trim(), school:document.getElementById('lead-school')?.value||'', program:(document.getElementById('lead-program')?.value||'').trim(), level:document.getElementById('lead-level')?.value||'', notes:(document.getElementById('lead-notes')?.value||'').trim(), source:'Saisie plateforme', createdAt:new Date().toISOString()};
   const saved = await saveLeadDirectToSupabase(obj);
   if(!saved.ok && !saved.skipped) return showToast('Lead non enregistré dans Supabase : ' + (saved.message || 'erreur inconnue'), 'error');
-  LEADS.unshift(obj);
+  LEADS = dedupeLeadsList([obj, ...LEADS]);
   ['lead-firstname','lead-lastname','lead-email','lead-phone','lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   saveLocalData();
-  if(ev && ev.nom) saveEventExtrasToSupabase(ev).catch(()=>{});
   renderLeadsPage(); renderDashboardV2(); showToast('Lead ajouté dans Supabase');
 }
 async function deleteLead(id){
@@ -5075,10 +5120,8 @@ async function deleteLead(id){
   const oldLead = LEADS.find(l=>l.id===id);
   const supa = await deleteLeadDirectFromSupabase(oldLead);
   if(!supa.ok && !supa.skipped) return showToast('Suppression Supabase impossible : ' + (supa.message || 'erreur inconnue'), 'error');
-  const ev = oldLead ? findCalendarEventById(oldLead.eventId) : null;
-  LEADS = LEADS.filter(l=>l.id!==id);
+  LEADS = LEADS.filter(l=>l.id!==id && l.supabase_id!==oldLead?.supabase_id);
   saveLocalData();
-  if(ev) saveEventExtrasToSupabase(ev).catch(()=>{});
   renderLeadsPage(); renderDashboardV2(); showToast('Lead supprimé');
 }
 function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun lien à copier','error'); navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
@@ -5090,9 +5133,7 @@ async function refreshLeadsFromSupabase(){
   const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
   if(error) return showToast('Erreur chargement leads Supabase : ' + getSupabaseErrorMessage(error), 'error');
   const remote = Array.isArray(data) ? data.map(mapSupabaseLeadToApp) : [];
-  const map = new Map();
-  [...LEADS, ...remote].forEach(l => map.set(String(l.supabase_id || l.id || `${l.eventId}__${l.email}`), l));
-  LEADS = Array.from(map.values());
+  LEADS = dedupeLeadsList([...LEADS, ...remote]);
   renderLeadsPage(); renderDashboardV2(); showToast(`${remote.length} lead(s) chargé(s) depuis Supabase`);
 }
 function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!lead) return; const ev=findCalendarEventById(lead.eventId)||{}; window.location.href=`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Suite à notre échange - Groupe EDH')}&body=${encodeURIComponent(`Bonjour ${lead.firstName},\n\nMerci pour ton échange avec nous lors de l'événement ${ev.nom||lead.eventName||''}.\n\nNous restons disponibles si tu souhaites recevoir plus d'informations sur ${lead.school||'nos écoles'}${lead.program ? ' - '+lead.program : ''}.\n\nBien cordialement,\nGroupe EDH`)}`; }
@@ -5866,10 +5907,8 @@ async function submitPublicLead(){
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Envoyer mes coordonnées'; }
     return;
   }
-  const dup = LEADS.findIndex(l => l.eventId===lead.eventId && (l.email||'').toLowerCase()===email);
-  if(dup>-1) LEADS[dup] = {...LEADS[dup], ...lead, id:LEADS[dup].id, supabase_id:lead.supabase_id||LEADS[dup].supabase_id}; else LEADS.unshift(lead);
+  LEADS = dedupeLeadsList([lead, ...LEADS]);
   saveLocalData();
-  if(ev) saveEventExtrasToSupabase(ev).catch(()=>{});
   const success = document.getElementById('public-lead-success'); if(success) success.classList.add('show');
   const error = document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
   ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
