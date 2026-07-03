@@ -1446,8 +1446,8 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
             <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="lead-lastname"></div>
             <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="lead-email" type="email"></div>
             <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="lead-phone"></div>
-            <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="lead-school"><option value="EFAP">EFAP</option><option value="ICART">ICART</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="À préciser">À préciser</option></select></div>
-            <div class="form-field"><label class="form-label">Cursus souhaité</label><input class="form-input" id="lead-program" placeholder="Communication, art, architecture, game design..."></div>
+            <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="lead-school" onchange="updateLeadProgramOptions('lead')"><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
+            <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="lead-program"></select></div>
             <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
             <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="lead-notes" rows="3" placeholder="Question posée, niveau d’intérêt, rappel à prévoir..."></textarea></div>
           </div>
@@ -2189,8 +2189,8 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
         <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="public-lead-lastname" autocomplete="family-name"></div>
         <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="public-lead-email" type="email" autocomplete="email"></div>
         <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone" autocomplete="tel"></div>
-        <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school"><option value="EFAP">EFAP</option><option value="ICART">ICART</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="À préciser">À préciser</option></select></div>
-        <div class="form-field"><label class="form-label">Cursus souhaité</label><input class="form-input" id="public-lead-program" placeholder="Communication, art, architecture..."></div>
+        <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school" onchange="updateLeadProgramOptions('public')"><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
+        <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="public-lead-program"></select></div>
         <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
         <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..."></textarea></div>
       </div>
@@ -2264,6 +2264,7 @@ let IMPORT_REPORTING_ROWS = [];
 let IMPORT_REPORTING_HEADERS = [];
 let REPORTING_DATA = {};
 let LEADS = [];
+let ARCHIVED_FORUM_IDS = [];
 const DEFAULT_SEASON = '2025-2026';
 
 // ══════════════════════════════════════
@@ -2705,7 +2706,7 @@ function mapAppLeadToSupabase(l){
   return {
     app_id: normalizeSupabaseText(l.id || ('LEAD' + Date.now())),
     saison: normalizeSupabaseText(l.season || S.season || DEFAULT_SEASON),
-    event_id: looksLikeUuid(eventToken) ? eventToken : null,
+    event_id: /^\d+$/.test(String(eventToken || '')) ? Number(eventToken) : null,
     event_app_id: normalizeSupabaseText(eventToken),
     event_name: normalizeSupabaseText(l.eventName || ev.nom),
     lycee: normalizeSupabaseText(l.lycee || ev.nom || l.eventName),
@@ -4001,6 +4002,7 @@ function saveSessionOnly(){
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
   safeLocalStorageSet('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
+  safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
 }
 function saveLocalData(){
   safeLocalStorageSet('edh_current_season_v1', S.season || DEFAULT_SEASON);
@@ -4009,6 +4011,7 @@ function saveLocalData(){
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
   safeLocalStorageSet('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
+  safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
 
   // En mode Supabase, ne jamais réécrire un cache local d'événements / lycées.
   // Cela évite que des événements supprimés en base réapparaissent après rechargement.
@@ -4074,6 +4077,7 @@ function loadLocalData(){
     USERS = JSON.parse(localStorage.getItem('edh_users_v3') || '[]');
     if(Array.isArray(USERS)) USERS = USERS.map(minimalUserForStorage);
     DELETED_DEFAULT_USER_IDS = JSON.parse(localStorage.getItem('edh_deleted_default_user_ids_v1') || '[]');
+    ARCHIVED_FORUM_IDS = JSON.parse(localStorage.getItem('edh_archived_forums_v1') || '[]');
     DELETED_EVENT_IDS = [];
     ensureDefaultUsers();
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
@@ -4958,11 +4962,77 @@ function prefillLeadEvent(){
   if(event){
     const schools=getSchoolsArray(event.ecoles);
     if(schools[0]){
-      const leadSchool = document.getElementById('lead-school'); if(leadSchool) leadSchool.value=schools[0];
+      const leadSchool = document.getElementById('lead-school'); if(leadSchool) leadSchool.value=schools[0]; updateLeadProgramOptions('lead');
     }
   }
 }
 function openLeadForEvent(eventId){ showPage('leads'); setTimeout(()=>{ const sel=document.getElementById('lead-event-select'); if(sel){ const ev=findCalendarEventById(eventId); sel.value=ev ? leadEventToken(ev) : eventId; renderQrPreview(); prefillLeadEvent(); } },0); }
+
+function forumArchiveKey(eventObj){
+  return canonicalEventId(eventObj) || eventNaturalKey(eventObj) || String(eventObj?.id || '');
+}
+function isForumArchived(eventObj){
+  const key = forumArchiveKey(eventObj);
+  return Boolean(key && (ARCHIVED_FORUM_IDS || []).map(String).includes(String(key)));
+}
+function activeValidatedForums(){
+  return (getVisibleLycees ? getVisibleLycees() : (LYCEES || []))
+    .filter(isValidatedForum)
+    .filter(l => !isForumArchived(l))
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+}
+function completeForum(eventId){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return showToast('Forum introuvable', 'error');
+  if(!confirm('Marquer ce forum comme terminé et l’archiver de la préparation ?')) return;
+  const key = forumArchiveKey(ev);
+  if(key && !ARCHIVED_FORUM_IDS.map(String).includes(String(key))) ARCHIVED_FORUM_IDS.push(String(key));
+  safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
+  const detail = document.getElementById('terrain-detail');
+  if(detail) detail.innerHTML = '<div class="crm-empty"><p>Forum terminé et archivé. Il disparaît de la préparation et du pipeline opérationnel.</p></div>';
+  renderTerrainPage();
+  renderActionsStructurePage();
+  renderDashboardV2();
+  showPage('actions');
+  showToast('Forum terminé : préparation archivée');
+}
+function currentLeadEvent(){
+  const eventId = document.getElementById('lead-event-select')?.value || CURRENT_PUBLIC_LEAD_EVENT_ID || '';
+  return findCalendarEventById(eventId) || null;
+}
+function selectedLeadCampus(scope){
+  const ev = scope === 'public' ? (findCalendarEventById(CURRENT_PUBLIC_LEAD_EVENT_ID) || null) : currentLeadEvent();
+  if(ev){
+    const eventCandidates = [ev.campus, ev.region, ev.ville].flat().filter(Boolean);
+    for(const c of eventCandidates){
+      const match = normalizeCampusCity(c);
+      if(match) return match;
+    }
+  }
+  return currentEfapCampus(ev || {});
+}
+function buildLeadProgramOptions(scope){
+  const schoolEl = document.getElementById(scope === 'public' ? 'public-lead-school' : 'lead-school');
+  const school = schoolEl?.value || 'EFAP';
+  const campus = selectedLeadCampus(scope) || 'Lille';
+  if(!school || school === 'À préciser') return ['À préciser'];
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for(let y=currentYear; y<=currentYear+6; y++) years.push(`${y}/${y+1}`);
+  const levels = ['1ère année grande école','2ème année grande école','3ème année grande école','4ème année grande école','5ème année grande école'];
+  const options = [];
+  levels.forEach(level => years.forEach(year => options.push(`${school} ${campus} - ${level} - ${year}`)));
+  return options;
+}
+function updateLeadProgramOptions(scope='lead'){
+  const select = document.getElementById(scope === 'public' ? 'public-lead-program' : 'lead-program');
+  if(!select) return;
+  const previous = select.value;
+  const options = buildLeadProgramOptions(scope);
+  select.innerHTML = options.map(opt => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join('');
+  if(previous && options.includes(previous)) select.value = previous;
+}
+
 function renderLeadsKpis(rows){
   const box = document.getElementById('leads-kpis'); if(!box) return;
   const today = new Date().toISOString().slice(0,10);
@@ -4977,7 +5047,7 @@ function renderLeadsKpis(rows){
     <div class="kpi-card"><div class="kpi-label">École dominante</div><div class="kpi-value" style="font-size:22px">${escapeHtml(topSchool ? topSchool[0] : '—')}</div><div class="kpi-meta">${topSchool ? topSchool[1]+' lead(s)' : 'À venir'}</div></div>`;
 }
 function renderLeadsPage(){
-  populateLeadEvents(); renderQrPreview(); prefillLeadEvent();
+  populateLeadEvents(); renderQrPreview(); prefillLeadEvent(); updateLeadProgramOptions('lead');
   const body = document.getElementById('leads-tbody'); const count = document.getElementById('leads-count');
   const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
   renderLeadsKpis(rows);
@@ -4995,7 +5065,7 @@ async function saveLeadFromForm(){
   const saved = await saveLeadDirectToSupabase(obj);
   if(!saved.ok && !saved.skipped) return showToast('Lead non enregistré dans Supabase : ' + (saved.message || 'erreur inconnue'), 'error');
   LEADS.unshift(obj);
-  ['lead-firstname','lead-lastname','lead-email','lead-phone','lead-program','lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['lead-firstname','lead-lastname','lead-email','lead-phone','lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   saveLocalData();
   if(ev && ev.nom) saveEventExtrasToSupabase(ev).catch(()=>{});
   renderLeadsPage(); renderDashboardV2(); showToast('Lead ajouté dans Supabase');
@@ -5014,7 +5084,7 @@ async function deleteLead(id){
 function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun lien à copier','error'); navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
 function downloadQrCode(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun QR code à télécharger','error'); const ev=findCalendarEventById(document.getElementById('lead-event-select')?.value)||{}; const a=document.createElement('a'); a.href=qrImageUrl(url); a.download=`QR_leads_${(ev.nom||'forum').replace(/[^a-z0-9]+/gi,'_')}.png`; a.target='_blank'; a.click(); }
 function openLeadPublicForm(){ const url=document.getElementById('lead-qr-url')?.value||''; if(url) window.open(url,'_blank'); }
-function downloadLeadsExcel(){ const rows=getVisibleLeads().map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; return {Date:l.createdAt, Saison:l.season||S.season, Evenement:ev.nom||l.eventName||l.lycee, Ville:ev.ville||l.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Ecole_interessee:l.school, Cursus_souhaite:l.program||l.cursus, Niveau_etude:l.level, Notes:l.notes, Source:l.source}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
+function downloadLeadsExcel(){ const rows=getVisibleLeads().map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const origine=ev.nom||l.eventName||l.lycee||'—'; return {Origine:origine, Date:l.createdAt, Saison:l.season||S.season, Evenement:origine, Ville:ev.ville||l.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Ecole_interessee:l.school, Cursus_souhaite:l.program||l.cursus, Niveau_etude:l.level, Notes:l.notes, Source:l.source}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
 async function refreshLeadsFromSupabase(){
   if(!supabaseClient) return showToast('Supabase indisponible : impossible de recharger les leads', 'error');
   const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
@@ -5328,7 +5398,7 @@ function actionButton(label, onclick, cls='btn btn-outline'){
 }
 function renderActionsStructurePage(){
   const visible = getVisibleLycees ? getVisibleLycees() : (LYCEES || []);
-  const validated = visible.filter(isValidatedForum).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const validated = visible.filter(isValidatedForum).filter(l => !isForumArchived(l)).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const noStudents = validated.filter(l => !forumHasAssignedStudents(l));
   const priorityCalls = visible.filter(l => ['A contacter','NRP','En cours de négociation'].includes(normalizeStatus(l.statut)))
     .sort((a,b)=>{
@@ -5384,24 +5454,20 @@ function renderActionsStructurePage(){
 }
 
 function preparationTasksForEvent(l){
-  const regs = eventRegistrations(l);
   const leads = eventLeads(l);
   const report = reportSummaryForEvent(l);
-  const schools = getSchoolsArray(l.ecoles);
   return [
-    {step:'Coordonnées', ok:!!(l.mail_ecole || lyceePhone(l)), title:'Vérifier le contact lycée', desc:'Mail, téléphone et organisateur doivent être renseignés pour gérer les derniers échanges.'},
-    {step:'Date / horaire', ok:!!(l.date && l.heure), title:'Confirmer les informations pratiques', desc:'Date, horaire, ville, adresse et contact sur place doivent être confirmés.'},
-    {step:'Écoles', ok:schools.length>0, title:'Valider les écoles participantes', desc:'Vérifier quelles écoles EDH sont concernées par le forum.'},
-    {step:'Ambassadeurs', ok:forumHasAssignedStudents(l), title:'Attribuer les étudiants ou représentants', desc:'Inscrire les ambassadeurs disponibles ou confirmer la présence d’un collaborateur.'},
-    {step:'Calendrier', ok:!!l.date, title:'Ajouter au calendrier', desc:'Télécharger l’ICS Outlook / Teams et le transmettre aux personnes mobilisées.'},
-    {step:'Itinéraire', ok:!!(l.adresse || l.ville), title:'Préparer le trajet', desc:`Départ calculé depuis le campus EFAP ${currentEfapCampus(l)}.`},
-    {step:'QR leads', ok:leads.length>0, title:'Préparer le QR code leads', desc:'Générer ou ouvrir le lien QR pour collecter les prospects pendant le forum.'},
-    {step:'Objectif', ok:Number(l.prospect_global||0)>0 || report.global>0, title:'Définir un objectif de contacts', desc:'Fixer un objectif de prospects à rencontrer et le comparer au reporting après l’événement.'},
-    {step:'Après forum', ok:!isPastEvent(l) || report.global>0 || report.candidat>0 || report.inscrit>0, title:'Compléter le reporting', desc:'Après le forum, saisir les prospects, candidats, admis, inscrits et le retour qualitatif.'}
+    {step:'Ambassadeurs', ok:forumHasAssignedStudents(l), title:'Trouver des ambassadeurs + attribuer les étudiants à l’événement', desc:'Identifier les étudiants disponibles, les inscrire à l’événement et confirmer qui représente chaque école sur place.'},
+    {step:'Teams', ok:false, title:'Créer conversation Teams avec les ambassadeurs', desc:'Créer une conversation Teams dédiée au forum avec les étudiants et collaborateurs mobilisés.'},
+    {step:'Outlook', ok:!!l.date, title:'Ajouter l’événement au calendrier Outlook', desc:'Télécharger le fichier Outlook / Teams puis l’ajouter au calendrier des personnes concernées.'},
+    {step:'Trajet', ok:!!(l.adresse || l.ville), title:'Préparer le trajet : train, bus, métro', desc:`Prévoir l’itinéraire depuis le campus EFAP ${currentEfapCampus(l)} et réserver les billets nécessaires.`},
+    {step:'QR Code', ok:leads.length>0, title:'Préparer le QR Code + tester le QR Code', desc:'Générer le QR code, le télécharger, le scanner avec un téléphone et vérifier que le formulaire s’ouvre correctement.'},
+    {step:'Sacs forums', ok:false, title:'Préparer les sacs forums + remise des sacs forums', desc:'Préparer les supports, goodies, flyers et sacs forums puis confirmer leur remise aux personnes qui partent sur le forum.'},
+    {step:'Reporting', ok:report.global>0 || report.candidat>0 || report.admis>0 || report.inscrit>0, title:'Compléter le reporting', desc:'Saisir prospects rencontrés, candidats, admis, inscrits et notes qualitatives après le forum.'}
   ];
 }
 function renderTerrainPage(){
-  const events = (getVisibleLycees ? getVisibleLycees() : (LYCEES || [])).filter(isValidatedForum).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const events = activeValidatedForums();
   const list = document.getElementById('terrain-forum-list');
   const count = document.getElementById('terrain-count');
   if(count) count.textContent = `${events.length} forum(s)`;
@@ -5412,7 +5478,7 @@ function renderTerrainPage(){
       const done = tasks.filter(t => t.ok).length;
       const pctDone = Math.round((done / tasks.length) * 100);
       return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${id}" onclick="selectTerrainEvent('${id}')"><div class="terrain-item-title">${escapeHtml(l.nom)}</div><div class="terrain-item-meta">${fmtDate(l.date)} · ${escapeHtml(l.ville||'')} · ${done}/${tasks.length} prêt</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
-    }).join('') : `<div class="crm-empty">Aucun forum validé avec date pour la saison active.</div>`;
+    }).join('') : `<div class="crm-empty">Aucun forum à préparer : les forums terminés sont archivés et les autres ne sont pas encore validés.</div>`;
   }
   if(events.length) selectTerrainEvent(canonicalEventId(events[0]) || events[0].id, false);
   else {
@@ -5434,10 +5500,10 @@ function selectTerrainEvent(eventId, markActive=true){
   const selectedCount = document.getElementById('terrain-selected-count');
   if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions prêtes`;
   const id = canonicalEventId(l) || l.id;
-  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>`;
+  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>`;
 }
 function renderPerformancePage(){
-  const events = (getVisibleLycees ? getVisibleLycees() : (LYCEES || [])).filter(isValidatedForum).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const events = activeValidatedForums();
   const rows = [];
   const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
   events.forEach(l => {
@@ -5742,7 +5808,7 @@ async function loadPublicLeadEventContext(eventToken, season){
   let ev = findCalendarEventById(eventToken) || null;
   if(!ev && supabaseClient){
     try {
-      if(looksLikeUuid(eventToken)){
+      if(looksLikeUuid(eventToken) || /^\d+$/.test(String(eventToken || ''))){
         const byId = await supabaseClient.from('evenements').select('*').eq('id', eventToken).limit(1);
         if(!byId.error && byId.data && byId.data.length){
           const row = byId.data[0];
@@ -5759,9 +5825,11 @@ async function loadPublicLeadEventContext(eventToken, season){
     const schools = getSchoolsArray(ev.ecoles);
     const publicSchool = document.getElementById('public-lead-school');
     if(schools[0] && publicSchool) publicSchool.value = schools[0];
+    updateLeadProgramOptions('public');
   } else {
     if(label) label.textContent = 'Complète tes coordonnées pour être recontacté par notre équipe.';
     if(pill) pill.textContent = 'Forum lycée';
+    updateLeadProgramOptions('public');
   }
   return ev;
 }
@@ -5804,7 +5872,7 @@ async function submitPublicLead(){
   if(ev) saveEventExtrasToSupabase(ev).catch(()=>{});
   const success = document.getElementById('public-lead-success'); if(success) success.classList.add('show');
   const error = document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
-  ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-program','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Envoyer mes coordonnées'; }
 }
 
