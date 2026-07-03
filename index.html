@@ -1931,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V27-2026-07-03-listing-telephone-forced";
+const APP_PATCH_VERSION = "V28-2026-07-03-listing-telephone-verified";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2071,7 +2071,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V27-2026-07-03-listing-telephone-forced';
+window.EDH_APP_VERSION = 'V28-2026-07-03-listing-telephone-verified';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -6339,6 +6339,12 @@ window.addEventListener('DOMContentLoaded', () => {
   SCHOOL_FORUMS = {};
   if(typeof window !== 'undefined') window.__EDH_EMBEDDED_LYCEES = [];
   init();
+  setTimeout(() => {
+    try {
+      forceListingTelephoneColumn();
+      console.info('EDH V28 : colonne Listing lycées vérifiée = Numéro de téléphone');
+    } catch(e) {}
+  }, 500);
 });
 </script>
 
