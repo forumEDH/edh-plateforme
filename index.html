@@ -1931,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V26-2026-07-03-listing-telephone";
+const APP_PATCH_VERSION = "V27-2026-07-03-listing-telephone-forced";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2071,7 +2071,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V25-2026-07-03-saisons-racefix';
+window.EDH_APP_VERSION = 'V27-2026-07-03-listing-telephone-forced';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -3314,6 +3314,17 @@ async function pushToSupabase(){
 // ══════════════════════════════════════
 function fmt(v){ return v || '—'; }
 
+function lyceePhone(l){
+  const phone = l?.tel_ecole || l?.contact_telephone || l?.tel_organisateur || l?.telephone || l?.phone || '';
+  return phone ? String(phone).trim() : '';
+}
+function phoneCell(l){
+  const phone = lyceePhone(l);
+  if(!phone) return '—';
+  const href = 'tel:' + phone.replace(/[^+0-9]/g, '');
+  return `<a href="${href}" onclick="event.stopPropagation()" style="color:var(--primary);text-decoration:none;font-weight:600">${escapeHtml(phone)}</a>`;
+}
+
 function fmtDate(d){
   if(!d) return '—';
   const dt = new Date(d);
@@ -3945,7 +3956,21 @@ function renderDashboard(){
 // ══════════════════════════════════════
 // LISTING
 // ══════════════════════════════════════
+
+function forceListingTelephoneColumn(){
+  try {
+    const listingTable = document.querySelector('#page-listing table');
+    if(!listingTable) return;
+    const headers = Array.from(listingTable.querySelectorAll('thead th'));
+    const oldHeader = headers.find(th => (th.textContent || '').trim().toLowerCase() === 'organisateur');
+    if(oldHeader) oldHeader.textContent = 'Numéro de téléphone';
+    const phoneHeader = headers[8];
+    if(phoneHeader) phoneHeader.textContent = 'Numéro de téléphone';
+  } catch(e) {}
+}
+
 function renderListing(){
+  forceListingTelephoneColumn();
   const data = filtered();
   const pg = paged(data, S.page, S.pageSize);
   document.getElementById('listing-sub').textContent = `${data.length} établissement${data.length>1?'s':''}`;
@@ -3960,7 +3985,7 @@ function renderListing(){
       <td>${scoreBadge(l)}</td>
       <td>${fmtDate(l.date)}</td>
       <td><div style="display:flex;gap:3px;flex-wrap:wrap">${schoolTags(l.ecoles)}</div></td>
-      <td>${fmt(l.tel_ecole || l.contact_telephone || l.tel_organisateur || l.telephone)}</td>
+      <td>${phoneCell(l)}</td>
       <td onclick="event.stopPropagation()">
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" onclick="openEdit('${l.id}')">Modifier</button>
