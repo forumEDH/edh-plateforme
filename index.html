@@ -677,6 +677,17 @@ td strong { color: var(--text); font-weight: 600; }
 .qr-preview img { width:150px; height:150px; }
 .email-preview { white-space:pre-wrap; min-height:240px; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; font-size:13px; line-height:1.65; color:var(--text2); }
 .lead-table-actions { display:flex; gap:6px; flex-wrap:wrap; }
+.lead-crm-grid { display:grid; grid-template-columns:1.05fr .95fr; gap:16px; margin-bottom:20px; }
+.lead-status-box { display:flex; align-items:flex-start; gap:10px; background:var(--primary-light); border:1px solid #bfdbfe; color:#1e3a8a; border-radius:10px; padding:12px; font-size:12px; line-height:1.5; margin-top:12px; }
+.lead-status-box strong { display:block; color:#1d4ed8; margin-bottom:2px; }
+.lead-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+.public-lead-overlay.crm-public { background:linear-gradient(135deg,#0f172a,#1d4ed8); }
+.public-lead-overlay.crm-public .public-lead-card { max-width:620px; border-radius:20px; }
+.public-lead-brand { display:inline-flex; align-items:center; gap:8px; background:#eff4ff; color:#1d4ed8; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:800; margin-bottom:12px; }
+.public-lead-event-pill { display:inline-flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:5px 10px; font-size:12px; color:var(--text2); margin-top:10px; }
+.public-lead-error { display:none; background:var(--red-bg); color:var(--red); border:1px solid var(--red-border); border-radius:10px; padding:12px; font-weight:600; margin-top:14px; }
+.public-lead-error.show { display:block; }
+@media (max-width: 1100px) { .lead-crm-grid, .lead-kpi-row { grid-template-columns:1fr; } }
 
 #modal-edit .check-dropdown-menu {
   position: static;
@@ -756,6 +767,108 @@ td strong { color: var(--text); font-weight: 600; }
   #modal-user #user-delete-btn { flex-basis: 100%; margin-right: 0; }
 }
 
+
+/* ── DESIGN SYSTEM CRM MÉTIER ── */
+.advanced-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+.advanced-card { background:white; border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow-sm); }
+.advanced-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); transition:all .12s; }
+.advanced-number { width:28px; height:28px; border-radius:8px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; margin-bottom:10px; }
+.advanced-title { font-size:14px; font-weight:800; color:var(--text); margin-bottom:5px; }
+.advanced-desc { font-size:12px; color:var(--text2); line-height:1.55; }
+.advanced-meta { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+.advanced-pill { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; background:var(--bg); color:var(--text3); border:1px solid var(--border); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
+.module-section { margin-bottom:24px; }
+.module-section-title { font-size:16px; font-weight:800; color:var(--text); margin-bottom:4px; }
+.module-section-sub { font-size:13px; color:var(--text3); margin-bottom:12px; }
+.feature-table td { white-space:normal; max-width:none; vertical-align:top; }
+.feature-table th { cursor:default; }
+.placeholder-box { background:var(--bg); border:1px dashed var(--border2); border-radius:12px; padding:16px; color:var(--text2); font-size:13px; line-height:1.65; }
+.checklist-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.checklist-box { background:white; border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow-sm); }
+.checklist-box h4 { font-size:13px; font-weight:800; margin-bottom:10px; color:var(--text); }
+.checklist-box label { display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--text2); padding:6px 0; border-bottom:1px solid rgba(0,0,0,.04); }
+.checklist-box label:last-child { border-bottom:none; }
+@media (max-width: 1200px){ .advanced-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .checklist-grid { grid-template-columns:1fr; } }
+@media (max-width: 760px){ .advanced-grid { grid-template-columns:1fr; } }
+
+
+
+/* ── V32 POLISH CRM PROFESSIONNEL ── */
+body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%); }
+.sidebar { box-shadow: 6px 0 24px rgba(15,23,42,.04); }
+.sidebar-logo-badge { box-shadow: 0 6px 16px rgba(37,99,235,.24); }
+.nav-section-label { color:#9aa1b5; }
+.nav-item { border-radius: 0 8px 8px 0; margin-right: 8px; }
+.nav-item.active { box-shadow: inset 0 0 0 1px rgba(37,99,235,.08); }
+.card, .kpi-card, .school-card, .event-card, .student-card, .advanced-card, .checklist-box { border-color:#e6e9f0; box-shadow: 0 8px 24px rgba(15,23,42,.045); }
+.card-header { background: linear-gradient(180deg,#fff,#fbfcff); }
+.page-title { font-size: 22px; letter-spacing: -.45px; }
+.page-subtitle { color:#707891; }
+.btn { min-height: 36px; }
+.btn-primary { box-shadow: 0 8px 20px rgba(37,99,235,.18); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(37,99,235,.22); }
+.btn-outline { box-shadow: 0 2px 8px rgba(15,23,42,.035); }
+.table-scroll table tbody tr:hover td { background:#f8fbff; }
+.badge, .tag-sm, .score-badge { letter-spacing:.1px; }
+.sync-status { border:1px solid var(--border); border-radius:10px; padding:8px 9px; background:white; }
+.login-overlay { background: radial-gradient(circle at 20% 20%, rgba(37,99,235,.22), transparent 34%), linear-gradient(135deg, rgba(15,23,42,.76), rgba(15,23,42,.52)); backdrop-filter: blur(7px); }
+.login-shell { width:min(920px, calc(100vw - 40px)); display:grid; grid-template-columns:1.05fr .95fr; background:white; border-radius:24px; overflow:hidden; box-shadow:0 30px 90px rgba(15,23,42,.34); border:1px solid rgba(255,255,255,.35); }
+.login-brand-panel { padding:34px; background:linear-gradient(145deg,#0f172a 0%, #172554 58%, #1d4ed8 100%); color:white; min-height:470px; display:flex; flex-direction:column; justify-content:flex-end; position:relative; overflow:hidden; }
+.login-brand-panel::before { content:''; position:absolute; width:260px; height:260px; border-radius:999px; background:rgba(255,255,255,.10); top:-90px; right:-60px; }
+.login-brand-panel::after { content:''; position:absolute; width:170px; height:170px; border-radius:999px; border:1px solid rgba(255,255,255,.18); top:70px; right:52px; }
+.login-product-badge { position:absolute; top:28px; left:30px; display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.22); padding:7px 11px; border-radius:999px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; }
+.login-brand-title { position:relative; font-size:30px; line-height:1.12; font-weight:800; letter-spacing:-.8px; max-width:390px; }
+.login-brand-sub { position:relative; margin-top:14px; color:rgba(255,255,255,.78); font-size:14px; line-height:1.6; max-width:390px; }
+.login-feature-list { position:relative; display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; }
+.login-feature-list div { background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); color:white; border-radius:999px; padding:7px 10px; font-size:11px; font-weight:700; }
+.login-card { width:100%; max-width:none; border-radius:0; box-shadow:none; display:flex; flex-direction:column; justify-content:center; }
+.login-head { padding:34px 34px 12px; border-bottom:none; }
+.login-kicker { font-size:11px; color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.login-title { font-size:26px; letter-spacing:-.5px; }
+.login-sub { font-size:13px; line-height:1.55; max-width:330px; }
+.login-body { padding:16px 34px 34px; }
+.login-body .form-grid { grid-template-columns:1fr; }
+.login-body .form-input { padding:11px 12px; min-height:44px; border-radius:10px; background:#fbfcff; }
+.login-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+.login-actions .btn { width:100%; justify-content:center; min-height:42px; border-radius:10px; }
+.btn-login { font-size:14px; }
+.login-footer-note { margin-top:14px; padding:12px 13px; background:#f8fafc; border:1px solid #e6e9f0; border-radius:12px; color:#647084; line-height:1.55; }
+.placeholder-box { border-style:solid; background:#fbfcff; }
+@media (max-width: 820px){ .login-shell { grid-template-columns:1fr; width:min(460px, calc(100vw - 28px)); } .login-brand-panel { min-height:220px; padding:26px; } .login-brand-title { font-size:23px; } .login-brand-sub { font-size:13px; } .login-card { border-radius:0; } .login-actions { grid-template-columns:1fr; } }
+
+/* ── V33 CRM MÉTIER : LOGIN ÉPURÉ + PAGES OPÉRATIONNELLES ── */
+.sidebar-season { display:none !important; }
+.login-shell { grid-template-columns:.92fr 1.08fr; max-width:880px; }
+.login-brand-panel-clean { justify-content:center; align-items:center; min-height:470px; }
+.login-edh-mark { position:relative; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.login-edh-badge { width:96px; height:96px; border-radius:26px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.30); color:white; font-size:30px; font-weight:900; letter-spacing:.8px; box-shadow:0 18px 45px rgba(0,0,0,.18); }
+.login-edh-text { color:white; font-size:20px; font-weight:800; letter-spacing:-.2px; }
+.login-brand-panel-clean::before { width:320px; height:320px; top:-120px; right:-90px; }
+.login-brand-panel-clean::after { width:190px; height:190px; top:auto; right:auto; bottom:54px; left:44px; }
+.crm-work-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; margin-bottom:20px; }
+.crm-table td { white-space:normal; max-width:340px; vertical-align:top; }
+.crm-empty { padding:24px; color:var(--text3); font-size:13px; text-align:center; }
+.todo-status { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid transparent; white-space:nowrap; }
+.todo-ok { background:var(--green-bg); color:var(--green); border-color:var(--green-border); }
+.todo-warning { background:var(--yellow-bg); color:var(--yellow); border-color:var(--yellow-border); }
+.todo-blocked { background:var(--red-bg); color:var(--red); border-color:var(--red-border); }
+.terrain-layout { display:grid; grid-template-columns:360px minmax(0,1fr); gap:16px; align-items:start; }
+.terrain-list { display:flex; flex-direction:column; gap:8px; padding:14px; max-height:640px; overflow:auto; }
+.terrain-item { border:1px solid var(--border); background:white; border-radius:10px; padding:12px; cursor:pointer; transition:all .12s; }
+.terrain-item:hover, .terrain-item.active { border-color:var(--primary); box-shadow:0 8px 20px rgba(37,99,235,.09); background:#fbfdff; }
+.terrain-item-title { font-size:13px; font-weight:800; color:var(--text); }
+.terrain-item-meta { font-size:11px; color:var(--text3); margin-top:3px; }
+.terrain-progress { height:6px; background:var(--bg2); border-radius:999px; overflow:hidden; margin-top:9px; }
+.terrain-progress span { display:block; height:100%; background:var(--primary); border-radius:999px; }
+.todo-checklist { display:grid; grid-template-columns:1fr; gap:8px; }
+.todo-row { display:grid; grid-template-columns:110px minmax(0,1fr); gap:12px; align-items:start; border:1px solid var(--border); border-radius:10px; padding:11px 12px; background:#fbfcff; }
+.todo-row-title { font-weight:800; color:var(--text); font-size:13px; }
+.todo-row-desc { color:var(--text2); font-size:12px; margin-top:2px; line-height:1.45; }
+.conversion-rate { font-weight:800; color:var(--text); }
+@media (max-width: 1100px){ .crm-work-grid, .terrain-layout { grid-template-columns:1fr; } }
+@media (max-width: 820px){ .login-shell { grid-template-columns:1fr; } .login-brand-panel-clean { min-height:190px; } .login-edh-badge { width:76px; height:76px; border-radius:22px; font-size:24px; } }
+
+
 </style>
 </head>
 <body>
@@ -767,7 +880,7 @@ td strong { color: var(--text); font-weight: 600; }
       <div class="sidebar-logo-badge">EDH</div>
       Groupe EDH
     </div>
-    <div class="sidebar-season" id="sidebar-season-label">Forums Lycées · 2025 – 2026</div>
+    <div class="sidebar-season" id="sidebar-season-label"></div>
   </div>
 
   <nav class="nav">
@@ -785,17 +898,17 @@ td strong { color: var(--text); font-weight: 600; }
 
     <button class="nav-item" onclick="showPage('calendrier')">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Calendrier événement
+      Calendrier forums
     </button>
 
     <button class="nav-item" data-role="collaborateur" onclick="showPage('students')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-      Nos étudiants
+      Ambassadeurs
     </button>
 
     <button class="nav-item" data-role="collaborateur" onclick="showPage('registrations')">
       <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
-      Inscriptions évènement
+      Inscriptions étudiants
     </button>
 
     <button class="nav-item" data-role="collaborateur" onclick="showPage('users')">
@@ -805,12 +918,30 @@ td strong { color: var(--text); font-weight: 600; }
 
     <button class="nav-item" data-role="collaborateur" onclick="showPage('reporting')">
       <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
-      Reporting
+      Reporting opérationnel
     </button>
 
     <button class="nav-item" data-role="collaborateur" onclick="showPage('leads')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h7v7h-7z"/></svg>
-      Leads QR
+      Leads & suivi
+    </button>
+
+
+    <div class="nav-section-label" style="margin-top:8px" data-role="collaborateur">Pilotage CRM</div>
+
+    <button class="nav-item" data-role="collaborateur" onclick="showPage('actions')">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/><circle cx="8" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg>
+      Pipeline CRM
+    </button>
+
+    <button class="nav-item" data-role="collaborateur" onclick="showPage('terrain')">
+      <svg viewBox="0 0 24 24"><path d="M12 21s7-4.4 7-11a7 7 0 1 0-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      Préparation forums
+    </button>
+
+    <button class="nav-item" data-role="collaborateur" onclick="showPage('performance')">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg>
+      Bilan & conversion
     </button>
 
 
@@ -862,6 +993,7 @@ td strong { color: var(--text); font-weight: 600; }
         <option value="collaborateur">Espace collaborateur</option>
       </select>
       <div class="role-hint" id="role-hint">Espace collaborateur : accès réservé aux comptes collaborateurs et administrateurs.</div>
+      <div class="sync-status" id="supabase-status" style="margin-top:10px"><span class="sync-dot"></span><span id="supabase-status-label">Connexion non initialisée</span></div>
       <div class="login-footer-note" id="current-user-label" style="margin-top:8px">Aucun utilisateur connecté</div>
     </div>
   </div>
@@ -933,6 +1065,24 @@ td strong { color: var(--text); font-weight: 600; }
         <div>
           <div class="page-title">Tableau de bord</div>
           <div class="page-subtitle">Campagne prospection Forums &amp; Visites · 2025-2026</div>
+        </div>
+      </div>
+
+      <div class="advanced-grid" style="margin-bottom:20px">
+        <div class="advanced-card" onclick="showPage('actions')" style="cursor:pointer">
+          <div class="advanced-title">Pipeline CRM</div>
+          <div class="advanced-desc">Prioriser les lycées à contacter, les NRP à relancer, les forums incomplets et les leads à traiter.</div>
+          <div class="advanced-meta"><span class="advanced-pill">Relances</span><span class="advanced-pill">Priorités</span></div>
+        </div>
+        <div class="advanced-card" onclick="showPage('terrain')" style="cursor:pointer">
+          <div class="advanced-title">Préparation forums</div>
+          <div class="advanced-desc">Piloter chaque événement avec une checklist avant / pendant / après et une future fiche terrain imprimable.</div>
+          <div class="advanced-meta"><span class="advanced-pill">Terrain</span><span class="advanced-pill">Checklist</span></div>
+        </div>
+        <div class="advanced-card" onclick="showPage('performance')" style="cursor:pointer">
+          <div class="advanced-title">Bilan & conversion</div>
+          <div class="advanced-desc">Mesurer les forums réalisés, les leads, les candidats, les inscrits et le rendement par lycée.</div>
+          <div class="advanced-meta"><span class="advanced-pill">Direction</span><span class="advanced-pill">ROI</span></div>
         </div>
       </div>
 
@@ -1061,7 +1211,7 @@ td strong { color: var(--text); font-weight: 600; }
     <div class="page" id="page-students">
       <div class="page-header">
         <div>
-          <div class="page-title">Nos étudiants</div>
+          <div class="page-title">Ambassadeurs</div>
           <div class="page-subtitle">Base administrée des étudiants actuellement inscrits à EFAP, ICART, CREAD ou BRASSART</div>
         </div>
         <div class="small-actions">
@@ -1141,7 +1291,7 @@ td strong { color: var(--text); font-weight: 600; }
     <div class="page" id="page-registrations">
       <div class="page-header">
         <div>
-          <div class="page-title">Inscriptions évènement</div>
+          <div class="page-title">Inscriptions étudiants</div>
           <div class="page-subtitle">Vue collaborateur : retrouver rapidement les étudiants inscrits par événement</div>
         </div>
       </div>
@@ -1233,57 +1383,88 @@ td strong { color: var(--text); font-weight: 600; }
 
 
 
-    <!-- ═══ LEADS QR PAGE ═══ -->
+    <!-- ═══ LEADS & SUIVI PAGE ═══ -->
     <div class="page" id="page-leads">
       <div class="page-header">
         <div>
-          <div class="page-title">Leads QR</div>
-          <div class="page-subtitle">Centraliser les contacts récupérés pendant les événements grâce à un QR code</div>
+          <div class="page-title">Leads &amp; suivi</div>
+          <div class="page-subtitle">Créer un QR code par forum, collecter les coordonnées prospects et centraliser les leads dans Supabase.</div>
         </div>
         <div class="small-actions">
+          <button class="btn btn-outline" onclick="refreshLeadsFromSupabase()">Recharger Supabase</button>
           <button class="btn btn-outline" onclick="downloadLeadsExcel()">Exporter Excel</button>
           <button class="btn btn-primary" onclick="saveLeadFromForm()">Ajouter le lead</button>
         </div>
       </div>
-      <div class="dashboard-v2-grid">
+
+      <div class="lead-kpi-row" id="leads-kpis"></div>
+
+      <div class="lead-crm-grid">
         <div class="card">
-          <div class="card-header"><div class="card-title">QR code événement</div><div class="card-count">Formulaire leads</div></div>
+          <div class="card-header">
+            <div>
+              <div class="card-title">QR code du forum</div>
+              <div class="card-count">Formulaire public sans connexion</div>
+            </div>
+          </div>
           <div style="padding:16px">
             <div class="qr-box">
-              <div style="flex:1;min-width:260px">
+              <div style="flex:1;min-width:280px">
                 <div class="form-grid">
-                  <div class="form-field full"><label class="form-label">Événement</label><select class="form-select" id="lead-event-select" onchange="renderQrPreview();prefillLeadEvent()"></select></div>
-                  <div class="form-field full"><label class="form-label">Lien du QR code</label><input class="form-input" id="lead-qr-url" readonly></div>
-                  <div class="form-field full"><label class="form-label">Lien de centralisation externe — optionnel</label><input class="form-input" id="lead-webhook-url" placeholder="URL Google Apps Script / Make / API" onchange="saveLeadWebhookUrl()"></div>
-                  <div class="qr-warning">Important : sans lien de centralisation externe, les leads scannés sont enregistrés uniquement dans le navigateur de l’appareil qui remplit le formulaire. Pour une vraie collecte partagée entre plusieurs collaborateurs, il faut connecter ce champ à un Google Sheet via Apps Script, Make, Airtable ou une API.</div>
+                  <div class="form-field full">
+                    <label class="form-label">Forum lycée concerné</label>
+                    <select class="form-select" id="lead-event-select" onchange="renderQrPreview();prefillLeadEvent()"></select>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">Lien public du formulaire</label>
+                    <input class="form-input" id="lead-qr-url" readonly>
+                  </div>
+                </div>
+                <div class="lead-status-box">
+                  <span class="sync-dot" style="margin-top:4px"></span>
+                  <div>
+                    <strong>Collecte directe dans Supabase</strong>
+                    Le QR code ouvre uniquement le formulaire prospect sur mobile. Aucune connexion n’est demandée au lycéen. Après validation, le lead remonte dans cet onglet et peut être exporté.
+                  </div>
                 </div>
                 <div class="small-actions" style="margin-top:12px">
                   <button class="btn btn-outline" onclick="copyLeadUrl()">Copier le lien</button>
-                  <button class="btn btn-outline" onclick="downloadQrCode()">Télécharger QR code</button>
-                  <button class="btn btn-primary" onclick="openLeadPublicForm()">Tester le formulaire</button>
+                  <button class="btn btn-outline" onclick="downloadQrCode()">Télécharger le QR code</button>
+                  <button class="btn btn-primary" onclick="openLeadPublicForm()">Ouvrir le formulaire</button>
                 </div>
               </div>
               <div class="qr-preview" id="lead-qr-preview">QR</div>
             </div>
           </div>
         </div>
+
         <div class="inline-form">
-          <div class="kicker">Saisie rapide lead</div>
+          <div class="kicker">Saisie manuelle</div>
           <div style="font-size:14px;font-weight:700;margin-bottom:10px">Ajouter un prospect rencontré</div>
           <div class="form-grid">
             <div class="form-field"><label class="form-label">Prénom *</label><input class="form-input" id="lead-firstname"></div>
             <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="lead-lastname"></div>
             <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="lead-email" type="email"></div>
             <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="lead-phone"></div>
-            <div class="form-field"><label class="form-label">Niveau</label><select class="form-select" id="lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Autre">Autre</option></select></div>
             <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="lead-school"><option value="EFAP">EFAP</option><option value="ICART">ICART</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="À préciser">À préciser</option></select></div>
-            <div class="form-field full"><label class="form-label">Notes</label><textarea class="form-textarea" id="lead-notes" rows="3"></textarea></div>
+            <div class="form-field"><label class="form-label">Cursus souhaité</label><input class="form-input" id="lead-program" placeholder="Communication, art, architecture, game design..."></div>
+            <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+            <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="lead-notes" rows="3" placeholder="Question posée, niveau d’intérêt, rappel à prévoir..."></textarea></div>
           </div>
         </div>
       </div>
+
       <div class="card">
-        <div class="card-header"><div class="card-title">Leads centralisés</div><div class="card-count" id="leads-count"></div></div>
-        <div class="table-scroll"><table><thead><tr><th>Date</th><th>Événement</th><th>Lycée</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>Niveau</th><th>École</th><th>Actions</th></tr></thead><tbody id="leads-tbody"></tbody></table></div>
+        <div class="card-header">
+          <div class="card-title">Leads récupérés</div>
+          <div class="card-count" id="leads-count"></div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Date</th><th>Événement</th><th>Lycée</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>École</th><th>Cursus</th><th>Niveau</th><th>Notes</th><th>Actions</th></tr></thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1297,7 +1478,7 @@ td strong { color: var(--text); font-weight: 600; }
         </div>
         <div class="small-actions">
           <button class="btn btn-outline" onclick="reloadUsersFromSupabaseAndRender()">Recharger Supabase</button>
-          <button class="btn btn-outline" onclick="diagnoseUsersSupabaseAccess()">Tester accès utilisateurs</button>
+          <button class="btn btn-outline" onclick="diagnoseUsersSupabaseAccess()">Vérifier accès utilisateurs</button>
           <button class="btn btn-outline" onclick="downloadUsersExcel()">Exporter Excel</button>
           <button class="btn btn-outline" onclick="openImportUsersModal()">Importer Excel</button>
           <button class="btn btn-primary" onclick="openUserModal()">Ajouter un utilisateur</button>
@@ -1361,7 +1542,7 @@ td strong { color: var(--text); font-weight: 600; }
     <div class="page" id="page-reporting">
       <div class="page-header">
         <div>
-          <div class="page-title">Reporting par école</div>
+          <div class="page-title">Reporting opérationnel par école</div>
           <div class="page-subtitle">Forums validés synchronisés automatiquement, avec saisie des contacts et statuts commerciaux</div>
         </div>
         <div class="small-actions">
@@ -1469,6 +1650,86 @@ td strong { color: var(--text); font-weight: 600; }
               <tbody id="school-reporting-body"></tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ PIPELINE CRM / RELANCES ═══ -->
+    <div class="page" id="page-actions">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Pipeline CRM</div>
+          <div class="page-subtitle">Todo-list commerciale : relances prioritaires, forums validés sans ambassadeur et actions à sécuriser</div>
+        </div>
+      </div>
+      <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card kpi-accent-blue"><div class="kpi-label">À appeler</div><div class="kpi-value" id="actions-a-contacter">—</div><div class="kpi-meta">lycées à contacter</div></div>
+        <div class="kpi-card kpi-accent-yellow"><div class="kpi-label">NRP</div><div class="kpi-value" id="actions-nrp">—</div><div class="kpi-meta">à rappeler</div></div>
+        <div class="kpi-card kpi-accent-orange"><div class="kpi-label">Sans ambassadeur</div><div class="kpi-value" id="actions-no-student">—</div><div class="kpi-meta">forums validés à staffer</div></div>
+        <div class="kpi-card kpi-accent-red"><div class="kpi-label">Reporting à compléter</div><div class="kpi-value" id="actions-reporting">—</div><div class="kpi-meta">forums passés ou incomplets</div></div>
+      </div>
+      <div class="crm-work-grid">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Forums validés sans étudiants attribués</div><div class="card-count" id="actions-no-student-count"></div></div>
+          <div class="table-scroll"><table class="feature-table crm-table"><thead><tr><th>Forum</th><th>Date</th><th>Action à faire</th><th></th></tr></thead><tbody id="actions-no-student-tbody"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Lycées à appeler en priorité</div><div class="card-count" id="actions-priority-count"></div></div>
+          <div class="table-scroll"><table class="feature-table crm-table"><thead><tr><th>Priorité</th><th>Lycée</th><th>Pourquoi</th><th>Action</th></tr></thead><tbody id="actions-priority-tbody"></tbody></table></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Todo-list CRM complète</div><div class="card-count" id="actions-todo-count"></div></div>
+        <div class="table-scroll"><table class="feature-table crm-table"><thead><tr><th>Statut</th><th>Lycée / forum</th><th>Déclencheur</th><th>Action recommandée</th><th>Accès</th></tr></thead><tbody id="actions-todo-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ═══ PRÉPARATION FORUMS ═══ -->
+    <div class="page" id="page-terrain">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Préparation forums</div>
+          <div class="page-subtitle">Sélectionner un forum validé pour afficher la checklist complète à traiter avant le jour J</div>
+        </div>
+      </div>
+      <div class="terrain-layout">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Forums validés</div><div class="card-count" id="terrain-count"></div></div>
+          <div class="terrain-list" id="terrain-forum-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Todo de préparation</div><div class="card-count" id="terrain-selected-count">Sélectionner un forum</div></div>
+          <div style="padding:16px" id="terrain-detail">
+            <div class="crm-empty">Clique sur un forum validé dans la liste pour afficher les actions à préparer.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BILAN & CONVERSION ═══ -->
+    <div class="page" id="page-performance">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Bilan & conversion</div>
+          <div class="page-subtitle">Lecture automatique du reporting par lycée : prospects, candidats, admis, inscrits et taux de conversion</div>
+        </div>
+      </div>
+      <div class="kpi-row" style="grid-template-columns:repeat(6,1fr)">
+        <div class="kpi-card"><div class="kpi-label">Forums validés</div><div class="kpi-value" id="perf-forums">—</div><div class="kpi-meta">saison active</div></div>
+        <div class="kpi-card"><div class="kpi-label">Prospects</div><div class="kpi-value" id="perf-prospects">—</div><div class="kpi-meta">reporting</div></div>
+        <div class="kpi-card"><div class="kpi-label">Candidats</div><div class="kpi-value" id="perf-candidats">—</div><div class="kpi-meta">post-forum</div></div>
+        <div class="kpi-card"><div class="kpi-label">Admis</div><div class="kpi-value" id="perf-admis">—</div><div class="kpi-meta">admissions</div></div>
+        <div class="kpi-card"><div class="kpi-label">Inscrits</div><div class="kpi-value" id="perf-inscrits">—</div><div class="kpi-meta">conversion</div></div>
+        <div class="kpi-card"><div class="kpi-label">Taux inscrit</div><div class="kpi-value" id="perf-taux">—</div><div class="kpi-meta">prospect → inscrit</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Lycées validés avec reporting</div><div class="card-count" id="perf-count"></div></div>
+        <div class="table-scroll">
+          <table class="feature-table crm-table">
+            <thead><tr><th>Lycée</th><th>Date</th><th>Écoles</th><th>Prospects</th><th>Candidats</th><th>Admis</th><th>Inscrits</th><th>Conversion</th><th>Lecture CRM</th></tr></thead>
+            <tbody id="performance-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1618,7 +1879,7 @@ td strong { color: var(--text); font-weight: 600; }
             </div>
             <div class="form-field full">
               <label class="form-label">Anciens étudiants référents</label>
-              <textarea class="form-textarea" id="f-etudiants" readonly placeholder="Les étudiants référents sont alimentés automatiquement depuis Nos étudiants"></textarea>
+              <textarea class="form-textarea" id="f-etudiants" readonly placeholder="Les étudiants référents sont alimentés automatiquement depuis Ambassadeurs"></textarea>
             </div>
           </div>
         </div>
@@ -1712,7 +1973,7 @@ td strong { color: var(--text); font-weight: 600; }
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-field full" id="admin-student-lookup-wrap" style="display:none">
-          <label class="form-label">Rechercher dans la base Nos étudiants</label>
+          <label class="form-label">Rechercher dans la base Ambassadeurs</label>
           <input class="form-input" id="admin-student-search" list="admin-student-datalist" placeholder="Tape le nom, prénom, email, lycée ou école de l’étudiant..." oninput="fillAdminStudentFromLookup(this.value)">
           <datalist id="admin-student-datalist"></datalist>
           <div class="login-footer-note">Sélectionne un étudiant existant pour préremplir automatiquement prénom, nom, email, téléphone et école.</div>
@@ -1758,25 +2019,34 @@ td strong { color: var(--text); font-weight: 600; }
 
 <!-- ═══ LOGIN MODAL ═══ -->
 <div class="login-overlay" id="login-modal">
-  <div class="login-card">
-    <div class="login-head">
-      <div class="login-title">Espace collaborateur</div>
-      <div class="login-sub">Connectez-vous avec un compte collaborateur, admin campus ou admin global.</div>
-    </div>
-    <div class="login-body">
-      <input type="hidden" id="login-role" value="collaborateur">
-      <div class="form-grid">
-        <div class="form-field full">
-          <label class="form-label">Identifiant</label>
-          <input class="form-input" id="login-username" placeholder="Adresse mail ou identifiant">
-        </div>
-        <div class="form-field full">
-          <label class="form-label">Mot de passe</label>
-          <input class="form-input" id="login-password" type="password" placeholder="Mot de passe">
-        </div>
+  <div class="login-shell">
+    <div class="login-brand-panel login-brand-panel-clean">
+      <div class="login-edh-mark" aria-label="Groupe EDH">
+        <div class="login-edh-badge">EDH</div>
+        <div class="login-edh-text">Groupe EDH</div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-        <button class="btn btn-primary" onclick="submitLogin()">Se connecter</button>
+    </div>
+    <div class="login-card">
+      <div class="login-head">
+        <div class="login-kicker">Accès sécurisé</div>
+        <div class="login-title">Espace collaborateur</div>
+        <div class="login-sub">Connectez-vous avec un compte collaborateur, admin campus ou admin global.</div>
+      </div>
+      <div class="login-body">
+        <input type="hidden" id="login-role" value="collaborateur">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label class="form-label">Identifiant</label>
+            <input class="form-input" id="login-username" placeholder="Adresse mail ou identifiant" autocomplete="username">
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Mot de passe</label>
+            <input class="form-input" id="login-password" type="password" placeholder="Mot de passe" autocomplete="current-password">
+          </div>
+        </div>
+        <div class="login-actions">
+          <button class="btn btn-primary btn-login" onclick="submitLogin()">Se connecter</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1905,24 +2175,28 @@ td strong { color: var(--text); font-weight: 600; }
 
 
 <!-- ═══ PUBLIC QR LEAD FORM ═══ -->
-<div class="public-lead-overlay" id="public-lead-overlay">
+<div class="public-lead-overlay crm-public" id="public-lead-overlay">
   <div class="public-lead-card">
     <div class="public-lead-head">
-      <div class="public-lead-title">Formulaire contact EDH</div>
-      <div class="public-lead-sub" id="public-lead-event-label">Complète tes coordonnées pour recevoir plus d’informations.</div>
+      <div class="public-lead-brand"><span class="sidebar-logo-badge">EDH</span> Groupe EDH</div>
+      <div class="public-lead-title">Recevoir plus d’informations</div>
+      <div class="public-lead-sub" id="public-lead-event-label">Complète tes coordonnées pour être recontacté par notre équipe.</div>
+      <div class="public-lead-event-pill" id="public-lead-event-pill">Forum lycée</div>
     </div>
     <div class="public-lead-body">
       <div class="form-grid">
-        <div class="form-field"><label class="form-label">Prénom *</label><input class="form-input" id="public-lead-firstname"></div>
-        <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="public-lead-lastname"></div>
-        <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="public-lead-email" type="email"></div>
-        <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone"></div>
-        <div class="form-field"><label class="form-label">Niveau</label><select class="form-select" id="public-lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Autre">Autre</option></select></div>
+        <div class="form-field"><label class="form-label">Prénom *</label><input class="form-input" id="public-lead-firstname" autocomplete="given-name"></div>
+        <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="public-lead-lastname" autocomplete="family-name"></div>
+        <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="public-lead-email" type="email" autocomplete="email"></div>
+        <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone" autocomplete="tel"></div>
         <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school"><option value="EFAP">EFAP</option><option value="ICART">ICART</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="À préciser">À préciser</option></select></div>
-        <div class="form-field full"><label class="form-label">Message / question</label><textarea class="form-textarea" id="public-lead-notes" rows="3"></textarea></div>
+        <div class="form-field"><label class="form-label">Cursus souhaité</label><input class="form-input" id="public-lead-program" placeholder="Communication, art, architecture..."></div>
+        <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+        <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..."></textarea></div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Envoyer mes coordonnées</button>
+      <button class="btn btn-primary" id="public-lead-submit-btn" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Envoyer mes coordonnées</button>
       <div class="public-lead-success" id="public-lead-success">Merci, tes coordonnées ont bien été enregistrées.</div>
+      <div class="public-lead-error" id="public-lead-error">Une erreur empêche l’enregistrement. Merci de réessayer ou de transmettre tes coordonnées à l’équipe sur place.</div>
     </div>
   </div>
 </div>
@@ -1931,7 +2205,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V28-2026-07-03-listing-telephone-verified";
+const APP_PATCH_VERSION = "V33-2026-07-03-correctifs-crm-operationnel";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2011,7 +2285,6 @@ let SUPABASE_LOAD_SEQ = 0;
 let SUPABASE_REALTIME_CHANNEL = null;
 let SUPABASE_REMOTE_REFRESH_TIMER = null;
 let SUPABASE_PERIODIC_REFRESH_TIMER = null;
-const ALLOW_DEMO_ACCOUNTS = false;
 
 // V12 SAFE SYNC
 // On garde Supabase comme source de vérité, mais on désactive le temps réel
@@ -2071,7 +2344,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V28-2026-07-03-listing-telephone-verified';
+window.EDH_APP_VERSION = 'V33-2026-07-03-correctifs-crm-operationnel';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2298,7 +2571,7 @@ async function refreshUsersFromSupabase(){
 async function diagnoseUsersSupabaseAccess(){
   if(!isAdminMode()) return showToast('Accès réservé aux collaborateurs', 'error');
   if(!supabaseClient) return showToast('Client Supabase non initialisé : SDK, URL ou clé anon absent.', 'error');
-  setSupabaseStatus('syncing', 'Supabase : test utilisateurs…');
+  setSupabaseStatus('syncing', 'Supabase : vérification utilisateurs…');
   try {
     const rows = await fetchUtilisateursRows();
     setSupabaseStatus('ok', `Supabase : utilisateurs OK · ${rows.length} ligne(s)`);
@@ -2394,10 +2667,6 @@ async function findUserForLogin(username, password){
     }
   }
 
-  if(!supabaseClient || ALLOW_DEMO_ACCOUNTS){
-    ensureDefaultUsers();
-    return USERS.find(u => (((u.email || '').toLowerCase() === login) || (login === 'admin' && (u.email || '') === 'admin')) && (u.password || '') === pass) || null;
-  }
   return null;
 }
 function mapSupabaseRegistrationToApp(row){
@@ -2406,6 +2675,90 @@ function mapSupabaseRegistrationToApp(row){
 function mapAppRegistrationToSupabase(r){
   const ev = findCalendarEventById(r.eventId) || {};
   return { app_id: normalizeSupabaseText(r.id), event_app_id: normalizeSupabaseText(r.eventId), event_name: normalizeSupabaseText(r.eventName || ev.nom), school: normalizeSupabaseText(r.school), first_name: normalizeSupabaseText(r.firstName), last_name: normalizeSupabaseText(r.lastName), email: normalizeSupabaseText(r.email), phone: normalizeSupabaseText(r.phone), notes: normalizeSupabaseText(r.notes), user_app_id: normalizeSupabaseText(r.userId), created_at: normalizeSupabaseText(r.createdAt || new Date().toISOString()) };
+}
+function looksLikeUuid(value){ return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '')); }
+function mapSupabaseLeadToApp(row){
+  const eventToken = row.event_app_id || row.event_id || row.event_uuid || row.lycee_id || row.eventId || '';
+  return {
+    id: String(row.app_id || row.id || ('LEAD' + Date.now())),
+    supabase_id: row.id || null,
+    season: row.saison || row.season || S.season || DEFAULT_SEASON,
+    eventId: String(eventToken || ''),
+    eventName: row.event_name || row.evenement || row.event || row.lycee || '',
+    lycee: row.lycee || row.event_name || '',
+    ville: row.ville || '',
+    firstName: row.first_name || row.firstname || row.prenom || row.firstName || '',
+    lastName: row.last_name || row.lastname || row.nom || row.lastName || '',
+    email: (row.email || '').toString().toLowerCase(),
+    phone: row.phone || row.telephone || row.téléphone || '',
+    school: normalizeSchoolName(row.school || row.ecole || row.ecole_interessee) || row.school || row.ecole || row.ecole_interessee || '',
+    program: row.cursus_souhaite || row.cursus || row.program || row.programme || '',
+    level: row.niveau_etude || row.niveau || row.level || '',
+    notes: row.notes || row.commentaire || row.prise_notes || '',
+    source: row.source || 'QR public',
+    createdAt: row.created_at || row.createdAt || new Date().toISOString()
+  };
+}
+function mapAppLeadToSupabase(l){
+  const ev = findCalendarEventById(l.eventId) || {};
+  const eventToken = l.eventId || leadEventToken(ev) || '';
+  return {
+    app_id: normalizeSupabaseText(l.id || ('LEAD' + Date.now())),
+    saison: normalizeSupabaseText(l.season || S.season || DEFAULT_SEASON),
+    event_id: looksLikeUuid(eventToken) ? eventToken : null,
+    event_app_id: normalizeSupabaseText(eventToken),
+    event_name: normalizeSupabaseText(l.eventName || ev.nom),
+    lycee: normalizeSupabaseText(l.lycee || ev.nom || l.eventName),
+    ville: normalizeSupabaseText(l.ville || ev.ville),
+    first_name: normalizeSupabaseText(l.firstName),
+    last_name: normalizeSupabaseText(l.lastName),
+    email: normalizeSupabaseText((l.email || '').toLowerCase()),
+    phone: normalizeSupabaseText(l.phone),
+    school: normalizeSupabaseText(l.school),
+    cursus_souhaite: normalizeSupabaseText(l.program || l.cursus),
+    niveau_etude: normalizeSupabaseText(l.level),
+    notes: normalizeSupabaseText(l.notes),
+    source: normalizeSupabaseText(l.source || 'Saisie plateforme'),
+    created_at: normalizeSupabaseText(l.createdAt || new Date().toISOString())
+  };
+}
+async function saveLeadDirectToSupabase(lead){
+  if(!supabaseClient) return { ok:false, skipped:false, message:'Supabase indisponible : le lead n’a pas été enregistré.' };
+  let payload = mapAppLeadToSupabase(lead);
+  try {
+    for(let attempt=0; attempt<12; attempt++){
+      const response = await supabaseClient.from('leads').upsert([payload], { onConflict:'app_id' }).select('id').single();
+      if(!response.error){
+        if(response.data?.id) lead.supabase_id = response.data.id;
+        return { ok:true, id:lead.supabase_id };
+      }
+      const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
+      if(cleaned){ payload = cleaned; continue; }
+      throw response.error;
+    }
+    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder ce lead.' };
+  } catch(err){
+    console.error('Erreur sauvegarde lead Supabase:', err);
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+  }
+}
+async function deleteLeadDirectFromSupabase(lead){
+  if(!supabaseClient || !lead) return { ok:false, skipped:true };
+  try {
+    if(lead.supabase_id){
+      const { error } = await supabaseClient.from('leads').delete().eq('id', lead.supabase_id);
+      if(error) throw error;
+      return { ok:true };
+    }
+    if(lead.id){
+      const { error } = await supabaseClient.from('leads').delete().eq('app_id', lead.id);
+      if(error) throw error;
+    }
+    return { ok:true };
+  } catch(err){
+    console.error('Erreur suppression lead Supabase:', err);
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+  }
 }
 async function fetchOptionalTable(table, mapper){
   if(!supabaseClient) return [];
@@ -3242,7 +3595,23 @@ async function loadFromSupabase(options = {}){
       loadedTables.push(`etudiants:${nextStudents.length}`);
     }
 
-    // 4) Utilisateurs.
+    // 4) Leads QR centralisés.
+    const leadResponse = await supabaseClient.from('leads').select('*').eq('saison', requestedSeason);
+    if(isStaleLoad()) return false;
+    if(leadResponse.error){
+      console.warn('Table leads non chargée : les leads intégrés aux événements restent disponibles.', leadResponse.error);
+    } else {
+      const remoteLeadRows = Array.isArray(leadResponse.data) ? leadResponse.data.map(mapSupabaseLeadToApp) : [];
+      const leadMap = new Map();
+      [...nextLeads, ...remoteLeadRows].forEach(l => {
+        const key = l.supabase_id || l.id || `${l.eventId || ''}__${(l.email || '').toLowerCase()}`;
+        leadMap.set(String(key), l);
+      });
+      nextLeads = Array.from(leadMap.values());
+      loadedTables.push(`leads:${remoteLeadRows.length}`);
+    }
+
+    // 5) Utilisateurs.
     try {
       await refreshUsersFromSupabase();
       if(isStaleLoad()) return false;
@@ -3442,7 +3811,7 @@ function canSeeRecord(row,user=currentUser()){
 function getVisibleLycees(){ return (Array.isArray(LYCEES)?LYCEES:[]).filter(l=>canSeeRecord(l)); }
 function getVisibleStudents(){ return (Array.isArray(STUDENTS)?STUDENTS:[]).filter(s=>canSeeRecord({...s, ecoles:s.school, campus:s.campus||s.region})); }
 function getVisibleUsers(){ return Array.isArray(USERS) ? USERS : []; }
-function getVisibleLeads(){ const ids=new Set(getVisibleLycees().map(l=>l.id)); return (Array.isArray(LEADS)?LEADS:[]).filter(l=>!l.eventId||ids.has(l.eventId)||canSeeRecord(l)); }
+function getVisibleLeads(){ const ids=new Set(getVisibleLycees().flatMap(l=>eventIdCandidates(l))); return (Array.isArray(LEADS)?LEADS:[]).filter(l=>!l.eventId||ids.has(String(l.eventId))||canSeeRecord(l)); }
 
 function normalizeSchoolName(value){
   const raw = (value || '').toString().trim();
@@ -3658,30 +4027,10 @@ function saveLocalData(){
   // IMPORTANT V22 : en mode Supabase, on ne lance plus jamais de push global automatique.
   // Les sauvegardes vers Supabase doivent rester ciblées : lycée, suivi annuel, événement, utilisateur, etc.
   // Sinon, changer d'année puis recharger peut recopier des données d'une autre saison dans la saison active.
-  if(!supabaseClient){
-    queueSupabaseSave();
-  }
+
 }
 function ensureDefaultUsers(){
-  if(!Array.isArray(USERS)) USERS = [];
-  if(!Array.isArray(DELETED_DEFAULT_USER_IDS)) DELETED_DEFAULT_USER_IDS = [];
-  // Version opérationnelle : on ne réinjecte plus de comptes démo locaux.
-  // Les seuls utilisateurs affichés / modifiables doivent venir de Supabase
-  // ou des comptes réellement créés via l’interface.
-  if(!ALLOW_DEMO_ACCOUNTS) return;
-  const defaults = [
-    {id:'USR_ADMIN', firstName:'Admin', lastName:'EDH', email:'admin', password:'edhadmin', role:'collaborateur', school:'', phone:'', locked:true},
-    {id:'USR_DEMO_STUDENT', firstName:'Étudiant', lastName:'Démo', email:'student', password:'edhstudent', role:'student', school:'EFAP', phone:'0600000000', locked:false}
-  ];
-  defaults.forEach(def => {
-    if(def.id !== 'USR_ADMIN' && DELETED_DEFAULT_USER_IDS.includes(def.id)) return;
-    const existingIndex = USERS.findIndex(u => (u.email || '').toLowerCase() === def.email.toLowerCase() || u.id === def.id);
-    if(existingIndex === -1){
-      USERS.unshift(def);
-    } else if(def.id === 'USR_ADMIN'){
-      USERS[existingIndex] = { ...USERS[existingIndex], ...def, password: def.password, role: def.role, school: def.school };
-    }
-  });
+  return;
 }
 
 function restoreEmbeddedLyceesIfEmpty(){
@@ -4359,11 +4708,49 @@ function reportTotalRow(rows, school){
   });
   return `<tr style="font-weight:700;background:var(--bg)"><td>Total</td><td></td><td></td><td>${totals.global}</td><td>${totals.seconde}</td><td>${totals.premiere}</td><td>${totals.terminale}</td><td>${totals.autres}</td><td>${totals.prospect}</td><td>${totals.candidat}</td><td>${totals.admis}</td><td>${totals.inscrit}</td></tr>`;
 }
+const EFAP_CAMPUS_CITIES = ['Paris','Lille','Rennes','Strasbourg','Nice','Bordeaux','Lyon','Toulouse','Montpellier','Aix-En-Provence'];
+const EFAP_ROUTE_ORIGINS = {
+  'Paris':'EFAP Paris',
+  'Lille':'EFAP Lille',
+  'Rennes':'EFAP Rennes',
+  'Strasbourg':'EFAP Strasbourg',
+  'Nice':'EFAP Nice',
+  'Bordeaux':'EFAP Bordeaux',
+  'Lyon':'EFAP Lyon',
+  'Toulouse':'EFAP Toulouse',
+  'Montpellier':'EFAP Montpellier',
+  'Aix-En-Provence':'EFAP Aix-en-Provence'
+};
+function normalizeCampusCity(value){
+  const raw = String(value || '').trim();
+  if(!raw) return '';
+  const normalized = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  return EFAP_CAMPUS_CITIES.find(city => city.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'') === normalized) || '';
+}
+function currentEfapCampus(eventObj=null){
+  const cu = currentUser ? currentUser() : null;
+  const campusCandidates = [
+    ...(userCampusAccess ? userCampusAccess(cu) : []),
+    cu?.campus,
+    cu?.region,
+    eventObj?.campus,
+    eventObj?.region,
+    S.currentCampus,
+    'Lille'
+  ].flat().filter(Boolean);
+  for(const c of campusCandidates){
+    const match = normalizeCampusCity(c);
+    if(match) return match;
+  }
+  return 'Lille';
+}
 function getMapsTrainUrl(eventObj){
   const destinationLabel = `${eventObj.adresse||''} ${eventObj.ville||''} ${eventObj.cp||''}`.trim() || `${eventObj.nom||''} ${eventObj.ville||''}`.trim();
   const destination = encodeURIComponent(destinationLabel);
-  const origin = encodeURIComponent('Gare Lille Flandres');
-  return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
+  const campus = currentEfapCampus(eventObj);
+  const originLabel = EFAP_ROUTE_ORIGINS[campus] || `EFAP ${campus}`;
+  const origin = encodeURIComponent(originLabel);
+  return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
 }
 function openMapsRoute(eventId){
   const eventObj = findCalendarEventById(eventId);
@@ -4548,13 +4935,17 @@ function renderDashboardV2(){
   if(body) body.innerHTML = top.map(({event,score})=>`<tr onclick="openDetail('${event.id}')"><td><strong>${escapeHtml(event.nom)}</strong></td><td>${escapeHtml(event.ville||'—')}</td><td>${scoreBadge(event)}</td><td>${score.prospects}</td><td>${score.inscrits}</td><td>${score.prospects ? Math.round(score.taux*100)+'%' : '—'}</td><td onclick="event.stopPropagation()"><div class="small-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailModal('${event.id}','prospection')">Mail</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openLeadForEvent('${event.id}')">QR</button></div></td></tr>`).join('') || `<tr><td colspan="7"><div class="empty-state"><p>Aucun score disponible.</p></div></td></tr>`;
 }
 function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
-function qrImageUrl(url){ return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`; }
+function qrImageUrl(url){ return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(url)}`; }
+function leadEventToken(eventObj){ return eventObj?.supabase_event_id || canonicalEventId(eventObj) || eventObj?.id || ''; }
+function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
 function populateLeadEvents(){
   const sel = document.getElementById('lead-event-select'); if(!sel) return;
   const current = sel.value;
   const events = allCalendarEvents().sort((a,b)=>new Date(a.date||'2999-12-31')-new Date(b.date||'2999-12-31'));
-  sel.innerHTML = events.map(l=>`<option value="${escapeHtml(canonicalEventId(l))}">${escapeHtml(fmtDate(l.date))} — ${escapeHtml(l.nom)} (${escapeHtml(l.ville||'')})</option>`).join('');
-  if(current && events.some(e=>canonicalEventId(e)===current)) sel.value = current;
+  sel.innerHTML = events.length
+    ? events.map(l=>`<option value="${escapeHtml(leadEventToken(l))}">${escapeHtml(fmtDate(l.date))} — ${escapeHtml(l.nom)} (${escapeHtml(l.ville||'')})</option>`).join('')
+    : '<option value="">Aucun forum validé disponible</option>';
+  if(current && events.some(e=>leadEventToken(e)===current || eventIdCandidates(e).includes(current))) sel.value = current;
 }
 function renderQrPreview(){
   const id = document.getElementById('lead-event-select')?.value || '';
@@ -4562,33 +4953,79 @@ function renderQrPreview(){
   const input = document.getElementById('lead-qr-url'); if(input) input.value = url;
   const box = document.getElementById('lead-qr-preview'); if(box) box.innerHTML = url ? `<img src="${qrImageUrl(url)}" alt="QR code lead">` : 'QR';
 }
-function prefillLeadEvent(){ const event = findCalendarEventById(document.getElementById('lead-event-select')?.value); if(event){ const schools=getSchoolsArray(event.ecoles); if(schools[0]) document.getElementById('lead-school').value=schools[0]; } }
-function openLeadForEvent(eventId){ showPage('leads'); setTimeout(()=>{ const sel=document.getElementById('lead-event-select'); if(sel){ sel.value=eventId; renderQrPreview(); prefillLeadEvent(); } },0); }
+function prefillLeadEvent(){
+  const event = findCalendarEventById(document.getElementById('lead-event-select')?.value);
+  if(event){
+    const schools=getSchoolsArray(event.ecoles);
+    if(schools[0]){
+      const leadSchool = document.getElementById('lead-school'); if(leadSchool) leadSchool.value=schools[0];
+    }
+  }
+}
+function openLeadForEvent(eventId){ showPage('leads'); setTimeout(()=>{ const sel=document.getElementById('lead-event-select'); if(sel){ const ev=findCalendarEventById(eventId); sel.value=ev ? leadEventToken(ev) : eventId; renderQrPreview(); prefillLeadEvent(); } },0); }
+function renderLeadsKpis(rows){
+  const box = document.getElementById('leads-kpis'); if(!box) return;
+  const today = new Date().toISOString().slice(0,10);
+  const todayCount = rows.filter(l => (l.createdAt||'').slice(0,10) === today).length;
+  const uniqueEmails = new Set(rows.map(l => (l.email||'').toLowerCase()).filter(Boolean)).size;
+  const hotSchools = rows.reduce((acc,l)=>{ const s=l.school||'À préciser'; acc[s]=(acc[s]||0)+1; return acc; },{});
+  const topSchool = Object.entries(hotSchools).sort((a,b)=>b[1]-a[1])[0];
+  box.innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Leads collectés</div><div class="kpi-value">${rows.length}</div><div class="kpi-meta">Saison ${escapeHtml(S.season||DEFAULT_SEASON)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Aujourd’hui</div><div class="kpi-value">${todayCount}</div><div class="kpi-meta">Nouveaux formulaires</div></div>
+    <div class="kpi-card"><div class="kpi-label">Emails uniques</div><div class="kpi-value">${uniqueEmails}</div><div class="kpi-meta">Déduplication indicative</div></div>
+    <div class="kpi-card"><div class="kpi-label">École dominante</div><div class="kpi-value" style="font-size:22px">${escapeHtml(topSchool ? topSchool[0] : '—')}</div><div class="kpi-meta">${topSchool ? topSchool[1]+' lead(s)' : 'À venir'}</div></div>`;
+}
 function renderLeadsPage(){
-  populateLeadEvents(); renderQrPreview(); prefillLeadEvent(); loadLeadWebhookUrl();
+  populateLeadEvents(); renderQrPreview(); prefillLeadEvent();
   const body = document.getElementById('leads-tbody'); const count = document.getElementById('leads-count');
   const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  renderLeadsKpis(rows);
   if(count) count.textContent = `${rows.length} lead(s)`;
-  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(ev.nom||l.eventName||'—')}</td><td>${escapeHtml(ev.nom||'—')}</td><td><strong>${escapeHtml((l.firstName||'')+' '+(l.lastName||''))}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="9"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
+  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const eventName=ev.nom||l.eventName||l.lycee||'—'; const ville=ev.ville||l.ville||''; return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(eventName)}</td><td>${escapeHtml((l.lycee||ev.nom||'—'))}${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(((l.firstName||'')+' '+(l.lastName||'')).trim())}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="11"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
 }
-function saveLeadFromForm(){
+async function saveLeadFromForm(){
   const eventId = document.getElementById('lead-event-select')?.value || '';
   const ev = findCalendarEventById(eventId) || {};
   const firstName = (document.getElementById('lead-firstname')?.value||'').trim();
   const lastName = (document.getElementById('lead-lastname')?.value||'').trim();
   const email = (document.getElementById('lead-email')?.value||'').trim().toLowerCase();
-  if(!eventId || !firstName || !lastName || !email) return showToast('Événement, prénom, nom et email sont requis','error');
-  const obj = {id:'LEAD'+Date.now(), eventId, eventName:ev.nom||'', firstName,lastName,email, phone:(document.getElementById('lead-phone')?.value||'').trim(), level:document.getElementById('lead-level')?.value||'', school:document.getElementById('lead-school')?.value||'', notes:(document.getElementById('lead-notes')?.value||'').trim(), createdAt:new Date().toISOString()};
+  if(!eventId || !firstName || !lastName || !email) return showToast('Forum, prénom, nom et email sont requis','error');
+  const obj = {id:'LEAD'+Date.now(), season:S.season, eventId, eventName:ev.nom||'', lycee:ev.nom||'', ville:ev.ville||'', firstName,lastName,email, phone:(document.getElementById('lead-phone')?.value||'').trim(), school:document.getElementById('lead-school')?.value||'', program:(document.getElementById('lead-program')?.value||'').trim(), level:document.getElementById('lead-level')?.value||'', notes:(document.getElementById('lead-notes')?.value||'').trim(), source:'Saisie plateforme', createdAt:new Date().toISOString()};
+  const saved = await saveLeadDirectToSupabase(obj);
+  if(!saved.ok && !saved.skipped) return showToast('Lead non enregistré dans Supabase : ' + (saved.message || 'erreur inconnue'), 'error');
   LEADS.unshift(obj);
-  ['lead-firstname','lead-lastname','lead-email','lead-phone','lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  saveLocalData(); saveEventExtrasToSupabase(ev).catch(err => showToast('Lead local enregistré, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error')); renderLeadsPage(); renderDashboardV2(); showToast('Lead ajouté et centralisé');
+  ['lead-firstname','lead-lastname','lead-email','lead-phone','lead-program','lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  saveLocalData();
+  if(ev && ev.nom) saveEventExtrasToSupabase(ev).catch(()=>{});
+  renderLeadsPage(); renderDashboardV2(); showToast('Lead ajouté dans Supabase');
 }
-function deleteLead(id){ if(!confirm('Supprimer ce lead ?')) return; const oldLead = LEADS.find(l=>l.id===id); const ev = oldLead ? findCalendarEventById(oldLead.eventId) : null; LEADS = LEADS.filter(l=>l.id!==id); saveLocalData(); saveEventExtrasToSupabase(ev).catch(err => showToast('Lead supprimé localement, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error')); renderLeadsPage(); renderDashboardV2(); showToast('Lead supprimé'); }
-function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
-function downloadQrCode(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return; const a=document.createElement('a'); a.href=qrImageUrl(url); a.download='QR_leads_evenement.png'; a.target='_blank'; a.click(); }
+async function deleteLead(id){
+  if(!confirm('Supprimer ce lead ?')) return;
+  const oldLead = LEADS.find(l=>l.id===id);
+  const supa = await deleteLeadDirectFromSupabase(oldLead);
+  if(!supa.ok && !supa.skipped) return showToast('Suppression Supabase impossible : ' + (supa.message || 'erreur inconnue'), 'error');
+  const ev = oldLead ? findCalendarEventById(oldLead.eventId) : null;
+  LEADS = LEADS.filter(l=>l.id!==id);
+  saveLocalData();
+  if(ev) saveEventExtrasToSupabase(ev).catch(()=>{});
+  renderLeadsPage(); renderDashboardV2(); showToast('Lead supprimé');
+}
+function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun lien à copier','error'); navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
+function downloadQrCode(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun QR code à télécharger','error'); const ev=findCalendarEventById(document.getElementById('lead-event-select')?.value)||{}; const a=document.createElement('a'); a.href=qrImageUrl(url); a.download=`QR_leads_${(ev.nom||'forum').replace(/[^a-z0-9]+/gi,'_')}.png`; a.target='_blank'; a.click(); }
 function openLeadPublicForm(){ const url=document.getElementById('lead-qr-url')?.value||''; if(url) window.open(url,'_blank'); }
-function downloadLeadsExcel(){ const rows=LEADS.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; return {Date:l.createdAt, Evenement:ev.nom||l.eventName, Ville:ev.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Niveau:l.level, Ecole:l.school, Notes:l.notes}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,'EDH_leads_QR.xlsx'); }
-function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!lead) return; const ev=findCalendarEventById(lead.eventId)||{}; window.location.href=`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Suite à notre échange - Groupe EDH')}&body=${encodeURIComponent(`Bonjour ${lead.firstName},\n\nMerci pour ton échange avec nous lors de l'événement ${ev.nom||''}.\n\nNous restons disponibles si tu souhaites recevoir plus d'informations sur ${lead.school||'nos écoles'}.\n\nBien cordialement,\nGroupe EDH`)}`; }
+function downloadLeadsExcel(){ const rows=getVisibleLeads().map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; return {Date:l.createdAt, Saison:l.season||S.season, Evenement:ev.nom||l.eventName||l.lycee, Ville:ev.ville||l.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Ecole_interessee:l.school, Cursus_souhaite:l.program||l.cursus, Niveau_etude:l.level, Notes:l.notes, Source:l.source}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
+async function refreshLeadsFromSupabase(){
+  if(!supabaseClient) return showToast('Supabase indisponible : impossible de recharger les leads', 'error');
+  const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
+  if(error) return showToast('Erreur chargement leads Supabase : ' + getSupabaseErrorMessage(error), 'error');
+  const remote = Array.isArray(data) ? data.map(mapSupabaseLeadToApp) : [];
+  const map = new Map();
+  [...LEADS, ...remote].forEach(l => map.set(String(l.supabase_id || l.id || `${l.eventId}__${l.email}`), l));
+  LEADS = Array.from(map.values());
+  renderLeadsPage(); renderDashboardV2(); showToast(`${remote.length} lead(s) chargé(s) depuis Supabase`);
+}
+function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!lead) return; const ev=findCalendarEventById(lead.eventId)||{}; window.location.href=`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Suite à notre échange - Groupe EDH')}&body=${encodeURIComponent(`Bonjour ${lead.firstName},\n\nMerci pour ton échange avec nous lors de l'événement ${ev.nom||lead.eventName||''}.\n\nNous restons disponibles si tu souhaites recevoir plus d'informations sur ${lead.school||'nos écoles'}${lead.program ? ' - '+lead.program : ''}.\n\nBien cordialement,\nGroupe EDH`)}`; }
 function mailRecipient(event){ return event.mail_organisateur || event.mail_ecole || ''; }
 function mailContactName(event){ return event.organisateur || 'Madame, Monsieur'; }
 function emailTemplates(event, type){
@@ -4614,10 +5051,24 @@ function openMailModal(eventId, type='prospection'){
 function renderEmailPreview(){ const ev=findCalendarEventById(MAIL_CONTEXT_ID)||{}; const type=document.getElementById('email-template-type')?.value||'prospection'; const tpl=emailTemplates(ev,type); document.getElementById('email-subject').value=tpl.subject; document.getElementById('email-preview').textContent=tpl.body; }
 function copyEmailPreview(){ const text=document.getElementById('email-preview')?.textContent||''; navigator.clipboard?.writeText(text); showToast('Mail copié'); }
 function sendPreparedEmail(){ const to=document.getElementById('email-to')?.value||''; const subject=document.getElementById('email-subject')?.value||''; const body=document.getElementById('email-preview')?.textContent||''; if(!to) return showToast('Aucun email destinataire renseigné','error'); window.location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
-function openLeadHashIfNeeded(){
-  const m = window.location.hash.match(/lead=([^&]+)/); if(!m) return false;
-  const eventId = decodeURIComponent(m[1]); const ev = findCalendarEventById(eventId); if(!ev) return;
-  showPage('leads'); setTimeout(()=>{ const sel=document.getElementById('lead-event-select'); if(sel){ sel.value=eventId; renderQrPreview(); prefillLeadEvent(); } },0); return true;
+function getLyceeCrmPriority(l){
+  const status = normalizeStatus(l?.statut);
+  if(status === 'Participation Validée' && (!l.date || !l.heure || !lyceePhone(l))) return '<span class="score-badge score-high">Haute</span>';
+  if(status === 'A contacter' || status === 'NRP') return '<span class="score-badge score-mid">Moyenne</span>';
+  if(status === 'Refus') return '<span class="score-badge score-low">Faible</span>';
+  return '<span class="score-badge score-none">À qualifier</span>';
+}
+function getLyceeNextAction(l){
+  const status = normalizeStatus(l?.statut);
+  if(!lyceePhone(l) && !(l?.mail_ecole || l?.mail_organisateur)) return 'Compléter les coordonnées avant relance';
+  if(status === 'A contacter') return 'Premier contact lycée';
+  if(status === 'NRP') return 'Relance téléphone + mail de suivi';
+  if(status === 'En cours de négociation') return 'Sécuriser la participation et confirmer la date';
+  if(status === 'Participation Validée' && !l?.date) return 'Créer / confirmer la date du forum';
+  if(status === 'Participation Validée' && !l?.heure) return 'Compléter l’horaire et préparer la fiche terrain';
+  if(status === 'Participation Validée') return 'Préparer le forum, les étudiants et le QR leads';
+  if(status === 'Refus') return 'Qualifier le motif de refus pour la saison suivante';
+  return 'Qualifier le lycée';
 }
 
 // ══════════════════════════════════════
@@ -4634,6 +5085,16 @@ function openDetail(id){
 
   document.getElementById('detail-body').innerHTML=`
     <div style="margin-bottom:16px">${badge(l.statut)} ${typeBadge(l.type)}</div>
+
+    <div class="detail-panel">
+      <div class="detail-panel-title">Suivi CRM lycée</div>
+      <div class="detail-row" style="margin-bottom:0">
+        <div class="detail-field"><div class="detail-label">Priorité</div><div class="detail-value">${getLyceeCrmPriority(l)}</div></div>
+        <div class="detail-field"><div class="detail-label">Prochaine action</div><div class="detail-value">${getLyceeNextAction(l)}</div></div>
+        <div class="detail-field"><div class="detail-label">Responsable</div><div class="detail-value">À affecter</div></div>
+        <div class="detail-field"><div class="detail-label">Dernier contact</div><div class="detail-value">À historiser</div></div>
+      </div>
+    </div>
 
     <div class="detail-row">
       <div class="detail-field"><div class="detail-label">Date du forum</div><div class="detail-value">${l.date?fmtDate(l.date):'Non définie'}</div></div>
@@ -4797,7 +5258,7 @@ async function saveForm(){
 
   updateSchoolFilterCounts();
   closeModal('modal-edit');
-  showToast(successLabel + ' localement. Synchronisation Supabase en cours…');
+  showToast(successLabel + '. Synchronisation Supabase en cours…');
   refreshCurrentPage();
 
   // Synchronisation Supabase en arrière-plan. L'erreur reste visible au-dessus de tous les pop-up.
@@ -4814,12 +5275,198 @@ async function saveForm(){
     } else {
       console.error('Sauvegarde Supabase refusée:', { lyceeSave, suiviSave, eventSave });
       const msg = !lyceeSave.ok ? lyceeSave.message : (!suiviSave.ok ? suiviSave.message : eventSave.message);
-      showToast(successLabel + ' localement, mais pas complètement dans Supabase : ' + (msg || 'erreur inconnue'), 'error');
+      showToast(successLabel + ' non synchronisé complètement dans Supabase : ' + (msg || 'erreur inconnue'), 'error');
     }
   })().catch(err => {
     console.error('Erreur sauvegarde Supabase:', err);
-    showToast(successLabel + ' localement, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error');
+    showToast('Erreur Supabase : ' + getSupabaseErrorMessage(err), 'error');
   });
+}
+
+
+function eventRegistrations(eventObj){
+  if(!eventObj) return [];
+  if(typeof registrationBelongsToEvent === 'function') return (REGISTRATIONS || []).filter(r => registrationBelongsToEvent(r, eventObj));
+  const id = canonicalEventId(eventObj) || eventObj.id;
+  return (REGISTRATIONS || []).filter(r => r.eventId === id);
+}
+function eventLeads(eventObj){
+  if(!eventObj) return [];
+  if(typeof leadBelongsToEvent === 'function') return (LEADS || []).filter(l => leadBelongsToEvent(l, eventObj));
+  const id = canonicalEventId(eventObj) || eventObj.id;
+  return (LEADS || []).filter(l => l.eventId === id);
+}
+function isValidatedForum(l){ return normalizeStatus(l?.statut) === 'Participation Validée' && !!l?.date; }
+function isPastEvent(l){ if(!l?.date) return false; const d = new Date(l.date + 'T23:59:59'); return !isNaN(d) && d < new Date(); }
+function reportSummaryForEvent(l){
+  const totals = {global:0, prospect:0, candidat:0, admis:0, inscrit:0};
+  getSchoolsArray(l?.ecoles).forEach(school => {
+    const rec = getReportRecord(canonicalEventId(l) || l.id, school);
+    totals.global += Number(rec.global || rec.nombreProspect || 0);
+    totals.prospect += Number(rec.prospect || 0);
+    totals.candidat += Number(rec.candidat || 0);
+    totals.admis += Number(rec.admis || 0);
+    totals.inscrit += Number(rec.inscrit || 0);
+  });
+  if(!totals.global) totals.global = Number(l?.prospect_global || 0);
+  return totals;
+}
+function pct(n, d){
+  const nn = Number(n || 0), dd = Number(d || 0);
+  if(!dd) return '—';
+  return Math.round((nn / dd) * 100) + '%';
+}
+function forumHasAssignedStudents(l){
+  const regs = eventRegistrations(l);
+  if(regs.length) return true;
+  const participants = String(l?.participants || '').trim().toLowerCase();
+  if(participants && !participants.includes('aucun')) return true;
+  return studentNamesForLycee(l?.nom).length > 0;
+}
+function actionButton(label, onclick, cls='btn btn-outline'){
+  return `<button class="${cls}" style="padding:5px 9px;font-size:11px" onclick="${onclick}">${label}</button>`;
+}
+function renderActionsStructurePage(){
+  const visible = getVisibleLycees ? getVisibleLycees() : (LYCEES || []);
+  const validated = visible.filter(isValidatedForum).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const noStudents = validated.filter(l => !forumHasAssignedStudents(l));
+  const priorityCalls = visible.filter(l => ['A contacter','NRP','En cours de négociation'].includes(normalizeStatus(l.statut)))
+    .sort((a,b)=>{
+      const score = s => normalizeStatus(s.statut)==='NRP' ? 0 : normalizeStatus(s.statut)==='En cours de négociation' ? 1 : 2;
+      return score(a)-score(b) || (a.ville||'').localeCompare(b.ville||'') || (a.nom||'').localeCompare(b.nom||'');
+    });
+  const reportingMissing = validated.filter(l => {
+    const r = reportSummaryForEvent(l);
+    return isPastEvent(l) && !r.global && !r.candidat && !r.inscrit;
+  });
+
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('actions-a-contacter', visible.filter(l => normalizeStatus(l.statut) === 'A contacter').length);
+  set('actions-nrp', visible.filter(l => normalizeStatus(l.statut) === 'NRP').length);
+  set('actions-no-student', noStudents.length);
+  set('actions-reporting', reportingMissing.length);
+  set('actions-no-student-count', `${noStudents.length} forum(s)`);
+  set('actions-priority-count', `${priorityCalls.length} lycée(s)`);
+
+  const noStudentBody = document.getElementById('actions-no-student-tbody');
+  if(noStudentBody){
+    noStudentBody.innerHTML = noStudents.length ? noStudents.map(l => {
+      const id = canonicalEventId(l) || l.id;
+      return `<tr><td><strong>${escapeHtml(l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${escapeHtml(l.ville||'')} · ${schoolTags(l.ecoles)}</span></td><td>${fmtDate(l.date)}<br><span style="color:var(--text3);font-size:11px">${escapeHtml(l.heure||'Horaire à vérifier')}</span></td><td>Attribuer au moins un ambassadeur ou confirmer qu’un collaborateur représentera l’école sur place.</td><td>${actionButton('Préparer', `showPage('terrain'); selectTerrainEvent('${id}')`, 'btn btn-primary')}</td></tr>`;
+    }).join('') : `<tr><td colspan="4"><div class="crm-empty">Tous les forums validés ont au moins un étudiant ou une présence identifiée.</div></td></tr>`;
+  }
+
+  const priorityBody = document.getElementById('actions-priority-tbody');
+  if(priorityBody){
+    priorityBody.innerHTML = priorityCalls.length ? priorityCalls.map(l => {
+      const st = normalizeStatus(l.statut);
+      const priority = st === 'NRP' ? '<span class="score-badge score-high">Haute</span>' : st === 'En cours de négociation' ? '<span class="score-badge score-mid">Moyenne</span>' : '<span class="score-badge score-low">À lancer</span>';
+      const why = st === 'NRP' ? 'Le lycée ne répond pas : changer de canal ou rappeler à un autre horaire.' : st === 'En cours de négociation' ? 'Échange engagé : sécuriser une date ou les modalités.' : 'Lycée encore non travaillé sur la saison active.';
+      const id = canonicalEventId(l) || l.id;
+      return `<tr><td>${priority}</td><td><strong>${escapeHtml(l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${escapeHtml(l.ville||'')} · ${escapeHtml(l.departement||'')}</span></td><td>${why}</td><td><div class="small-actions">${actionButton('Fiche', `openDetail('${id}')`)}${actionButton('Mail', `openMailModal('${id}','relance')`)}</div></td></tr>`;
+    }).join('') : `<tr><td colspan="4"><div class="crm-empty">Aucun lycée prioritaire à appeler pour le moment.</div></td></tr>`;
+  }
+
+  const todos = [];
+  noStudents.forEach(l => todos.push({level:'Bloquant', cls:'todo-blocked', lycee:l, trigger:'Forum validé sans étudiant attribué', action:'Identifier un ambassadeur issu du lycée ou de l’école concernée, puis confirmer sa présence.'}));
+  validated.filter(l => !l.heure || !lyceePhone(l) || !l.mail_ecole).forEach(l => todos.push({level:'À compléter', cls:'todo-warning', lycee:l, trigger:'Informations pratiques incomplètes', action:'Compléter horaire, téléphone, mail ou contact organisateur avant d’envoyer la confirmation.'}));
+  priorityCalls.slice(0, 25).forEach(l => todos.push({level:normalizeStatus(l.statut)==='NRP'?'Prioritaire':'Relance', cls:normalizeStatus(l.statut)==='NRP'?'todo-blocked':'todo-warning', lycee:l, trigger:`Statut ${normalizeStatus(l.statut)}`, action:normalizeStatus(l.statut)==='NRP'?'Relancer par mail + appel standard, puis tracer le retour dans le commentaire.':'Appeler le lycée et mettre à jour le statut dans la fiche lycée.'}));
+  reportingMissing.forEach(l => todos.push({level:'Reporting', cls:'todo-warning', lycee:l, trigger:'Forum passé sans reporting', action:'Saisir prospects, candidats, admis, inscrits et commentaire qualitatif dans Reporting opérationnel.'}));
+
+  const todoBody = document.getElementById('actions-todo-tbody');
+  set('actions-todo-count', `${todos.length} action(s)`);
+  if(todoBody){
+    todoBody.innerHTML = todos.length ? todos.map(t => {
+      const id = canonicalEventId(t.lycee) || t.lycee.id;
+      return `<tr><td><span class="todo-status ${t.cls}">${escapeHtml(t.level)}</span></td><td><strong>${escapeHtml(t.lycee.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${escapeHtml(t.lycee.ville||'')} ${t.lycee.date?'· '+fmtDate(t.lycee.date):''}</span></td><td>${escapeHtml(t.trigger)}</td><td>${escapeHtml(t.action)}</td><td>${actionButton('Ouvrir', `openDetail('${id}')`)}</td></tr>`;
+    }).join('') : `<tr><td colspan="5"><div class="crm-empty">Aucune action critique détectée.</div></td></tr>`;
+  }
+}
+
+function preparationTasksForEvent(l){
+  const regs = eventRegistrations(l);
+  const leads = eventLeads(l);
+  const report = reportSummaryForEvent(l);
+  const schools = getSchoolsArray(l.ecoles);
+  return [
+    {step:'Coordonnées', ok:!!(l.mail_ecole || lyceePhone(l)), title:'Vérifier le contact lycée', desc:'Mail, téléphone et organisateur doivent être renseignés pour gérer les derniers échanges.'},
+    {step:'Date / horaire', ok:!!(l.date && l.heure), title:'Confirmer les informations pratiques', desc:'Date, horaire, ville, adresse et contact sur place doivent être confirmés.'},
+    {step:'Écoles', ok:schools.length>0, title:'Valider les écoles participantes', desc:'Vérifier quelles écoles EDH sont concernées par le forum.'},
+    {step:'Ambassadeurs', ok:forumHasAssignedStudents(l), title:'Attribuer les étudiants ou représentants', desc:'Inscrire les ambassadeurs disponibles ou confirmer la présence d’un collaborateur.'},
+    {step:'Calendrier', ok:!!l.date, title:'Ajouter au calendrier', desc:'Télécharger l’ICS Outlook / Teams et le transmettre aux personnes mobilisées.'},
+    {step:'Itinéraire', ok:!!(l.adresse || l.ville), title:'Préparer le trajet', desc:`Départ calculé depuis le campus EFAP ${currentEfapCampus(l)}.`},
+    {step:'QR leads', ok:leads.length>0, title:'Préparer le QR code leads', desc:'Générer ou ouvrir le lien QR pour collecter les prospects pendant le forum.'},
+    {step:'Objectif', ok:Number(l.prospect_global||0)>0 || report.global>0, title:'Définir un objectif de contacts', desc:'Fixer un objectif de prospects à rencontrer et le comparer au reporting après l’événement.'},
+    {step:'Après forum', ok:!isPastEvent(l) || report.global>0 || report.candidat>0 || report.inscrit>0, title:'Compléter le reporting', desc:'Après le forum, saisir les prospects, candidats, admis, inscrits et le retour qualitatif.'}
+  ];
+}
+function renderTerrainPage(){
+  const events = (getVisibleLycees ? getVisibleLycees() : (LYCEES || [])).filter(isValidatedForum).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const list = document.getElementById('terrain-forum-list');
+  const count = document.getElementById('terrain-count');
+  if(count) count.textContent = `${events.length} forum(s)`;
+  if(list){
+    list.innerHTML = events.length ? events.map((l, idx) => {
+      const id = canonicalEventId(l) || l.id;
+      const tasks = preparationTasksForEvent(l);
+      const done = tasks.filter(t => t.ok).length;
+      const pctDone = Math.round((done / tasks.length) * 100);
+      return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${id}" onclick="selectTerrainEvent('${id}')"><div class="terrain-item-title">${escapeHtml(l.nom)}</div><div class="terrain-item-meta">${fmtDate(l.date)} · ${escapeHtml(l.ville||'')} · ${done}/${tasks.length} prêt</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
+    }).join('') : `<div class="crm-empty">Aucun forum validé avec date pour la saison active.</div>`;
+  }
+  if(events.length) selectTerrainEvent(canonicalEventId(events[0]) || events[0].id, false);
+  else {
+    const detail = document.getElementById('terrain-detail');
+    if(detail) detail.innerHTML = '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>';
+  }
+}
+function selectTerrainEvent(eventId, markActive=true){
+  const l = findCalendarEventById(eventId);
+  const detail = document.getElementById('terrain-detail');
+  if(!l || !detail) return;
+  if(markActive){
+    document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active'));
+    const active = document.getElementById('terrain-item-' + eventId);
+    if(active) active.classList.add('active');
+  }
+  const tasks = preparationTasksForEvent(l);
+  const done = tasks.filter(t=>t.ok).length;
+  const selectedCount = document.getElementById('terrain-selected-count');
+  if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions prêtes`;
+  const id = canonicalEventId(l) || l.id;
+  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>`;
+}
+function renderPerformancePage(){
+  const events = (getVisibleLycees ? getVisibleLycees() : (LYCEES || [])).filter(isValidatedForum).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const rows = [];
+  const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
+  events.forEach(l => {
+    const report = reportSummaryForEvent(l);
+    const leads = eventLeads(l).length;
+    const prospects = report.global || report.prospect || leads || Number(l.prospect_global || 0);
+    totals.prospects += prospects;
+    totals.candidats += report.candidat;
+    totals.admis += report.admis;
+    totals.inscrits += report.inscrit;
+    const rate = pct(report.inscrit, prospects);
+    const reading = !prospects ? 'Reporting à compléter' : report.inscrit > 0 ? 'Forum générateur d’inscrits' : report.candidat > 0 ? 'Forum à suivre en admissions' : 'Prospects à qualifier';
+    rows.push({l, schools:getSchoolsArray(l.ecoles), prospects, report, rate, reading});
+  });
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('perf-forums', totals.forums);
+  set('perf-prospects', totals.prospects);
+  set('perf-candidats', totals.candidats);
+  set('perf-admis', totals.admis);
+  set('perf-inscrits', totals.inscrits);
+  set('perf-taux', pct(totals.inscrits, totals.prospects));
+  set('perf-count', `${rows.length} lycée(s)`);
+  const body = document.getElementById('performance-tbody');
+  if(body){
+    body.innerHTML = rows.length ? rows.map(r => {
+      const id = canonicalEventId(r.l) || r.l.id;
+      return `<tr onclick="openDetail('${id}')" style="cursor:pointer"><td><strong>${escapeHtml(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${escapeHtml(r.l.ville||'')}</span></td><td>${fmtDate(r.l.date)}</td><td>${schoolTags(r.l.ecoles)}</td><td>${r.prospects}</td><td>${r.report.candidat}</td><td>${r.report.admis}</td><td>${r.report.inscrit}</td><td><span class="conversion-rate">${r.rate}</span></td><td>${escapeHtml(r.reading)}</td></tr>`;
+    }).join('') : `<tr><td colspan="9"><div class="crm-empty">Aucun forum validé à analyser pour la saison active.</div></td></tr>`;
+  }
 }
 
 // ══════════════════════════════════════
@@ -4851,13 +5498,16 @@ function showPage(page){
 
   const pageMap = {
     dashboard: "Tableau de bord",
+    actions: "Pipeline CRM",
     listing: "Listing lycées",
-    calendrier: "Calendrier événement",
-    students: "Nos étudiants",
-    registrations: "Inscriptions évènement",
+    calendrier: "Calendrier forums",
+    terrain: "Préparation forums",
+    leads: "Leads & suivi",
+    students: "Ambassadeurs",
+    registrations: "Inscriptions étudiants",
+    reporting: "Reporting opérationnel",
+    performance: "Bilan & conversion",
     users: "Utilisateurs",
-    reporting: "Reporting",
-    leads: "Leads QR",
     inscriptions: "Mes évènements"
   };
   document.querySelectorAll('.nav-item').forEach(btn=>{
@@ -4878,6 +5528,9 @@ function showPage(page){
   else if(page==='users') { renderUsersPage(); }
   else if(page==='reporting') { renderReportingPage(); }
   else if(page==='leads') renderLeadsPage();
+  else if(page==='actions') renderActionsStructurePage();
+  else if(page==='terrain') renderTerrainPage();
+  else if(page==='performance') renderPerformancePage();
   else if(page==='inscriptions') renderInscriptionPage();
 }
 
@@ -5057,7 +5710,7 @@ function initSeasonSelect(){
   const sel = document.getElementById('season-select');
   if(sel) sel.value = S.season || DEFAULT_SEASON;
   const label = document.getElementById('sidebar-season-label');
-  if(label) label.textContent = `Forums Lycées · Saison ${(S.season || DEFAULT_SEASON).replace('-', ' – ')}`;
+  if(label) label.textContent = ''; 
 }
 async function changeSeason(season){
   S.season = season || DEFAULT_SEASON;
@@ -5082,32 +5735,77 @@ async function changeSeason(season){
   }
   showToast(`Saison ${S.season} chargée`);
 }
-function saveLeadWebhookUrl(){ safeLocalStorageSet('edh_lead_webhook_url_v1', document.getElementById('lead-webhook-url')?.value || ''); }
-function loadLeadWebhookUrl(){ const el=document.getElementById('lead-webhook-url'); if(el) el.value = localStorage.getItem('edh_lead_webhook_url_v1') || ''; }
+function saveLeadWebhookUrl(){ /* conservé pour compatibilité avec les anciennes versions */ }
+function loadLeadWebhookUrl(){ /* conservé pour compatibilité avec les anciennes versions */ }
 function parseHashParam(name){ return new URLSearchParams((window.location.hash || '').replace(/^#/, '')).get(name); }
-// Ancienne ouverture QR remplacée par le formulaire public V3.
-async function sendLeadToWebhook(lead){
-  const url = localStorage.getItem('edh_lead_webhook_url_v1') || '';
-  if(!url) return {sent:false, reason:'no_endpoint'};
-  try {
-    await fetch(url, {method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(lead)});
-    return {sent:true};
-  } catch(e){ return {sent:false, reason:'fetch_error'}; }
+async function loadPublicLeadEventContext(eventToken, season){
+  let ev = findCalendarEventById(eventToken) || null;
+  if(!ev && supabaseClient){
+    try {
+      if(looksLikeUuid(eventToken)){
+        const byId = await supabaseClient.from('evenements').select('*').eq('id', eventToken).limit(1);
+        if(!byId.error && byId.data && byId.data.length){
+          const row = byId.data[0];
+          ev = { id: row.id, supabase_event_id: row.id, nom: row.lycee || row.nom || 'Forum lycée', ville: row.ville || '', date: row.date || '', heure: row.heure || '', ecoles: row.ecoles || '' };
+        }
+      }
+    } catch(err){ console.warn('Chargement contexte formulaire public impossible', err); }
+  }
+  const label = document.getElementById('public-lead-event-label');
+  const pill = document.getElementById('public-lead-event-pill');
+  if(ev){
+    if(label) label.textContent = `${ev.nom || 'Forum lycée'}${ev.ville ? ' · ' + ev.ville : ''}${ev.date ? ' · ' + fmtDate(ev.date) : ''}`;
+    if(pill) pill.textContent = `${ev.nom || 'Forum lycée'}${ev.ville ? ' · ' + ev.ville : ''}`;
+    const schools = getSchoolsArray(ev.ecoles);
+    const publicSchool = document.getElementById('public-lead-school');
+    if(schools[0] && publicSchool) publicSchool.value = schools[0];
+  } else {
+    if(label) label.textContent = 'Complète tes coordonnées pour être recontacté par notre équipe.';
+    if(pill) pill.textContent = 'Forum lycée';
+  }
+  return ev;
+}
+function showPublicLeadForm(eventToken, season){
+  CURRENT_PUBLIC_LEAD_EVENT_ID = eventToken;
+  if(season){ S.season = season; initSeasonSelect(); }
+  const login = document.getElementById('login-modal'); if(login) login.classList.remove('open');
+  const overlay = document.getElementById('public-lead-overlay'); if(overlay) overlay.classList.add('open');
+  const success = document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
+  const error = document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
+  loadPublicLeadEventContext(eventToken, season).catch(()=>{});
+}
+function openLeadHashIfNeeded(){
+  const eventToken = parseHashParam('lead');
+  if(!eventToken) return false;
+  const season = parseHashParam('season') || S.season || DEFAULT_SEASON;
+  showPublicLeadForm(eventToken, season);
+  return true;
 }
 async function submitPublicLead(){
-  const ev = findCalendarEventById(CURRENT_PUBLIC_LEAD_EVENT_ID) || {};
+  const eventToken = CURRENT_PUBLIC_LEAD_EVENT_ID;
+  const ev = await loadPublicLeadEventContext(eventToken, S.season || DEFAULT_SEASON);
   const firstName=(document.getElementById('public-lead-firstname')?.value||'').trim();
   const lastName=(document.getElementById('public-lead-lastname')?.value||'').trim();
   const email=(document.getElementById('public-lead-email')?.value||'').trim().toLowerCase();
   if(!firstName || !lastName || !email) return showToast('Prénom, nom et email sont requis','error');
-  const lead={id:'LEAD'+Date.now(), season:S.season, eventId:CURRENT_PUBLIC_LEAD_EVENT_ID, eventName:ev.nom||'', lycee:ev.nom||'', ville:ev.ville||'', firstName,lastName,email, phone:(document.getElementById('public-lead-phone')?.value||'').trim(), level:document.getElementById('public-lead-level')?.value||'', school:document.getElementById('public-lead-school')?.value||'', notes:(document.getElementById('public-lead-notes')?.value||'').trim(), source:'QR public', createdAt:new Date().toISOString()};
+  const submitBtn = document.getElementById('public-lead-submit-btn');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…'; }
+  const lead={id:'LEAD'+Date.now(), season:S.season || DEFAULT_SEASON, eventId:eventToken, eventName:ev?.nom||'', lycee:ev?.nom||'', ville:ev?.ville||'', firstName,lastName,email, phone:(document.getElementById('public-lead-phone')?.value||'').trim(), school:document.getElementById('public-lead-school')?.value||'', program:(document.getElementById('public-lead-program')?.value||'').trim(), level:document.getElementById('public-lead-level')?.value||'', notes:(document.getElementById('public-lead-notes')?.value||'').trim(), source:'QR public', createdAt:new Date().toISOString()};
+  const saved = await saveLeadDirectToSupabase(lead);
+  if(!saved.ok && !saved.skipped){
+    const error = document.getElementById('public-lead-error');
+    if(error){ error.textContent = 'Erreur d’enregistrement Supabase : ' + (saved.message || 'merci de réessayer.'); error.classList.add('show'); }
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Envoyer mes coordonnées'; }
+    return;
+  }
   const dup = LEADS.findIndex(l => l.eventId===lead.eventId && (l.email||'').toLowerCase()===email);
-  if(dup>-1) LEADS[dup] = {...LEADS[dup], ...lead, id:LEADS[dup].id}; else LEADS.unshift(lead);
+  if(dup>-1) LEADS[dup] = {...LEADS[dup], ...lead, id:LEADS[dup].id, supabase_id:lead.supabase_id||LEADS[dup].supabase_id}; else LEADS.unshift(lead);
   saveLocalData();
-  await saveEventExtrasToSupabase(ev);
-  await sendLeadToWebhook(lead);
-  document.getElementById('public-lead-success')?.classList.add('show');
-  ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  if(ev) saveEventExtrasToSupabase(ev).catch(()=>{});
+  const success = document.getElementById('public-lead-success'); if(success) success.classList.add('show');
+  const error = document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
+  ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-program','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Envoyer mes coordonnées'; }
 }
 
 // ══════════════════════════════════════
@@ -5164,14 +5862,12 @@ function setRole(role){
   if(topSearch) topSearch.placeholder = normalizeRoleValue(role) === 'student' ? 'Rechercher un événement, un lycée ou une ville…' : 'Rechercher un lycée, ville, organisateur…';
 }
 
+
 function updateLoginHelp(){
   const roleInput = document.getElementById('login-role');
   if(roleInput) roleInput.value = 'collaborateur';
 }
 
-function fillDemoLogin(){
-  showToast('Les identifiants démo sont désactivés.', 'error');
-}
 
 function openLoginModal(){
   document.getElementById('login-modal').classList.add('open');
@@ -5410,7 +6106,7 @@ async function saveUser(){
     setSupabaseStatus('error', 'Supabase : utilisateur non enregistré');
     const msg = supaResult.message || 'erreur inconnue';
     console.error('Utilisateur non enregistré dans Supabase:', msg, supaResult.error || '');
-    alert('Le compte utilisateur n’a PAS été enregistré.\n\nRien n’a été ajouté localement pour éviter les faux comptes visibles uniquement sur ton navigateur.\n\nErreur Supabase :\n' + msg);
+    alert('Le compte utilisateur n’a PAS été enregistré.\n\nAucun compte n’a été ajouté dans la base partagée.\n\nErreur Supabase :\n' + msg);
     return showToast('Utilisateur non enregistré : Supabase a refusé l’écriture', 'error');
   }
 
@@ -5469,11 +6165,10 @@ async function deleteUser(id){
   } catch(err){
     const msg = userSupabaseFailureAdvice(err);
     setSupabaseStatus('error', 'Supabase : suppression refusée');
-    alert('Le compte n’a PAS été supprimé localement car Supabase a refusé la suppression.\n\nErreur Supabase :\n' + msg);
+    alert('Le compte n’a PAS été supprimé car Supabase a refusé la suppression.\n\nErreur Supabase :\n' + msg);
     return showToast('Suppression annulée : Supabase a refusé l’écriture', 'error');
   }
   USERS = USERS.filter(x=>x.id!==id);
-  if(id === 'USR_DEMO_STUDENT' && !DELETED_DEFAULT_USER_IDS.includes(id)) DELETED_DEFAULT_USER_IDS.push(id);
   REGISTRATIONS = REGISTRATIONS.map(r => r.userId === id ? { ...r, userId: null } : r);
   if(S.currentUserId === id){ S.currentUserId = null; S.studentProfile = null; }
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
@@ -5768,7 +6463,7 @@ async function saveStudent(){
   closeModal('modal-student');
   renderStudentsPage();
   if(supaResult.ok || supaResult.skipped) showToast('Étudiant enregistré dans Supabase');
-  else showToast('Étudiant enregistré localement, mais pas dans Supabase : ' + (supaResult.message || 'erreur'), 'error');
+  else showToast('Étudiant non synchronisé dans Supabase : ' + (supaResult.message || 'erreur'), 'error');
 }
 
 function downloadStudentsCSV(){
@@ -5997,7 +6692,7 @@ async function clearContacts(id){
   saveLocalData();
   refreshCurrentPage();
   if(supaResult.ok || supaResult.skipped) showToast('Coordonnées supprimées');
-  else showToast('Coordonnées supprimées localement, mais pas dans Supabase : ' + (supaResult.message || 'erreur'), 'error');
+  else showToast('Coordonnées non synchronisées dans Supabase : ' + (supaResult.message || 'erreur'), 'error');
 }
 
 async function deleteEvent(id){
@@ -6084,7 +6779,7 @@ async function deleteStudent(id){
     renderSchoolReporting();
   }
   if(supaDelete.ok || supaDelete.skipped) showToast('Profil étudiant supprimé définitivement');
-  else showToast('Profil étudiant supprimé localement, mais pas dans Supabase : ' + (supaDelete.message || 'erreur'), 'error');
+  else showToast('Suppression non synchronisée dans Supabase : ' + (supaDelete.message || 'erreur'), 'error');
 }
 
 function deleteStudentFromModal(){
@@ -6127,7 +6822,7 @@ function renderRegistrationsPage(){
       <td>${r.regs.length ? namesToListHtml(r.regs.map(x=>`${x.firstName} ${x.lastName}`)) : 'Aucune inscription'}</td>
       <td>${r.regs.length ? namesToListHtml(r.regs.map(x=>x.email).filter(Boolean)) : '—'}</td>
       <td>${r.regs.length ? namesToListHtml(r.regs.map(x=>x.phone).filter(Boolean)) : '—'}</td>
-      <td><a class="train-link" target="_blank" href="${getMapsTrainUrl(r.ev)}">Itinéraire train</a></td>
+      <td><a class="train-link" target="_blank" href="${getMapsTrainUrl(r.ev)}">Itinéraire</a></td>
       <td>
         <div class="small-actions">
           <button class="btn btn-primary" style="padding:4px 8px;font-size:11px" onclick="openAdminRegistrationModal('${r.ev.id}','${r.school}')">Inscrire</button>
@@ -6290,10 +6985,10 @@ async function init(){
   if(typeof window !== 'undefined') window.__EDH_EMBEDDED_LYCEES = [];
   if(supabaseClient) clearEventLocalCache(false);
 
-  // V11 : on affiche l'interface immédiatement, puis Supabase charge la source de vérité.
-  // Le chargement complet Supabase se fait ensuite en arrière-plan.
+  // Production : Supabase est la source de vérité.
+  // L'interface se charge puis récupère les données partagées en arrière-plan.
   loadLocalData();
-  if(!supabaseClient) restoreEmbeddedLyceesIfEmpty();
+  
   populateStaticSelects();
   const visibleAtInit = schoolsVisibleForCurrentUser();
   if(!visibleAtInit.includes(S.currentSchool)) S.currentSchool = visibleAtInit[0] || SCHOOLS[0];
@@ -6317,15 +7012,15 @@ async function init(){
     setTimeout(async () => {
       try {
         const supabaseLoaded = await refreshFromSupabaseAndRender(false, 'initial', S.season || DEFAULT_SEASON);
-        if(!supabaseLoaded && !supabaseClient) restoreEmbeddedLyceesIfEmpty();
+        if(!supabaseLoaded) setSupabaseStatus('error', 'Supabase : données non chargées');
       } catch(err){
         console.error('Erreur chargement Supabase initial en arrière-plan:', err);
         setSupabaseStatus('error', 'Supabase : erreur de chargement');
-        showToast('Connexion Supabase impossible : données locales utilisées', 'error');
+        showToast('Connexion Supabase impossible : vérifiez la configuration de la base', 'error');
       }
     }, 80);
   } else {
-    setSupabaseStatus('error', 'Supabase : SDK ou clé absent');
+    setSupabaseStatus('error', 'Supabase : configuration absente');
   }
 }
 </script>
@@ -6342,7 +7037,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     try {
       forceListingTelephoneColumn();
-      console.info('EDH V28 : colonne Listing lycées vérifiée = Numéro de téléphone');
+      console.info('EDH V35 production GitHub : Supabase requis');
     } catch(e) {}
   }, 500);
 });
