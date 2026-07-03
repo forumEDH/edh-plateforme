@@ -1931,7 +1931,7 @@ td strong { color: var(--text); font-weight: 600; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V23-2026-07-02-rpc-lycees-saison";
+const APP_PATCH_VERSION = "V25-2026-07-03-saisons-racefix";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2007,6 +2007,7 @@ let SUPABASE_LAST_LOAD_AT = 0;
 const USER_SELECT_COLUMNS = 'id,app_id,first_name,last_name,email,password,role,school,phone,locked,regions_autorisees,schools_autorisees,region,campus,updated_at';
 const USER_LIGHT_SELECT_COLUMNS = 'id,app_id,first_name,last_name,email,role,school,phone,locked,regions_autorisees,schools_autorisees,region,campus,updated_at';
 let SUPABASE_IS_LOADING = false;
+let SUPABASE_LOAD_SEQ = 0;
 let SUPABASE_REALTIME_CHANNEL = null;
 let SUPABASE_REMOTE_REFRESH_TIMER = null;
 let SUPABASE_PERIODIC_REFRESH_TIMER = null;
@@ -2070,7 +2071,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V23-2026-07-02-rpc-lycees-saison';
+window.EDH_APP_VERSION = 'V25-2026-07-03-saisons-racefix';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -2618,10 +2619,12 @@ function scheduleRemoteReload(reason='remote-change'){
   clearTimeout(SUPABASE_REMOTE_REFRESH_TIMER);
   SUPABASE_REMOTE_REFRESH_TIMER = setTimeout(() => refreshFromSupabaseAndRender(true, reason), 700);
 }
-async function refreshFromSupabaseAndRender(silent=true, reason='manual'){
+async function refreshFromSupabaseAndRender(silent=true, reason='manual', seasonOverride=null){
   if(!supabaseClient || SUPABASE_IS_PUSHING) return false;
-  const loaded = await loadFromSupabase({ silent, reason });
-  if(loaded){
+  const requestedSeason = seasonOverride || S.season || DEFAULT_SEASON;
+  const loaded = await loadFromSupabase({ silent, reason, season: requestedSeason });
+  // V25 : si l'utilisateur a changé d'année pendant le chargement, on ne rend pas l'ancien résultat.
+  if(loaded && requestedSeason === (S.season || DEFAULT_SEASON)){
     populateStaticSelects();
     populateDepts();
     updateSchoolFilterCounts();
@@ -3008,8 +3011,8 @@ async function deleteEventDirectFromSupabase(localEvent){
   }
 }
 
-async function fetchLyceesForActiveSeason(){
-  const season = S.season || DEFAULT_SEASON;
+async function fetchLyceesForActiveSeason(seasonOverride=null){
+  const season = seasonOverride || S.season || DEFAULT_SEASON;
 
   // V24 : le listing ne doit JAMAIS dépendre de la table annuelle.
   // On lit toujours le référentiel lycees, puis on applique le suivi de la saison si disponible.
@@ -3064,16 +3067,24 @@ async function loadFromSupabase(options = {}){
     showToast('Supabase non initialisé : vérifie le SDK, l’URL projet et la clé anon.', 'error');
     return false;
   }
-  if(SUPABASE_IS_LOADING){
-    // V24 : évite qu'un changement d'année rende l'ancien résultat en cours de chargement.
-    await new Promise(resolve => setTimeout(resolve, 250));
-    if(SUPABASE_IS_LOADING) return false;
-  }
+
+  // V25 : chaque chargement capture l'année demandée et reçoit un numéro unique.
+  // Aucun résultat n'est écrit dans LYCEES tant que toutes les requêtes de cette année ne sont pas terminées.
+  // Cela empêche un ancien chargement 2025-2026 de s'afficher après un changement vers 2029-2030.
+  const requestedSeason = options.season || S.season || DEFAULT_SEASON;
+  const loadSeq = ++SUPABASE_LOAD_SEQ;
+  const isStaleLoad = () => loadSeq !== SUPABASE_LOAD_SEQ || requestedSeason !== (S.season || DEFAULT_SEASON);
   SUPABASE_IS_LOADING = true;
+
   const silent = Boolean(options.silent);
   const errors = [];
   const loadedTables = [];
-  let activeSuiviByLyceeId = new Map();
+
+  let nextLycees = [];
+  let nextStudents = [];
+  let nextRegistrations = [];
+  let nextReportingData = {};
+  let nextLeads = [];
 
   function recordTableError(table, err){
     const msg = getSupabaseErrorMessage(err);
@@ -3081,47 +3092,98 @@ async function loadFromSupabase(options = {}){
     errors.push(`${table} → ${msg}`);
   }
 
-  try {
-    setSupabaseStatus('syncing', 'Supabase : test des tables…');
+  function applyEventExtrasToLocal(row, eventObj){
+    if(!row || !eventObj) return;
+    const canonical = canonicalEventId(eventObj) || eventObj.id || '';
 
-    // 1) LYCÉES — V23 : lecture par saison via RPC Supabase.
-    const lyceeResponse = await fetchLyceesForActiveSeason();
+    const remoteRegs = parseSupabaseJson(row.registrations_json ?? row.inscriptions_json ?? row.registrations, []);
+    if(Array.isArray(remoteRegs)){
+      remoteRegs.forEach((r, index) => nextRegistrations.push({
+        id: String(r.id || r.app_id || `REG_REMOTE_${row.id || canonical}_${index}`),
+        supabase_id: r.supabase_id || null,
+        eventId: canonical,
+        eventName: r.eventName || r.event_name || eventObj.nom || '',
+        school: normalizeSchoolName(r.school || r.ecole) || r.school || r.ecole || '',
+        firstName: r.firstName || r.first_name || r.prenom || '',
+        lastName: r.lastName || r.last_name || r.nom || '',
+        email: (r.email || '').toString().toLowerCase(),
+        phone: r.phone || r.telephone || '',
+        notes: r.notes || r.commentaire || '',
+        userId: r.userId || r.user_app_id || null,
+        forcedByAdmin: Boolean(r.forcedByAdmin),
+        createdAt: r.createdAt || r.created_at || new Date().toISOString()
+      }));
+    }
+
+    const remoteLeads = parseSupabaseJson(row.leads_json ?? row.leads, []);
+    if(Array.isArray(remoteLeads)){
+      remoteLeads.forEach((l, index) => nextLeads.push({
+        id: String(l.id || l.app_id || `LEAD_REMOTE_${row.id || canonical}_${index}`),
+        season: l.season || row.saison || requestedSeason,
+        eventId: canonical,
+        eventName: l.eventName || l.event_name || eventObj.nom || '',
+        lycee: l.lycee || eventObj.nom || '',
+        ville: l.ville || eventObj.ville || '',
+        firstName: l.firstName || l.first_name || l.prenom || '',
+        lastName: l.lastName || l.last_name || l.nom || '',
+        email: (l.email || '').toString().toLowerCase(),
+        phone: l.phone || l.telephone || '',
+        level: l.level || l.niveau || '',
+        school: normalizeSchoolName(l.school || l.ecole) || l.school || l.ecole || '',
+        notes: l.notes || l.commentaire || '',
+        source: l.source || 'QR public',
+        createdAt: l.createdAt || l.created_at || new Date().toISOString()
+      }));
+    }
+
+    const remoteReporting = parseSupabaseJson(row.reporting_json ?? row.reporting, {});
+    if(remoteReporting && typeof remoteReporting === 'object' && !Array.isArray(remoteReporting)){
+      Object.entries(remoteReporting).forEach(([school, record]) => {
+        const cleanSchool = normalizeSchoolName(school) || school;
+        if(cleanSchool) nextReportingData[getReportKey(canonical, cleanSchool)] = record || {};
+      });
+    }
+  }
+
+  try {
+    setSupabaseStatus('syncing', `Supabase : chargement ${requestedSeason}…`);
+
+    // 1) Lycées référentiels + suivi annuel de la saison demandée.
+    const lyceeResponse = await fetchLyceesForActiveSeason(requestedSeason);
+    if(isStaleLoad()) return false;
+
     if(lyceeResponse.error){
       recordTableError(lyceeResponse.source || 'lycees', lyceeResponse.error);
     } else {
-      LYCEES = Array.isArray(lyceeResponse.data) ? lyceeResponse.data.map(mapSupabaseLyceeToApp) : [];
-      // V24 : snapshot du suivi réellement chargé pour empêcher les événements
-      // de réécrire le statut/commentaire d'une autre année.
-      activeSuiviByLyceeId = new Map(
-        LYCEES
-          .filter(l => l.supabase_id)
-          .map(l => [String(l.supabase_id), { statut: l.statut || 'A contacter', commentaire: l.commentaire || '' }])
-      );
-      SCHOOL_FORUMS = {};
-      DELETED_EVENT_IDS = [];
-      loadedTables.push(`lycees:${LYCEES.length}`);
+      nextLycees = Array.isArray(lyceeResponse.data) ? lyceeResponse.data.map(mapSupabaseLyceeToApp) : [];
+      loadedTables.push(`lycees:${nextLycees.length}`);
     }
 
-    // 2) ÉVÉNEMENTS — Supabase est la source unique des événements. On ne vide les données locales que si la table répond.
+    const activeSuiviByLyceeId = new Map(
+      nextLycees
+        .filter(l => l.supabase_id)
+        .map(l => [String(l.supabase_id), { statut: l.statut || 'A contacter', commentaire: l.commentaire || '' }])
+    );
+
+    // 2) Événements de la saison demandée uniquement.
     const eventResponse = await supabaseClient
       .from('evenements')
       .select('*')
-      .eq('saison', S.season || DEFAULT_SEASON);
+      .eq('saison', requestedSeason);
+    if(isStaleLoad()) return false;
+
     if(eventResponse.error){
       recordTableError('evenements', eventResponse.error);
     } else {
-      REGISTRATIONS = [];
-      REPORTING_DATA = {};
-      LEADS = [];
       const remoteEvents = Array.isArray(eventResponse.data) ? eventResponse.data : [];
-      const byKey = new Map(LYCEES.map(l => [appLyceeKey(l), l]));
+      const byKey = new Map(nextLycees.map(l => [appLyceeKey(l), l]));
+
       remoteEvents.forEach(row => {
         const seasonRow = mapSupabaseEventToSeasonRow(row);
         const key = appLyceeKey(seasonRow);
         const base = byKey.get(key);
+
         if(base){
-          // V23 : un événement ne doit jamais écraser le suivi annuel du listing.
-          // On ajoute seulement les champs opérationnels de l'événement.
           Object.assign(base, {
             date: seasonRow.date,
             heure: seasonRow.heure,
@@ -3131,7 +3193,7 @@ async function loadFromSupabase(options = {}){
             term: seasonRow.term,
             supabase_event_id: row.id || null
           });
-          applyEventExtrasFromSupabaseRow(row, base);
+          applyEventExtrasToLocal(row, base);
         } else {
           const orphan = {
             id: 'EVT_' + String(row.id || Date.now()),
@@ -3150,43 +3212,58 @@ async function loadFromSupabase(options = {}){
             participants: row.participants || 'Aucun étudiant',
             ...seasonRow
           };
-          LYCEES.push(orphan);
-          applyEventExtrasFromSupabaseRow(row, orphan);
+          nextLycees.push(orphan);
+          applyEventExtrasToLocal(row, orphan);
         }
       });
-      // V22 : les événements peuvent ajouter une date/heure au lycée, mais ne doivent jamais
-      // écraser le suivi annuel du listing. On réapplique donc le statut/commentaire annuel après fusion.
-      LYCEES = LYCEES.map(l => {
+
+      nextLycees = nextLycees.map(l => {
         if(!l.supabase_id) return l;
         const suivi = activeSuiviByLyceeId.get(String(l.supabase_id));
         return {
           ...l,
           statut: suivi?.statut || 'A contacter',
           commentaire: suivi?.commentaire || '',
-          annee_scolaire: S.season || DEFAULT_SEASON
+          annee_scolaire: requestedSeason
         };
       });
+
       loadedTables.push(`evenements:${remoteEvents.length}`);
     }
 
-    // 3) ÉTUDIANTS
+    // 3) Étudiants.
     const studentResponse = await supabaseClient.from('etudiants').select('*');
+    if(isStaleLoad()) return false;
+
     if(studentResponse.error){
       recordTableError('etudiants', studentResponse.error);
     } else {
-      STUDENTS = Array.isArray(studentResponse.data) ? studentResponse.data.map(mapSupabaseStudentToApp) : [];
-      loadedTables.push(`etudiants:${STUDENTS.length}`);
+      nextStudents = Array.isArray(studentResponse.data) ? studentResponse.data.map(mapSupabaseStudentToApp) : [];
+      loadedTables.push(`etudiants:${nextStudents.length}`);
     }
 
-    // 4) UTILISATEURS — indispensable pour l'espace collaborateur, mais on affiche l'erreur exacte si ça bloque.
+    // 4) Utilisateurs.
     try {
       await refreshUsersFromSupabase();
+      if(isStaleLoad()) return false;
       loadedTables.push(`utilisateurs:${USERS.length}`);
     } catch(userErr){
       recordTableError('utilisateurs', userErr);
     }
 
+    if(isStaleLoad()) return false;
+
+    // COMMIT UNIQUE : aucune donnée de saison n'est écrite avant cette ligne.
+    LYCEES = nextLycees;
+    SCHOOL_FORUMS = {};
+    DELETED_EVENT_IDS = [];
+    REGISTRATIONS = nextRegistrations;
+    REPORTING_DATA = nextReportingData;
+    LEADS = nextLeads;
+    STUDENTS = nextStudents;
+
     SUPABASE_LAST_LOAD_AT = Date.now();
+
     if(errors.length){
       SUPABASE_SYNC_READY = loadedTables.length > 0;
       const short = errors[0];
@@ -3201,8 +3278,8 @@ async function loadFromSupabase(options = {}){
     SUPABASE_SYNC_READY = true;
     safeLocalStorageSet('edh_students_v2', JSON.stringify(STUDENTS));
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
-    setSupabaseStatus('ok', `Supabase : connecté · ${loadedTables.join(' · ')}`);
-    if(!silent) showToast('Connexion Supabase active : données partagées chargées');
+    setSupabaseStatus('ok', `Supabase : connecté · ${requestedSeason} · ${loadedTables.join(' · ')}`);
+    if(!silent) showToast(`Saison ${requestedSeason} chargée depuis Supabase`);
     return true;
   } catch(err){
     const msg = getSupabaseErrorMessage(err);
@@ -3214,7 +3291,7 @@ async function loadFromSupabase(options = {}){
     }
     return false;
   } finally {
-    SUPABASE_IS_LOADING = false;
+    if(loadSeq === SUPABASE_LOAD_SEQ) SUPABASE_IS_LOADING = false;
   }
 }
 async function seedLyceesToSupabase(){
@@ -4971,7 +5048,7 @@ async function changeSeason(season){
   if(supabaseClient){
     // V21 : en mode Supabase, chaque changement d'année recharge le référentiel lycees
     // puis applique uniquement le suivi annuel de l'année sélectionnée.
-    await refreshFromSupabaseAndRender(false, 'season-change');
+    await refreshFromSupabaseAndRender(false, 'season-change', S.season);
   } else {
     loadSeasonData(S.season);
     populateDepts();
@@ -6214,7 +6291,7 @@ async function init(){
     setupSupabaseRealtime();
     setTimeout(async () => {
       try {
-        const supabaseLoaded = await refreshFromSupabaseAndRender(false, 'initial');
+        const supabaseLoaded = await refreshFromSupabaseAndRender(false, 'initial', S.season || DEFAULT_SEASON);
         if(!supabaseLoaded && !supabaseClient) restoreEmbeddedLyceesIfEmpty();
       } catch(err){
         console.error('Erreur chargement Supabase initial en arrière-plan:', err);
