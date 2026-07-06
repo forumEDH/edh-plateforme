@@ -869,6 +869,45 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 @media (max-width: 820px){ .login-shell { grid-template-columns:1fr; } .login-brand-panel-clean { min-height:190px; } .login-edh-badge { width:76px; height:76px; border-radius:22px; font-size:24px; } }
 
 
+/* ── V38 KIT FORUM / ACTIONS / LEADS CRM ── */
+.crm-mini-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+.crm-action-card { background:white; border:1px solid var(--border); border-radius:12px; padding:14px; box-shadow:var(--shadow-sm); }
+.crm-action-card-title { font-size:13px; font-weight:800; color:var(--text); margin-bottom:4px; }
+.crm-action-card-sub { font-size:12px; color:var(--text3); line-height:1.45; }
+.kit-forum-section { margin-top:16px; border-top:1px solid var(--border); padding-top:16px; }
+.kit-forum-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.kit-card { background:#fbfcff; border:1px solid var(--border); border-radius:12px; padding:14px; }
+.kit-card-title { font-size:13px; font-weight:900; color:var(--text); display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.kit-list { display:flex; flex-direction:column; gap:8px; }
+.kit-item { display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--text2); line-height:1.45; }
+.kit-item::before { content:'□'; color:var(--primary); font-weight:900; line-height:1.2; }
+.kit-ready-pill { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; background:var(--green-bg); color:var(--green); border:1px solid var(--green-border); font-size:10px; font-weight:900; white-space:nowrap; }
+.kit-warning-pill { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; background:var(--yellow-bg); color:var(--yellow); border:1px solid var(--yellow-border); font-size:10px; font-weight:900; white-space:nowrap; }
+.lead-status-pill { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid transparent; white-space:nowrap; }
+.lead-status-new { background:var(--primary-light); color:var(--primary); border-color:#bfdbfe; }
+.lead-status-hot { background:var(--green-bg); color:var(--green); border-color:var(--green-border); }
+.lead-status-nurture { background:var(--yellow-bg); color:var(--yellow); border-color:var(--yellow-border); }
+.lead-status-qualify { background:var(--red-bg); color:var(--red); border-color:var(--red-border); }
+.field-sheet { display:none; }
+.rapid-report-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+@media (max-width: 1100px){ .crm-mini-grid, .kit-forum-grid { grid-template-columns:1fr; } }
+@media (max-width: 760px){ .rapid-report-grid { grid-template-columns:1fr; } }
+
+
+
+/* ── V39 TODO MODIFIABLE / LEADS AVANCÉS / MAIL TEMPLATES ── */
+.todo-row.interactive { align-items:flex-start; gap:12px; }
+.todo-checkbox { width:18px; height:18px; margin-top:2px; accent-color:var(--green); flex-shrink:0; }
+.todo-row-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.todo-custom-form { margin-top:12px; padding:12px; background:var(--bg); border:1px dashed var(--border2); border-radius:10px; }
+.todo-custom-form .form-grid { grid-template-columns:1fr auto; }
+.lead-filter-box { background:white; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px; box-shadow:var(--shadow-sm); }
+.lead-filter-box .form-grid { grid-template-columns:repeat(5,minmax(0,1fr)); align-items:end; }
+@media (max-width:1100px){ .lead-filter-box .form-grid { grid-template-columns:1fr 1fr; } }
+@media (max-width:700px){ .lead-filter-box .form-grid { grid-template-columns:1fr; } }
+.email-template-tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.template-help { font-size:12px; color:var(--text3); line-height:1.5; }
+
 </style>
 </head>
 <body>
@@ -926,8 +965,18 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
       Leads & suivi
     </button>
 
+    <button class="nav-item" data-role="collaborateur" onclick="showPage('leadsall')">
+      <svg viewBox="0 0 24 24"><path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/></svg>
+      Tous les leads
+    </button>
+
 
     <div class="nav-section-label" style="margin-top:8px" data-role="collaborateur">Pilotage CRM</div>
+
+    <button class="nav-item" data-role="collaborateur" onclick="showPage('myactions')">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Mes actions
+    </button>
 
     <button class="nav-item" data-role="collaborateur" onclick="showPage('actions')">
       <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/><circle cx="8" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg>
@@ -1069,6 +1118,11 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
       </div>
 
       <div class="advanced-grid" style="margin-bottom:20px">
+        <div class="advanced-card" onclick="showPage('myactions')" style="cursor:pointer">
+          <div class="advanced-title">Mes actions</div>
+          <div class="advanced-desc">Voir les relances, forums à préparer, leads à traiter et reportings à compléter en priorité.</div>
+          <div class="advanced-meta"><span class="advanced-pill">Todo</span><span class="advanced-pill">Priorités</span></div>
+        </div>
         <div class="advanced-card" onclick="showPage('actions')" style="cursor:pointer">
           <div class="advanced-title">Pipeline CRM</div>
           <div class="advanced-desc">Prioriser les lycées à contacter, les NRP à relancer, les forums incomplets et les leads à traiter.</div>
@@ -1076,7 +1130,7 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
         </div>
         <div class="advanced-card" onclick="showPage('terrain')" style="cursor:pointer">
           <div class="advanced-title">Préparation forums</div>
-          <div class="advanced-desc">Piloter chaque événement avec une checklist avant / pendant / après et une future fiche terrain imprimable.</div>
+          <div class="advanced-desc">Piloter chaque événement avec checklist, Kit Forum, QR code, sacs, trajet et fiche terrain imprimable.</div>
           <div class="advanced-meta"><span class="advanced-pill">Terrain</span><span class="advanced-pill">Checklist</span></div>
         </div>
         <div class="advanced-card" onclick="showPage('performance')" style="cursor:pointer">
@@ -1461,8 +1515,49 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
         </div>
         <div class="table-scroll">
           <table>
-            <thead><tr><th>Date</th><th>Événement</th><th>Lycée</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>École</th><th>Cursus</th><th>Niveau</th><th>Notes</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Date</th><th>Événement</th><th>Lycée</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>École</th><th>Cursus</th><th>Niveau</th><th>Statut</th><th>Notes</th><th>Actions</th></tr></thead>
             <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ TOUS LES LEADS PAGE ═══ -->
+    <div class="page" id="page-leadsall">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Tous les leads</div>
+          <div class="page-subtitle">Filtrer, consulter et exporter les contacts collectés sur les forums accessibles à votre école / campus.</div>
+        </div>
+        <div class="small-actions">
+          <button class="btn btn-outline" onclick="resetAllLeadsFilters()">Réinitialiser</button>
+          <button class="btn btn-outline" onclick="refreshLeadsFromSupabase()">Recharger Supabase</button>
+          <button class="btn btn-primary" onclick="downloadFilteredLeadsExcel()">Exporter les leads filtrés</button>
+        </div>
+      </div>
+
+      <div class="lead-filter-box">
+        <div class="form-grid">
+          <div class="form-field"><label class="form-label">Créé après le</label><input class="form-input" type="date" id="all-leads-date-from" onchange="renderAllLeadsPage()"></div>
+          <div class="form-field"><label class="form-label">Créé avant le</label><input class="form-input" type="date" id="all-leads-date-to" onchange="renderAllLeadsPage()"></div>
+          <div class="form-field"><label class="form-label">Forum / lycée</label><select class="form-select" id="all-leads-event-filter" onchange="renderAllLeadsPage()"><option value="">Tous les forums</option></select></div>
+          <div class="form-field"><label class="form-label">Niveau</label><select class="form-select" id="all-leads-level-filter" onchange="renderAllLeadsPage()"><option value="">Tous niveaux</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+          <div class="form-field"><label class="form-label">École</label><select class="form-select" id="all-leads-school-filter" onchange="renderAllLeadsPage()"><option value="">Toutes écoles</option><option value="EFAP">EFAP</option><option value="ICART">ICART</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="À préciser">À préciser</option></select></div>
+        </div>
+      </div>
+
+      <div class="lead-kpi-row" id="all-leads-kpis"></div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Leads filtrés</div>
+          <div class="card-count" id="all-leads-count"></div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Date</th><th>Origine</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>École</th><th>Cursus</th><th>Niveau</th><th>Statut</th><th>Notes</th><th>Actions</th></tr></thead>
+            <tbody id="all-leads-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1703,6 +1798,16 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
           <div style="padding:16px" id="terrain-detail">
             <div class="crm-empty">Clique sur un forum validé dans la liste pour afficher les actions à préparer.</div>
           </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><div><div class="card-title">Bibliothèque Kit Forum</div><div class="card-count">Ressources de référence à préparer pour les forums</div></div></div>
+        <div style="padding:16px" class="kit-forum-grid">
+          <div class="kit-card"><div class="kit-card-title">Supports écoles <span class="kit-warning-pill">À déposer</span></div><div class="kit-list"><div class="kit-item">Présentation courte 5 minutes par école</div><div class="kit-item">Présentation longue 15 minutes par école</div><div class="kit-item">Brochures PDF / plaquettes à jour</div><div class="kit-item">Argumentaire campus et débouchés</div></div></div>
+          <div class="kit-card"><div class="kit-card-title">Activités orientation <span class="kit-ready-pill">Modèle</span></div><div class="kit-list"><div class="kit-item">Quiz orientation métiers</div><div class="kit-item">Jeu vrai/faux sur les métiers</div><div class="kit-item">Cartes métiers / parcours</div><div class="kit-item">Questions à poser aux lycéens</div></div></div>
+          <div class="kit-card"><div class="kit-card-title">Documents terrain <span class="kit-ready-pill">Auto</span></div><div class="kit-list"><div class="kit-item">Fiche terrain du forum</div><div class="kit-item">QR code leads imprimable</div><div class="kit-item">Liste ambassadeurs et contacts</div><div class="kit-item">Consignes pour les étudiants</div></div></div>
+          <div class="kit-card"><div class="kit-card-title">Matériel physique <span class="kit-warning-pill">À vérifier</span></div><div class="kit-list"><div class="kit-item">Roll-up / kakémono</div><div class="kit-item">Flyers, goodies et sacs forums</div><div class="kit-item">Ordinateur, tablette, chargeur, multiprise</div><div class="kit-item">Badges, tour de cou, QR code imprimé</div></div></div>
         </div>
       </div>
     </div>
@@ -2162,6 +2267,10 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
   <div class="modal" style="max-width:760px">
     <div class="modal-header"><div><div class="modal-title" id="email-modal-title">Préparer un mail</div><div class="modal-subtitle" id="email-modal-subtitle"></div></div><button class="modal-close" onclick="closeModal('modal-email')">✕</button></div>
     <div class="modal-body">
+      <div class="email-template-tools">
+        <div class="template-help">Sélectionnez un modèle existant ou créez un modèle personnalisé réutilisable.</div>
+        <button class="btn btn-outline" onclick="openEmailTemplateModal()">Ajouter un template</button>
+      </div>
       <div class="form-grid" style="margin-bottom:14px">
         <div class="form-field"><label class="form-label">Type de mail</label><select class="form-select" id="email-template-type" onchange="renderEmailPreview()"><option value="prospection">Contact / prospection</option><option value="relance">Relance</option><option value="confirmation">Confirmation de participation</option><option value="refus">Refus de participation</option><option value="annulation">Annulation et excuses</option><option value="merci">Remerciement</option></select></div>
         <div class="form-field"><label class="form-label">Destinataire</label><input class="form-input" id="email-to" placeholder="mail du lycée ou organisateur"></div>
@@ -2173,6 +2282,68 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
   </div>
 </div>
 
+
+
+<!-- ═══ MODAL TEMPLATE EMAIL PERSONNALISÉ ═══ -->
+<div class="modal-overlay" id="modal-email-template" onclick="closeModalIf(event,'modal-email-template')">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Ajouter un template de mail</div>
+        <div class="modal-subtitle">Créer un modèle réutilisable dans les mails automatiques.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-email-template')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="muted-box" style="margin-bottom:14px">
+        Variables utilisables : <strong>{{lycee}}</strong>, <strong>{{date}}</strong>, <strong>{{ecoles}}</strong>, <strong>{{contact}}</strong>, <strong>{{ville}}</strong>.
+      </div>
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">Nom du template *</label><input class="form-input" id="custom-template-name" placeholder="Ex : Mail infos pratiques"></div>
+        <div class="form-field"><label class="form-label">Objet *</label><input class="form-input" id="custom-template-subject" placeholder="Objet du mail"></div>
+        <div class="form-field full"><label class="form-label">Corps du mail *</label><textarea class="form-textarea" id="custom-template-body" rows="10" placeholder="Bonjour {{contact}},\n\n..."></textarea></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><div class="card-title">Templates personnalisés existants</div><div class="card-count" id="custom-template-count"></div></div>
+        <div class="table-scroll"><table><thead><tr><th>Nom</th><th>Objet</th><th>Actions</th></tr></thead><tbody id="custom-template-tbody"></tbody></table></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-email-template')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveCustomEmailTemplate()">Enregistrer le template</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ MODAL REPORTING RAPIDE ═══ -->
+<div class="modal-overlay" id="modal-rapid-reporting" onclick="closeModalIf(event,'modal-rapid-reporting')">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="rapid-reporting-title">Reporting rapide</div>
+        <div class="modal-subtitle" id="rapid-reporting-subtitle">Compléter les chiffres principaux avant d’archiver le forum.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-rapid-reporting')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="muted-box" style="margin-bottom:14px">Ce formulaire permet de renseigner rapidement le bilan du forum. Les données alimentent ensuite le reporting opérationnel et le bilan conversion.</div>
+      <div class="rapid-report-grid">
+        <div class="form-field"><label class="form-label">École concernée</label><select class="form-select" id="rapid-reporting-school"></select></div>
+        <div class="form-field"><label class="form-label">Prospects rencontrés</label><input class="form-input" type="number" min="0" id="rapid-reporting-global" value="0"></div>
+        <div class="form-field"><label class="form-label">Dont prospects simples</label><input class="form-input" type="number" min="0" id="rapid-reporting-prospect" value="0"></div>
+        <div class="form-field"><label class="form-label">Candidats</label><input class="form-input" type="number" min="0" id="rapid-reporting-candidat" value="0"></div>
+        <div class="form-field"><label class="form-label">Admis</label><input class="form-input" type="number" min="0" id="rapid-reporting-admis" value="0"></div>
+        <div class="form-field"><label class="form-label">Inscrits</label><input class="form-input" type="number" min="0" id="rapid-reporting-inscrit" value="0"></div>
+        <div class="form-field full"><label class="form-label">Commentaire qualitatif</label><textarea class="form-textarea" id="rapid-reporting-comment" rows="3" placeholder="Qualité du forum, questions fréquentes, à refaire / à éviter..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="archiveForumWithoutRapidReporting()">Archiver sans reporting</button>
+      <button class="btn btn-primary" onclick="saveRapidReportingAndArchive()">Enregistrer et terminer</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ PUBLIC QR LEAD FORM ═══ -->
 <div class="public-lead-overlay crm-public" id="public-lead-overlay">
@@ -2205,7 +2376,7 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V33-2026-07-03-correctifs-crm-operationnel";
+const APP_PATCH_VERSION = "V39-2026-07-06-todo-mail-leads-reporting";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2300,6 +2471,7 @@ let SUPABASE_USERS_PAGE_REFRESHING = false;
 const SEASON_FIELDS = ['statut','date','heure','formation','ecoles','commentaire','ancien_etudiant','participants','prospect_global','term'];
 let CURRENT_PUBLIC_LEAD_EVENT_ID = null;
 let MAIL_CONTEXT_ID = null;
+let RAPID_REPORTING_EVENT_ID = null;
 
 // ══════════════════════════════════════
 // SUPABASE HELPERS
@@ -2345,7 +2517,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V33-2026-07-03-correctifs-crm-operationnel';
+window.EDH_APP_VERSION = 'V38-2026-07-04-kit-forum-crm';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -5014,17 +5186,7 @@ function activeValidatedForums(){
 function completeForum(eventId){
   const ev = findCalendarEventById(eventId);
   if(!ev) return showToast('Forum introuvable', 'error');
-  if(!confirm('Marquer ce forum comme terminé et l’archiver de la préparation ?')) return;
-  const key = forumArchiveKey(ev);
-  if(key && !ARCHIVED_FORUM_IDS.map(String).includes(String(key))) ARCHIVED_FORUM_IDS.push(String(key));
-  safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
-  const detail = document.getElementById('terrain-detail');
-  if(detail) detail.innerHTML = '<div class="crm-empty"><p>Forum terminé et archivé. Il disparaît de la préparation et du pipeline opérationnel.</p></div>';
-  renderTerrainPage();
-  renderActionsStructurePage();
-  renderDashboardV2();
-  showPage('actions');
-  showToast('Forum terminé : préparation archivée');
+  openRapidReportingModal(canonicalEventId(ev) || ev.id);
 }
 function currentLeadEvent(){
   const eventId = document.getElementById('lead-event-select')?.value || CURRENT_PUBLIC_LEAD_EVENT_ID || '';
@@ -5079,6 +5241,55 @@ function updateLeadProgramOptions(scope='lead'){
   if(previous && options.includes(previous)) select.value = previous;
 }
 
+
+function leadTreatmentStatus(lead){
+  const level = (lead?.level || '').toLowerCase();
+  const program = (lead?.program || lead?.cursus || '').toLowerCase();
+  const hasPhone = Boolean((lead?.phone || '').trim());
+  if(!program || program.includes('préciser') || program.includes('preciser') || !lead?.school){
+    return {label:'À qualifier', cls:'lead-status-qualify', html:'<span class="lead-status-pill lead-status-qualify">À qualifier</span>', action:'Compléter école / cursus puis recontacter.'};
+  }
+  if(level.includes('terminale') || level.includes('bac+1') || level.includes('bac+2')){
+    return {label: hasPhone ? 'Prioritaire' : 'Nouveau', cls: hasPhone ? 'lead-status-hot':'lead-status-new', html:`<span class="lead-status-pill ${hasPhone ? 'lead-status-hot':'lead-status-new'}">${hasPhone ? 'Prioritaire':'Nouveau'}</span>`, action: hasPhone ? 'Appeler sous 24/48h.' : 'Envoyer un mail puis récupérer le téléphone.'};
+  }
+  if(level.includes('1ère') || level.includes('1ere') || level.includes('2nde')){
+    return {label:'Nurturing', cls:'lead-status-nurture', html:'<span class="lead-status-pill lead-status-nurture">Nurturing</span>', action:'À entretenir sur la durée : invitation JPO / atelier orientation.'};
+  }
+  return {label:'Nouveau', cls:'lead-status-new', html:'<span class="lead-status-pill lead-status-new">Nouveau</span>', action:'Qualifier le besoin et proposer une prochaine action.'};
+}
+function openLeadDetail(leadId){
+  const lead = (LEADS || []).find(l => String(l.id) === String(leadId) || String(l.supabase_id) === String(leadId));
+  if(!lead) return showToast('Lead introuvable', 'error');
+  const ev = findCalendarEventById(lead.eventId) || {};
+  const status = leadTreatmentStatus(lead);
+  document.getElementById('detail-title').textContent = `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Lead';
+  document.getElementById('detail-subtitle').textContent = `${ev.nom || lead.eventName || lead.lycee || 'Origine non précisée'} · ${fmtDate((lead.createdAt || '').slice(0,10))}`;
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-panel"><div class="detail-panel-title">Suivi lead</div><div class="detail-row" style="margin-bottom:0">
+      <div class="detail-field"><div class="detail-label">Statut recommandé</div><div class="detail-value">${status.html}</div></div>
+      <div class="detail-field"><div class="detail-label">Prochaine action</div><div class="detail-value">${escapeHtml(status.action)}</div></div>
+      <div class="detail-field"><div class="detail-label">Origine</div><div class="detail-value">${escapeHtml(ev.nom || lead.eventName || lead.lycee || '—')}</div></div>
+      <div class="detail-field"><div class="detail-label">Source</div><div class="detail-value">${escapeHtml(lead.source || '—')}</div></div>
+    </div></div>
+    <div class="detail-row">
+      <div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">${lead.email ? `<a href="mailto:${escapeHtml(lead.email)}">${escapeHtml(lead.email)}</a>` : '—'}</div></div>
+      <div class="detail-field"><div class="detail-label">Téléphone</div><div class="detail-value">${lead.phone ? `<a href="tel:${escapeHtml(lead.phone)}">${escapeHtml(lead.phone)}</a>` : '—'}</div></div>
+      <div class="detail-field"><div class="detail-label">École intéressée</div><div class="detail-value">${escapeHtml(lead.school || '—')}</div></div>
+      <div class="detail-field"><div class="detail-label">Cursus souhaité</div><div class="detail-value">${escapeHtml(lead.program || lead.cursus || '—')}</div></div>
+      <div class="detail-field"><div class="detail-label">Niveau</div><div class="detail-value">${escapeHtml(lead.level || '—')}</div></div>
+      <div class="detail-field"><div class="detail-label">Ville forum</div><div class="detail-value">${escapeHtml(ev.ville || lead.ville || '—')}</div></div>
+      <div class="detail-field full"><div class="detail-label">Notes</div><div class="detail-value" style="white-space:pre-wrap">${escapeHtml(lead.notes || '—')}</div></div>
+    </div>`;
+  document.getElementById('detail-route-btn').style.display = 'none';
+  document.getElementById('detail-ics-btn').style.display = 'none';
+  document.getElementById('detail-qr-btn').style.display = 'none';
+  document.getElementById('detail-edit-btn').style.display = 'none';
+  document.getElementById('detail-mail-btn').style.display = lead.email ? '' : 'none';
+  document.getElementById('detail-mail-btn').onclick = ()=>openMailToLead(lead.id);
+  document.getElementById('detail-delete-event-btn').style.display = 'none';
+  document.getElementById('modal-detail').classList.add('open');
+}
+
 function renderLeadsKpis(rows){
   const box = document.getElementById('leads-kpis'); if(!box) return;
   const today = new Date().toISOString().slice(0,10);
@@ -5098,7 +5309,7 @@ function renderLeadsPage(){
   const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
   renderLeadsKpis(rows);
   if(count) count.textContent = `${rows.length} lead(s)`;
-  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const eventName=ev.nom||l.eventName||l.lycee||'—'; const ville=ev.ville||l.ville||''; return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(eventName)}</td><td>${escapeHtml((l.lycee||ev.nom||'—'))}${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(((l.firstName||'')+' '+(l.lastName||'')).trim())}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="11"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
+  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const eventName=ev.nom||l.eventName||l.lycee||'—'; const ville=ev.ville||l.ville||''; const status=leadTreatmentStatus(l); return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(eventName)}</td><td>${escapeHtml((l.lycee||ev.nom||'—'))}${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(((l.firstName||'')+' '+(l.lastName||'')).trim())}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${status.html}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openLeadDetail('${l.id}')">Fiche</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="12"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
 }
 async function saveLeadFromForm(){
   const eventId = document.getElementById('lead-event-select')?.value || '';
@@ -5186,6 +5397,7 @@ function getLyceeNextAction(l){
 // DETAIL MODAL
 // ══════════════════════════════════════
 function openDetail(id){
+  ['detail-route-btn','detail-ics-btn','detail-qr-btn','detail-edit-btn','detail-mail-btn'].forEach(btnId=>{ const b=document.getElementById(btnId); if(b) b.style.display=''; });
   const l=findCalendarEventById(id);
   if(!l) return showToast('Évènement introuvable', 'error');
   document.getElementById('detail-title').textContent=l.nom||'—';
@@ -5437,6 +5649,131 @@ function forumHasAssignedStudents(l){
 function actionButton(label, onclick, cls='btn btn-outline'){
   return `<button class="${cls}" style="padding:5px 9px;font-size:11px" onclick="${onclick}">${label}</button>`;
 }
+
+function kitForumStatus(eventObj){
+  const tasks = preparationTasksForEvent(eventObj);
+  const ready = tasks.filter(t => t.ok).length;
+  if(ready >= tasks.length - 1) return {label:'Kit prêt', cls:'kit-ready-pill'};
+  return {label:'Kit à compléter', cls:'kit-warning-pill'};
+}
+function kitForumHtml(eventObj){
+  const campus = currentEfapCampus(eventObj);
+  const schools = getSchoolsArray(eventObj?.ecoles);
+  const status = kitForumStatus(eventObj);
+  return `<div class="kit-forum-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+      <div><div style="font-size:16px;font-weight:900;color:var(--text)">Kit Forum</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Tout ce qu’il faut récupérer / préparer pour réussir le forum.</div></div>
+      <span class="${status.cls}">${status.label}</span>
+    </div>
+    <div class="small-actions" style="margin-bottom:12px">
+      ${actionButton('Télécharger le kit', `downloadForumKit('${canonicalEventId(eventObj) || eventObj.id}')`, 'btn btn-outline')}
+      ${actionButton('Générer fiche terrain', `printForumFieldSheet('${canonicalEventId(eventObj) || eventObj.id}')`, 'btn btn-outline')}
+      ${actionButton('QR code du forum', `openLeadForEvent('${canonicalEventId(eventObj) || eventObj.id}')`, 'btn btn-primary')}
+    </div>
+    <div class="kit-forum-grid">
+      <div class="kit-card"><div class="kit-card-title">Supports de présentation</div><div class="kit-list">
+        ${schools.map(s=>`<div class="kit-item">Présentation PDF/PPT ${escapeHtml(s)} — version courte 5 min et version longue 15 min</div>`).join('') || '<div class="kit-item">Présentation générale Groupe EDH</div>'}
+        <div class="kit-item">Brochures / plaquettes écoles à jour</div><div class="kit-item">Argumentaire campus ${escapeHtml(campus)}</div><div class="kit-item">FAQ admissions, concours, alternance et débouchés</div>
+      </div></div>
+      <div class="kit-card"><div class="kit-card-title">Activités à faire sur place</div><div class="kit-list"><div class="kit-item">Mini quiz orientation métiers</div><div class="kit-item">Jeu vrai/faux sur les métiers</div><div class="kit-item">Cartes métiers / parcours selon les écoles présentes</div><div class="kit-item">Questions de découverte : projet, niveau, ville, métier visé</div></div></div>
+      <div class="kit-card"><div class="kit-card-title">Documents utiles</div><div class="kit-list"><div class="kit-item">Fiche terrain du forum</div><div class="kit-item">QR code leads imprimé + lien testé</div><div class="kit-item">Liste des ambassadeurs / étudiants inscrits</div><div class="kit-item">Modèle de discours rapide et consignes étudiants</div></div></div>
+      <div class="kit-card"><div class="kit-card-title">Matériel physique</div><div class="kit-list"><div class="kit-item">Roll-up / kakémono adapté aux écoles présentes</div><div class="kit-item">Flyers, brochures, goodies et sacs forums</div><div class="kit-item">Ordinateur / tablette / chargeur / multiprise</div><div class="kit-item">Badges, tour de cou, QR code visible sur table</div></div></div>
+    </div>
+  </div>`;
+}
+function forumFieldSheetHtml(eventObj){
+  const leadsUrl = leadPublicUrl(leadEventToken(eventObj));
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Fiche terrain - ${escapeHtml(eventObj.nom||'Forum')}</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#111827}h1{font-size:24px;margin-bottom:4px}.muted{color:#6b7280}.box{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin:14px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.check div{margin:7px 0} @media print{button{display:none}}</style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
+}
+function printForumFieldSheet(eventId){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return showToast('Forum introuvable', 'error');
+  const w = window.open('', '_blank');
+  if(!w) return showToast('Popup bloquée : autorise l’ouverture de la fiche terrain.', 'error');
+  w.document.write(forumFieldSheetHtml(ev));
+  w.document.close();
+}
+function downloadForumKit(eventId){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return showToast('Forum introuvable', 'error');
+  const text = `KIT FORUM - ${ev.nom || ''}\n\nDate : ${fmtDate(ev.date)}\nVille : ${ev.ville || ''}\nCampus départ : EFAP ${currentEfapCampus(ev)}\nÉcoles : ${getSchoolsArray(ev.ecoles).join(', ') || 'À préciser'}\nLien QR : ${leadPublicUrl(leadEventToken(ev))}\n\nSUPPORTS\n- Présentation courte 5 minutes\n- Présentation longue 15 minutes\n- Brochures / plaquettes\n- Argumentaire campus\n\nACTIVITÉS\n- Quiz orientation\n- Vrai/faux métiers\n- Cartes métiers / parcours\n- Questions de découverte\n\nMATÉRIEL\n- Roll-up / kakémono\n- Flyers / goodies / sacs forums\n- Ordinateur / tablette / chargeur / multiprise\n- QR code imprimé\n\nCHECKLIST\n- Ambassadeurs attribués\n- Conversation Teams créée\n- Outlook ajouté\n- Trajet réservé\n- QR testé\n- Sacs remis\n- Reporting complété`;
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Kit_forum_${(ev.nom||'forum').replace(/[^a-z0-9]+/gi,'_')}.txt`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  showToast('Kit forum téléchargé');
+}
+function buildMyActions(){
+  const validated = activeValidatedForums();
+  const priorityCalls = getVisibleLycees().filter(l => ['A contacter','NRP','En cours de négociation'].includes(normalizeStatus(l.statut))).slice(0, 25);
+  const leadActions = getVisibleLeads().filter(l => ['Prioritaire','À qualifier','Nouveau'].includes(leadTreatmentStatus(l).label)).slice(0, 25);
+  const reportingMissing = validated.filter(l => isPastEvent(l) && !isForumArchived(l) && reportSummaryForEvent(l).global === 0);
+  const rows = [];
+  validated.filter(l => !forumHasAssignedStudents(l)).forEach(l => rows.push({prio:'Haute', cls:'todo-blocked', type:'Forum', object:l.nom, sub:`${fmtDate(l.date)} · ${l.ville||''}`, action:'Attribuer des ambassadeurs / étudiants référents.', open:`showPage('terrain'); selectTerrainEvent('${canonicalEventId(l)||l.id}')`}));
+  priorityCalls.forEach(l => rows.push({prio:normalizeStatus(l.statut)==='NRP'?'Haute':'Moyenne', cls:normalizeStatus(l.statut)==='NRP'?'todo-blocked':'todo-warning', type:'Lycée', object:l.nom, sub:l.ville||'', action:getLyceeNextAction(l), open:`openDetail('${canonicalEventId(l)||l.id}')`}));
+  leadActions.forEach(l => { const st=leadTreatmentStatus(l); rows.push({prio:st.label==='Prioritaire'?'Haute':'Moyenne', cls:st.label==='Prioritaire'?'todo-blocked':'todo-warning', type:'Lead', object:`${l.firstName||''} ${l.lastName||''}`.trim() || l.email, sub:l.school||'', action:st.action, open:`openLeadDetail('${l.id}')`}); });
+  reportingMissing.forEach(l => rows.push({prio:'Moyenne', cls:'todo-warning', type:'Reporting', object:l.nom, sub:`${fmtDate(l.date)} · ${l.ville||''}`, action:'Compléter le reporting post-forum.', open:`showPage('reporting')`}));
+  return rows;
+}
+function renderMyActionsPage(){
+  const rows = buildMyActions();
+  const kpis = document.getElementById('myactions-kpis');
+  const high = rows.filter(r=>r.prio==='Haute').length;
+  const leads = rows.filter(r=>r.type==='Lead').length;
+  const forums = rows.filter(r=>r.type==='Forum').length;
+  if(kpis) kpis.innerHTML = `<div class="kpi-card kpi-accent-red"><div class="kpi-label">Priorité haute</div><div class="kpi-value">${high}</div><div class="kpi-meta">à traiter vite</div></div><div class="kpi-card kpi-accent-orange"><div class="kpi-label">Forums</div><div class="kpi-value">${forums}</div><div class="kpi-meta">à sécuriser</div></div><div class="kpi-card kpi-accent-blue"><div class="kpi-label">Leads</div><div class="kpi-value">${leads}</div><div class="kpi-meta">à qualifier</div></div>`;
+  const count = document.getElementById('myactions-count'); if(count) count.textContent = `${rows.length} action(s)`;
+  const body = document.getElementById('myactions-tbody');
+  if(body) body.innerHTML = rows.length ? rows.map(r => `<tr><td><span class="todo-status ${r.cls}">${escapeHtml(r.prio)}</span></td><td>${escapeHtml(r.type)}</td><td><strong>${escapeHtml(r.object||'—')}</strong><br><span style="font-size:11px;color:var(--text3)">${escapeHtml(r.sub||'')}</span></td><td>${escapeHtml(r.action)}</td><td>${actionButton('Ouvrir', r.open)}</td></tr>`).join('') : `<tr><td colspan="5"><div class="crm-empty">Aucune action prioritaire détectée.</div></td></tr>`;
+}
+function openRapidReportingModal(eventId){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return showToast('Forum introuvable', 'error');
+  RAPID_REPORTING_EVENT_ID = canonicalEventId(ev) || ev.id;
+  const schools = getSchoolsArray(ev.ecoles);
+  const sel = document.getElementById('rapid-reporting-school');
+  if(sel) sel.innerHTML = (schools.length ? schools : ['EFAP']).map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  document.getElementById('rapid-reporting-title').textContent = `Reporting rapide — ${ev.nom || 'Forum'}`;
+  document.getElementById('rapid-reporting-subtitle').textContent = `${fmtDate(ev.date)} · ${ev.ville || ''}`;
+  ['global','prospect','candidat','admis','inscrit'].forEach(f=>{ const el=document.getElementById('rapid-reporting-'+f); if(el) el.value=0; });
+  const c = document.getElementById('rapid-reporting-comment'); if(c) c.value = '';
+  document.getElementById('modal-rapid-reporting').classList.add('open');
+}
+function archiveForumNow(eventId){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return showToast('Forum introuvable', 'error');
+  const key = forumArchiveKey(ev);
+  if(key && !ARCHIVED_FORUM_IDS.map(String).includes(String(key))) ARCHIVED_FORUM_IDS.push(String(key));
+  safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
+  saveLocalData();
+  const detail = document.getElementById('terrain-detail');
+  if(detail) detail.innerHTML = '<div class="crm-empty"><p>Forum terminé et archivé. Il disparaît de la préparation et du pipeline opérationnel.</p></div>';
+  renderTerrainPage(); renderActionsStructurePage(); renderMyActionsPage(); renderPerformancePage(); renderDashboardV2();
+}
+async function saveRapidReportingAndArchive(){
+  const ev = findCalendarEventById(RAPID_REPORTING_EVENT_ID);
+  if(!ev) return showToast('Forum introuvable', 'error');
+  const school = document.getElementById('rapid-reporting-school')?.value || getSchoolsArray(ev.ecoles)[0] || 'EFAP';
+  const rec = getReportRecord(canonicalEventId(ev) || ev.id, school);
+  rec.global = Number(document.getElementById('rapid-reporting-global')?.value || 0);
+  rec.prospect = Number(document.getElementById('rapid-reporting-prospect')?.value || 0);
+  rec.candidat = Number(document.getElementById('rapid-reporting-candidat')?.value || 0);
+  rec.admis = Number(document.getElementById('rapid-reporting-admis')?.value || 0);
+  rec.inscrit = Number(document.getElementById('rapid-reporting-inscrit')?.value || 0);
+  const comment = (document.getElementById('rapid-reporting-comment')?.value || '').trim();
+  if(comment) ev.commentaire = [ev.commentaire, `Reporting rapide : ${comment}`].filter(Boolean).join('\n');
+  saveLocalData();
+  await saveEventExtrasToSupabase(ev).catch(err => showToast('Reporting local enregistré, mais Supabase non synchronisé : ' + getSupabaseErrorMessage(err), 'error'));
+  closeModal('modal-rapid-reporting'); archiveForumNow(canonicalEventId(ev) || ev.id); showPage('actions'); showToast('Reporting enregistré et forum archivé');
+}
+function archiveForumWithoutRapidReporting(){
+  const ev = findCalendarEventById(RAPID_REPORTING_EVENT_ID);
+  if(!ev) return closeModal('modal-rapid-reporting');
+  closeModal('modal-rapid-reporting'); archiveForumNow(canonicalEventId(ev) || ev.id); showPage('actions'); showToast('Forum archivé sans reporting');
+}
+
 function renderActionsStructurePage(){
   const visible = getVisibleLycees ? getVisibleLycees() : (LYCEES || []);
   const validated = visible.filter(isValidatedForum).filter(l => !isForumArchived(l)).sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -5541,7 +5878,7 @@ function selectTerrainEvent(eventId, markActive=true){
   const selectedCount = document.getElementById('terrain-selected-count');
   if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions prêtes`;
   const id = canonicalEventId(l) || l.id;
-  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>`;
+  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche terrain', `printForumFieldSheet('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>${kitForumHtml(l)}`;
 }
 function renderPerformancePage(){
   const events = activeValidatedForums();
@@ -5605,6 +5942,7 @@ function showPage(page){
 
   const pageMap = {
     dashboard: "Tableau de bord",
+    myactions: "Mes actions",
     actions: "Pipeline CRM",
     listing: "Listing lycées",
     calendrier: "Calendrier forums",
@@ -5636,6 +5974,7 @@ function showPage(page){
   else if(page==='reporting') { renderReportingPage(); }
   else if(page==='leads') renderLeadsPage();
   else if(page==='actions') renderActionsStructurePage();
+  else if(page==='myactions') renderMyActionsPage();
   else if(page==='terrain') renderTerrainPage();
   else if(page==='performance') renderPerformancePage();
   else if(page==='inscriptions') renderInscriptionPage();
@@ -5735,6 +6074,10 @@ function refreshCurrentPage(){
   else if(id==='users') renderUsersPage();
   else if(id==='reporting') { renderReportingPage(); }
   else if(id==='leads') renderLeadsPage();
+  else if(id==='myactions') renderMyActionsPage();
+  else if(id==='actions') renderActionsStructurePage();
+  else if(id==='terrain') renderTerrainPage();
+  else if(id==='performance') renderPerformancePage();
   else if(id==='inscriptions') renderInscriptionPage();
 }
 
@@ -7130,6 +7473,390 @@ async function init(){
     setSupabaseStatus('error', 'Supabase : configuration absente');
   }
 }
+
+// ══════════════════════════════════════
+// V39 — TODO MODIFIABLE / TEMPLATES MAIL / LEADS AVANCÉS / REPORTING AUTO
+// ══════════════════════════════════════
+let FORUM_TODO_STATE = {};
+let FORUM_CUSTOM_TASKS = {};
+let CUSTOM_EMAIL_TEMPLATES = [];
+let V39_STATE_LOADED = false;
+
+function loadV39LocalState(){
+  if(V39_STATE_LOADED) return;
+  try { FORUM_TODO_STATE = JSON.parse(localStorage.getItem('edh_forum_todo_state_v39') || '{}'); } catch(e){ FORUM_TODO_STATE = {}; }
+  try { FORUM_CUSTOM_TASKS = JSON.parse(localStorage.getItem('edh_forum_custom_tasks_v39') || '{}'); } catch(e){ FORUM_CUSTOM_TASKS = {}; }
+  try { CUSTOM_EMAIL_TEMPLATES = JSON.parse(localStorage.getItem('edh_custom_email_templates_v39') || '[]'); } catch(e){ CUSTOM_EMAIL_TEMPLATES = []; }
+  V39_STATE_LOADED = true;
+}
+function saveV39LocalState(){
+  try { localStorage.setItem('edh_forum_todo_state_v39', JSON.stringify(FORUM_TODO_STATE || {})); } catch(e){}
+  try { localStorage.setItem('edh_forum_custom_tasks_v39', JSON.stringify(FORUM_CUSTOM_TASKS || {})); } catch(e){}
+  try { localStorage.setItem('edh_custom_email_templates_v39', JSON.stringify(CUSTOM_EMAIL_TEMPLATES || [])); } catch(e){}
+}
+function taskKeyForEvent(eventObj){ return forumArchiveKey(eventObj) || canonicalEventId(eventObj) || String(eventObj?.id || ''); }
+function getForumTaskState(eventObj, taskId){
+  loadV39LocalState();
+  const key = taskKeyForEvent(eventObj);
+  return Boolean(key && FORUM_TODO_STATE[key] && FORUM_TODO_STATE[key][taskId]);
+}
+function setForumTaskState(eventObj, taskId, checked){
+  loadV39LocalState();
+  const key = taskKeyForEvent(eventObj);
+  if(!key) return;
+  if(!FORUM_TODO_STATE[key]) FORUM_TODO_STATE[key] = {};
+  FORUM_TODO_STATE[key][taskId] = Boolean(checked);
+  saveV39LocalState();
+}
+function defaultForumTasksForEvent(l){
+  const leads = eventLeads(l);
+  const report = reportSummaryForEvent(l);
+  return [
+    {id:'ambassadeurs', step:'Ambassadeurs', autoOk:forumHasAssignedStudents(l), title:'Trouver des ambassadeurs + attribuer les étudiants à l’événement', desc:'Identifier les étudiants disponibles, les inscrire à l’événement et confirmer qui représente chaque école sur place.'},
+    {id:'teams', step:'Teams', autoOk:false, title:'Créer conversation Teams avec les ambassadeurs', desc:'Créer une conversation Teams dédiée au forum avec les étudiants et collaborateurs mobilisés.'},
+    {id:'outlook', step:'Outlook', autoOk:false, title:'Ajouter l’événement au calendrier Outlook', desc:'Télécharger le fichier Outlook / Teams puis l’ajouter au calendrier des personnes concernées.'},
+    {id:'trajet', step:'Trajet', autoOk:false, title:'Préparer le trajet : réserver billet de train, bus, métro nécessaire', desc:`Prévoir l’itinéraire depuis le campus EFAP ${currentEfapCampus(l)} et réserver les billets nécessaires.`},
+    {id:'qr', step:'QR Code', autoOk:leads.length>0, title:'Préparer le QR Code + tester le QR Code', desc:'Générer le QR code, le télécharger, le scanner avec un téléphone et vérifier que le formulaire s’ouvre correctement.'},
+    {id:'sacs', step:'Sacs forums', autoOk:false, title:'Préparer les sacs forums + remise des sacs forums', desc:'Préparer les supports, goodies, flyers et sacs forums puis confirmer leur remise aux personnes qui partent sur le forum.'},
+    {id:'reporting', step:'Reporting', autoOk:report.global>0 || report.candidat>0 || report.admis>0 || report.inscrit>0, title:'Compléter le reporting', desc:'Saisir prospects rencontrés, candidats, admis, inscrits et notes qualitatives après le forum.'}
+  ];
+}
+function customForumTasksForEvent(l){
+  loadV39LocalState();
+  const key = taskKeyForEvent(l);
+  return key && Array.isArray(FORUM_CUSTOM_TASKS[key]) ? FORUM_CUSTOM_TASKS[key] : [];
+}
+function preparationTasksForEvent(l){
+  const defaults = defaultForumTasksForEvent(l).map(t => ({...t, ok:getForumTaskState(l,t.id) || Boolean(t.autoOk), custom:false}));
+  const customs = customForumTasksForEvent(l).map(t => ({...t, step:t.step || 'Action personnalisée', ok:getForumTaskState(l,t.id), custom:true}));
+  return [...defaults, ...customs];
+}
+function allForumTasksDone(eventObj){
+  const tasks = preparationTasksForEvent(eventObj);
+  return tasks.length > 0 && tasks.every(t => Boolean(t.ok));
+}
+function toggleForumTask(eventId, taskId, checked){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return showToast('Forum introuvable','error');
+  setForumTaskState(ev, taskId, checked);
+  if(allForumTasksDone(ev)){
+    archiveForumNow(canonicalEventId(ev) || ev.id);
+    showToast('Toutes les actions sont cochées : forum terminé et archivé');
+    return;
+  }
+  selectTerrainEvent(canonicalEventId(ev) || ev.id, true);
+  renderTerrainPage();
+  renderActionsStructurePage();
+  renderMyActionsPage();
+}
+function addForumCustomTask(eventId){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return showToast('Forum introuvable','error');
+  loadV39LocalState();
+  const title = (document.getElementById('new-forum-task-title')?.value || '').trim();
+  const desc = (document.getElementById('new-forum-task-desc')?.value || '').trim();
+  if(!title) return showToast('Indique le nom de l’action à ajouter','error');
+  const key = taskKeyForEvent(ev);
+  if(!FORUM_CUSTOM_TASKS[key]) FORUM_CUSTOM_TASKS[key] = [];
+  FORUM_CUSTOM_TASKS[key].push({id:'custom_' + Date.now(), title, desc, step:'Action personnalisée'});
+  saveV39LocalState();
+  selectTerrainEvent(canonicalEventId(ev) || ev.id, true);
+  renderTerrainPage();
+  showToast('Action ajoutée à la todo');
+}
+function deleteForumCustomTask(eventId, taskId){
+  const ev = findCalendarEventById(eventId);
+  if(!ev) return;
+  loadV39LocalState();
+  const key = taskKeyForEvent(ev);
+  FORUM_CUSTOM_TASKS[key] = (FORUM_CUSTOM_TASKS[key] || []).filter(t => t.id !== taskId);
+  if(FORUM_TODO_STATE[key]) delete FORUM_TODO_STATE[key][taskId];
+  saveV39LocalState();
+  selectTerrainEvent(canonicalEventId(ev) || ev.id, true);
+}
+function selectTerrainEvent(eventId, markActive=true){
+  const l = findCalendarEventById(eventId);
+  const detail = document.getElementById('terrain-detail');
+  if(!l || !detail) return;
+  if(markActive){
+    document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active'));
+    const active = document.getElementById('terrain-item-' + eventId);
+    if(active) active.classList.add('active');
+  }
+  const tasks = preparationTasksForEvent(l);
+  const done = tasks.filter(t=>t.ok).length;
+  const selectedCount = document.getElementById('terrain-selected-count');
+  if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions cochées`;
+  const id = canonicalEventId(l) || l.id;
+  const taskHtml = tasks.map(t => `
+    <div class="todo-row interactive">
+      <input class="todo-checkbox" type="checkbox" ${t.ok?'checked':''} onchange="toggleForumTask('${id}','${escapeHtml(t.id)}',this.checked)">
+      <div style="flex:1">
+        <div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'Fait':'À faire'}</span></div>
+        <div class="todo-row-title" style="margin-top:5px">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div>
+        <div class="todo-row-desc">${escapeHtml(t.desc || '')}</div>
+        ${t.custom ? `<div class="todo-row-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="deleteForumCustomTask('${id}','${escapeHtml(t.id)}')">Supprimer</button></div>` : ''}
+      </div>
+    </div>`).join('');
+  detail.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
+      <div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div>
+      <div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche terrain', `printForumFieldSheet('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div>
+    </div>
+    <div class="todo-checklist">${taskHtml}</div>
+    <div class="todo-custom-form">
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">Ajouter une action personnalisée</label><input class="form-input" id="new-forum-task-title" placeholder="Ex : imprimer les flyers EFAP"></div>
+        <div class="form-field" style="justify-content:flex-end"><button class="btn btn-primary" onclick="addForumCustomTask('${id}')">Ajouter</button></div>
+        <div class="form-field full"><label class="form-label">Détail optionnel</label><input class="form-input" id="new-forum-task-desc" placeholder="Précision, responsable, ressource à prévoir..."></div>
+      </div>
+    </div>
+    ${kitForumHtml(l)}`;
+}
+function renderTerrainPage(){
+  const events = activeValidatedForums();
+  const list = document.getElementById('terrain-forum-list');
+  const count = document.getElementById('terrain-count');
+  if(count) count.textContent = `${events.length} forum(s)`;
+  if(list){
+    list.innerHTML = events.length ? events.map((l, idx) => {
+      const id = canonicalEventId(l) || l.id;
+      const tasks = preparationTasksForEvent(l);
+      const done = tasks.filter(t => t.ok).length;
+      const pctDone = Math.round((done / Math.max(1,tasks.length)) * 100);
+      return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${id}" onclick="selectTerrainEvent('${id}')"><div class="terrain-item-title">${escapeHtml(l.nom)}</div><div class="terrain-item-meta">${fmtDate(l.date)} · ${escapeHtml(l.ville||'')} · ${done}/${tasks.length} fait</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
+    }).join('') : `<div class="crm-empty">Aucun forum à préparer : les forums terminés sont archivés et les autres ne sont pas encore validés.</div>`;
+  }
+  if(events.length) selectTerrainEvent(canonicalEventId(events[0]) || events[0].id, false);
+  else { const detail = document.getElementById('terrain-detail'); if(detail) detail.innerHTML = '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>'; }
+}
+function canSeeLeadForCurrentUser(lead){
+  const cu = currentUser ? currentUser() : null;
+  if(!cu) return true;
+  const role = normalizeRoleValue(cu.role);
+  if(role === 'admin_global' || (cu.email||'').toLowerCase()==='admin') return true;
+  const allowedSchools = userSchoolAccess(cu);
+  const leadSchool = normalizeSchoolName(lead.school) || lead.school || '';
+  const ev = findCalendarEventById(lead.eventId) || null;
+  if(allowedSchools.length){
+    const eventSchools = getSchoolsArray(ev?.ecoles || '');
+    const schoolOk = allowedSchools.includes(leadSchool) || eventSchools.some(s=>allowedSchools.includes(s));
+    if(!schoolOk) return false;
+  }
+  const allowedCampus = userCampusAccess(cu).map(normalizeCampusCity).filter(Boolean);
+  if(!allowedCampus.length) return true;
+  const text = `${lead.program||lead.cursus||''} ${ev?.campus||''} ${ev?.region||''}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  // Si le campus n'est pas encore renseigné dans les données historiques, on ne masque pas le lead une fois l'école validée.
+  if(!text) return true;
+  return allowedCampus.some(c => text.includes(c.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()));
+}
+function getVisibleLeads(){
+  return dedupeLeadsList((Array.isArray(LEADS)?LEADS:[]).filter(canSeeLeadForCurrentUser));
+}
+function syncReportingFromLeads(){
+  (Array.isArray(LEADS) ? LEADS : []).forEach(lead => {
+    const ev = findCalendarEventById(lead.eventId);
+    if(!ev) return;
+    const school = normalizeSchoolName(lead.school) || lead.school;
+    if(!school || school === 'À préciser') return;
+    const eventId = canonicalEventId(ev) || ev.id;
+    const eventSchoolLeads = (LEADS || []).filter(l => {
+      const s = normalizeSchoolName(l.school) || l.school;
+      return String(l.eventId) === String(lead.eventId) && s === school;
+    });
+    const rec = getReportRecord(eventId, school);
+    const counts = {seconde:0,premiere:0,terminale:0,autres:0};
+    eventSchoolLeads.forEach(l => {
+      const lvl = String(l.level || '').toLowerCase();
+      if(lvl.includes('2nde') || lvl.includes('seconde')) counts.seconde += 1;
+      else if(lvl.includes('1ère') || lvl.includes('1ere') || lvl.includes('prem')) counts.premiere += 1;
+      else if(lvl.includes('term')) counts.terminale += 1;
+      else counts.autres += 1;
+    });
+    const total = eventSchoolLeads.length;
+    rec.global = Math.max(Number(rec.global||0), total);
+    rec.prospect = Math.max(Number(rec.prospect||0), total);
+    rec.seconde = Math.max(Number(rec.seconde||0), counts.seconde);
+    rec.premiere = Math.max(Number(rec.premiere||0), counts.premiere);
+    rec.terminale = Math.max(Number(rec.terminale||0), counts.terminale);
+    rec.autres = Math.max(Number(rec.autres||0), counts.autres);
+  });
+}
+const EDH_V38_renderReportingPage = renderReportingPage;
+function renderReportingPage(){ syncReportingFromLeads(); EDH_V38_renderReportingPage(); }
+const EDH_V38_renderPerformancePage = renderPerformancePage;
+function renderPerformancePage(){ syncReportingFromLeads(); EDH_V38_renderPerformancePage(); }
+function leadEventName(lead){
+  const ev = findCalendarEventById(lead.eventId) || {};
+  return ev.nom || lead.eventName || lead.lycee || '—';
+}
+function populateAllLeadsFilters(rows){
+  const sel = document.getElementById('all-leads-event-filter');
+  if(sel){
+    const current = sel.value;
+    const options = Array.from(new Map(rows.map(l => [leadEventName(l), leadEventName(l)])).values()).filter(v=>v && v !== '—').sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = '<option value="">Tous les forums</option>' + options.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    if(current && options.includes(current)) sel.value = current;
+  }
+}
+function filteredAllLeadsRows(){
+  const base = getVisibleLeads().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const from = document.getElementById('all-leads-date-from')?.value || '';
+  const to = document.getElementById('all-leads-date-to')?.value || '';
+  const eventFilter = document.getElementById('all-leads-event-filter')?.value || '';
+  const level = document.getElementById('all-leads-level-filter')?.value || '';
+  const school = document.getElementById('all-leads-school-filter')?.value || '';
+  return base.filter(l => {
+    const d = (l.createdAt || '').slice(0,10);
+    if(from && d < from) return false;
+    if(to && d > to) return false;
+    if(eventFilter && leadEventName(l) !== eventFilter) return false;
+    if(level && String(l.level||'') !== level) return false;
+    if(school && String(l.school||'') !== school) return false;
+    return true;
+  });
+}
+function renderAllLeadsKpis(rows){
+  const box = document.getElementById('all-leads-kpis'); if(!box) return;
+  const terminales = rows.filter(l=>String(l.level||'').toLowerCase().includes('term')).length;
+  const premieres = rows.filter(l=>String(l.level||'').includes('1ère') || String(l.level||'').toLowerCase().includes('1ere')).length;
+  const uniqueForums = new Set(rows.map(leadEventName)).size;
+  const exportable = rows.length;
+  box.innerHTML = `<div class="kpi-card"><div class="kpi-label">Leads filtrés</div><div class="kpi-value">${exportable}</div><div class="kpi-meta">contacts affichés</div></div><div class="kpi-card"><div class="kpi-label">Forums sources</div><div class="kpi-value">${uniqueForums}</div><div class="kpi-meta">origines différentes</div></div><div class="kpi-card"><div class="kpi-label">Terminales</div><div class="kpi-value">${terminales}</div><div class="kpi-meta">priorité admissions</div></div><div class="kpi-card"><div class="kpi-label">Premières</div><div class="kpi-value">${premieres}</div><div class="kpi-meta">nurturing N+1</div></div>`;
+}
+function leadRowHtml(l, all=false){
+  const ev=findCalendarEventById(l.eventId)||{};
+  const eventName=ev.nom||l.eventName||l.lycee||'—';
+  const ville=ev.ville||l.ville||'';
+  const status=leadTreatmentStatus(l);
+  const name = `${l.firstName||''} ${l.lastName||''}`.trim();
+  if(all){
+    return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td><strong>${escapeHtml(eventName)}</strong>${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${status.html}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions">${actionButton('Fiche', `openLeadDetail('${l.id}')`)}${l.email?actionButton('Mail', `openMailToLead('${l.id}')`):''}</div></td></tr>`;
+  }
+  return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(eventName)}</td><td>${escapeHtml((l.lycee||ev.nom||'—'))}${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${status.html}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions">${actionButton('Fiche', `openLeadDetail('${l.id}')`)}${l.email?actionButton('Mail', `openMailToLead('${l.id}')`):''}${actionButton('Suppr.', `deleteLead('${l.id}')`, 'btn btn-danger')}</div></td></tr>`;
+}
+function renderLeadsPage(){
+  populateLeadEvents(); renderQrPreview(); prefillLeadEvent(); updateLeadProgramOptions('lead'); syncReportingFromLeads();
+  const body = document.getElementById('leads-tbody'); const count = document.getElementById('leads-count');
+  const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  renderLeadsKpis(rows);
+  if(count) count.textContent = `${rows.length} lead(s) liés à votre école / campus`;
+  if(body) body.innerHTML = rows.length ? rows.map(l=>leadRowHtml(l,false)).join('') : `<tr><td colspan="12"><div class="crm-empty">Aucun lead accessible pour votre école / campus.</div></td></tr>`;
+}
+function renderAllLeadsPage(){
+  const base = getVisibleLeads();
+  populateAllLeadsFilters(base);
+  const rows = filteredAllLeadsRows();
+  renderAllLeadsKpis(rows);
+  const count = document.getElementById('all-leads-count'); if(count) count.textContent = `${rows.length} lead(s)`;
+  const body = document.getElementById('all-leads-tbody');
+  if(body) body.innerHTML = rows.length ? rows.map(l=>leadRowHtml(l,true)).join('') : `<tr><td colspan="11"><div class="crm-empty">Aucun lead ne correspond aux filtres.</div></td></tr>`;
+}
+function resetAllLeadsFilters(){
+  ['all-leads-date-from','all-leads-date-to','all-leads-event-filter','all-leads-level-filter','all-leads-school-filter'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  renderAllLeadsPage();
+}
+function rowsForLeadsExport(rows){
+  return rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const origine=ev.nom||l.eventName||l.lycee||'—'; return {Origine:origine, Date:l.createdAt, Saison:l.season||S.season, Evenement:origine, Ville:ev.ville||l.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Ecole_interessee:l.school, Cursus_souhaite:l.program||l.cursus, Niveau_etude:l.level, Notes:l.notes, Source:l.source}; });
+}
+function downloadLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(getVisibleLeads())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
+function downloadFilteredLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(filteredAllLeadsRows())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads filtrés'); XLSX.writeFile(wb,`EDH_leads_filtres_${S.season||DEFAULT_SEASON}.xlsx`); }
+const EDH_V38_saveLeadFromForm = saveLeadFromForm;
+async function saveLeadFromForm(){
+  await EDH_V38_saveLeadFromForm();
+  syncReportingFromLeads();
+  try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
+}
+const EDH_V38_refreshLeadsFromSupabase = refreshLeadsFromSupabase;
+async function refreshLeadsFromSupabase(){
+  await EDH_V38_refreshLeadsFromSupabase();
+  syncReportingFromLeads();
+  try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
+}
+const EDH_V38_submitPublicLead = submitPublicLead;
+async function submitPublicLead(){
+  await EDH_V38_submitPublicLead();
+  syncReportingFromLeads();
+}
+function replaceTemplateVariables(text, event){
+  const values = {lycee:event.nom||'votre établissement', date:event.date?fmtDate(event.date):'[date à préciser]', ecoles:eventSchoolsList(event), contact:mailContactName(event), ville:event.ville||''};
+  return String(text||'').replace(/\{\{\s*(lycee|date|ecoles|contact|ville)\s*\}\}/gi, (_,k)=>values[k.toLowerCase()]||'');
+}
+const EDH_V38_emailTemplates = emailTemplates;
+function emailTemplates(event, type){
+  loadV39LocalState();
+  if(String(type||'').startsWith('custom:')){
+    const id = String(type).replace('custom:','');
+    const tpl = (CUSTOM_EMAIL_TEMPLATES || []).find(t=>String(t.id)===String(id));
+    if(tpl) return {subject:replaceTemplateVariables(tpl.subject,event), body:replaceTemplateVariables(tpl.body,event)};
+  }
+  return EDH_V38_emailTemplates(event,type);
+}
+function renderEmailTemplateSelect(){
+  loadV39LocalState();
+  const sel = document.getElementById('email-template-type'); if(!sel) return;
+  const current = sel.value || 'prospection';
+  const base = [
+    ['prospection','Contact / prospection'],['relance','Relance'],['confirmation','Confirmation de participation'],['refus','Refus de participation'],['annulation','Annulation et excuses'],['merci','Remerciement']
+  ];
+  sel.innerHTML = base.map(([v,l])=>`<option value="${v}">${l}</option>`).join('') + (CUSTOM_EMAIL_TEMPLATES.length ? '<optgroup label="Templates personnalisés">' + CUSTOM_EMAIL_TEMPLATES.map(t=>`<option value="custom:${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('') + '</optgroup>' : '');
+  if([...sel.options].some(o=>o.value===current)) sel.value=current;
+}
+const EDH_V38_openMailModal = openMailModal;
+function openMailModal(eventId, type='prospection'){
+  MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
+  renderEmailTemplateSelect();
+  document.getElementById('email-template-type').value=type;
+  document.getElementById('email-to').value=mailRecipient(ev);
+  document.getElementById('email-modal-title').textContent='Préparer un mail automatique';
+  document.getElementById('email-modal-subtitle').textContent=`${ev.nom||''} · ${ev.ville||''}`;
+  renderEmailPreview(); document.getElementById('modal-email').classList.add('open');
+}
+function openEmailTemplateModal(){
+  loadV39LocalState();
+  ['custom-template-name','custom-template-subject','custom-template-body'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  renderCustomEmailTemplatesList();
+  document.getElementById('modal-email-template').classList.add('open');
+}
+function renderCustomEmailTemplatesList(){
+  loadV39LocalState();
+  const count = document.getElementById('custom-template-count'); if(count) count.textContent = `${CUSTOM_EMAIL_TEMPLATES.length} modèle(s)`;
+  const body = document.getElementById('custom-template-tbody'); if(!body) return;
+  body.innerHTML = CUSTOM_EMAIL_TEMPLATES.length ? CUSTOM_EMAIL_TEMPLATES.map(t=>`<tr><td><strong>${escapeHtml(t.name)}</strong></td><td>${escapeHtml(t.subject||'—')}</td><td><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteCustomEmailTemplate('${escapeHtml(t.id)}')">Supprimer</button></td></tr>`).join('') : `<tr><td colspan="3"><div class="crm-empty">Aucun template personnalisé.</div></td></tr>`;
+}
+function saveCustomEmailTemplate(){
+  loadV39LocalState();
+  const name = (document.getElementById('custom-template-name')?.value||'').trim();
+  const subject = (document.getElementById('custom-template-subject')?.value||'').trim();
+  const body = (document.getElementById('custom-template-body')?.value||'').trim();
+  if(!name || !subject || !body) return showToast('Nom, objet et corps du mail sont requis','error');
+  CUSTOM_EMAIL_TEMPLATES.push({id:'tpl_'+Date.now(), name, subject, body, createdAt:new Date().toISOString()});
+  saveV39LocalState();
+  renderCustomEmailTemplatesList();
+  renderEmailTemplateSelect();
+  showToast('Template de mail ajouté');
+}
+function deleteCustomEmailTemplate(id){
+  loadV39LocalState();
+  CUSTOM_EMAIL_TEMPLATES = CUSTOM_EMAIL_TEMPLATES.filter(t=>String(t.id)!==String(id));
+  saveV39LocalState(); renderCustomEmailTemplatesList(); renderEmailTemplateSelect();
+}
+const EDH_V38_showPage = showPage;
+function showPage(page){
+  EDH_V38_showPage(page);
+  if(page==='leadsall'){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim()==='Tous les leads') btn.classList.add('active'); });
+    renderAllLeadsPage();
+  }
+}
+const EDH_V38_refreshCurrentPage = refreshCurrentPage;
+function refreshCurrentPage(){
+  EDH_V38_refreshCurrentPage();
+  const active = document.querySelector('.page.active')?.id;
+  if(active === 'page-leadsall') renderAllLeadsPage();
+}
+
 </script>
 
 <!-- DATA -->
