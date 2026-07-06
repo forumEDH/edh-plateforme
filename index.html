@@ -2356,16 +2356,16 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
     </div>
     <div class="public-lead-body">
       <div class="form-grid">
-        <div class="form-field"><label class="form-label">Prénom *</label><input class="form-input" id="public-lead-firstname" autocomplete="given-name"></div>
-        <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="public-lead-lastname" autocomplete="family-name"></div>
-        <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="public-lead-email" type="email" autocomplete="email"></div>
-        <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone" autocomplete="tel"></div>
-        <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school" onchange="updateLeadProgramOptions('public')"><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
-        <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="public-lead-program"></select></div>
-        <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level" onchange="updateLeadProgramOptions('public')"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
-        <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..."></textarea></div>
+        <div class="form-field"><label class="form-label">Prénom *</label><input class="form-input" id="public-lead-firstname" autocomplete="given-name" required></div>
+        <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="public-lead-lastname" autocomplete="family-name" required></div>
+        <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="public-lead-email" type="email" autocomplete="email" required></div>
+        <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone" autocomplete="tel" required></div>
+        <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner l’école qui vous intéresse</option><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
+        <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="public-lead-program" required><option value="">Sélectionner le cursus souhaité</option></select></div>
+        <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner votre niveau d’étude</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+        <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..." required></textarea></div>
       </div>
-      <button class="btn btn-primary" id="public-lead-submit-btn" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Envoyer mes coordonnées</button>
+      <button class="btn btn-primary" id="public-lead-submit-btn" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Valider le formulaire</button>
       <div class="public-lead-success" id="public-lead-success">Merci, tes coordonnées ont bien été enregistrées.</div>
       <div class="public-lead-error" id="public-lead-error">Une erreur empêche l’enregistrement. Merci de réessayer ou de transmettre tes coordonnées à l’équipe sur place.</div>
     </div>
@@ -6250,7 +6250,7 @@ async function submitPublicLead(){
   if(!saved.ok && !saved.skipped){
     const error = document.getElementById('public-lead-error');
     if(error){ error.textContent = 'Erreur d’enregistrement Supabase : ' + (saved.message || 'merci de réessayer.'); error.classList.add('show'); }
-    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Envoyer mes coordonnées'; }
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Valider le formulaire'; }
     return;
   }
   LEADS = dedupeLeadsList([lead, ...LEADS]);
@@ -6258,7 +6258,7 @@ async function submitPublicLead(){
   const success = document.getElementById('public-lead-success'); if(success) success.classList.add('show');
   const error = document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
   ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Envoyer mes coordonnées'; }
+  if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Valider le formulaire'; }
 }
 
 // ══════════════════════════════════════
@@ -8110,6 +8110,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const label=document.getElementById('public-lead-event-label'); const pill=document.getElementById('public-lead-event-pill');
     if(label) label.textContent = ev ? `${ev.nom||'Forum lycée'}${ev.ville?' · '+ev.ville:''}${ev.date?' · '+(typeof fmtDate==='function'?fmtDate(ev.date):ev.date):''}` : 'Complète tes coordonnées pour être recontacté par notre équipe.';
     if(pill) pill.textContent = ev ? `${ev.nom||'Forum lycée'}${ev.ville?' · '+ev.ville:''}` : 'Forum lycée';
+    window.CURRENT_PUBLIC_LEAD_EVENT = ev || null;
     preparePublicLeadSelects(ev);
     return ev;
   };
@@ -8125,23 +8126,62 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   window.submitPublicLead = async function(){
     const eventToken = window.CURRENT_PUBLIC_LEAD_EVENT_ID;
-    const ev = await window.loadPublicLeadEventContext(eventToken, (window.S&&S.season)||'2025-2026');
+    // Important : ne pas rappeler loadPublicLeadEventContext ici.
+    // Cette fonction reconstruit les menus École / Niveau / Cursus et effaçait donc les choix juste avant l'envoi.
+    const ev = window.CURRENT_PUBLIC_LEAD_EVENT || (typeof findCalendarEventById==='function' ? findCalendarEventById(eventToken) : null) || {};
     const val=id=>(document.getElementById(id)?.value||'').trim();
-    const lead={ id:'LEAD'+Date.now(), season:(window.S&&S.season)||'2025-2026', eventId:eventToken, eventName:ev?.nom||'', lycee:ev?.nom||'', ville:ev?.ville||'', firstName:val('public-lead-firstname'), lastName:val('public-lead-lastname'), email:val('public-lead-email').toLowerCase(), phone:val('public-lead-phone'), school:val('public-lead-school'), program:val('public-lead-program'), level:val('public-lead-level'), notes:val('public-lead-notes'), source:'QR public', createdAt:new Date().toISOString() };
+    const lead={
+      id:'LEAD'+Date.now(),
+      season:(window.S&&S.season)||'2025-2026',
+      eventId:eventToken,
+      eventName:ev?.nom||'',
+      lycee:ev?.nom||'',
+      ville:ev?.ville||'',
+      firstName:val('public-lead-firstname'),
+      lastName:val('public-lead-lastname'),
+      email:val('public-lead-email').toLowerCase(),
+      phone:val('public-lead-phone'),
+      school:val('public-lead-school'),
+      program:val('public-lead-program'),
+      level:val('public-lead-level'),
+      notes:val('public-lead-notes'),
+      source:'QR public',
+      createdAt:new Date().toISOString()
+    };
     const required = [['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École intéressée',lead.school],['Cursus souhaité',lead.program],['Niveau d’étude',lead.level],['Prise de notes',lead.notes]];
     const missing = required.filter(x=>!x[1]).map(x=>x[0]);
-    const error=document.getElementById('public-lead-error'); const success=document.getElementById('public-lead-success');
-    if(missing.length){ if(error){ error.textContent='Merci de compléter tous les champs obligatoires : '+missing.join(', ')+'.'; error.classList.add('show'); } return; }
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lead.email)){ if(error){ error.textContent='Merci de saisir une adresse email valide.'; error.classList.add('show'); } return; }
-    const btn=document.getElementById('public-lead-submit-btn'); if(btn){ btn.disabled=true; btn.textContent='Enregistrement…'; }
-    const saved = typeof saveLeadDirectToSupabase==='function' ? await saveLeadDirectToSupabase(lead) : {ok:false,message:'Fonction Supabase absente'};
-    if(!saved.ok && !saved.skipped){ if(error){ error.textContent='Erreur d’enregistrement Supabase : '+(saved.message||'merci de réessayer.'); error.classList.add('show'); } if(btn){btn.disabled=false;btn.textContent='Envoyer mes coordonnées';} return; }
-    window.LEADS = typeof dedupeLeadsList==='function' ? dedupeLeadsList([lead, ...(window.LEADS||[])]) : [lead, ...(window.LEADS||[])];
-    syncReportingFromLeadsV41();
-    if(success) success.classList.add('show'); if(error) error.classList.remove('show');
-    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-    preparePublicLeadSelects(ev);
-    if(btn){btn.disabled=false;btn.textContent='Envoyer mes coordonnées';}
+    const error=document.getElementById('public-lead-error');
+    const success=document.getElementById('public-lead-success');
+    if(error) error.classList.remove('show');
+    if(success) success.classList.remove('show');
+    if(missing.length){
+      if(error){ error.textContent='Merci de compléter tous les champs obligatoires : '+missing.join(', ')+'.'; error.classList.add('show'); }
+      return;
+    }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lead.email)){
+      if(error){ error.textContent='Merci de saisir une adresse email valide.'; error.classList.add('show'); }
+      return;
+    }
+    const btn=document.getElementById('public-lead-submit-btn');
+    if(btn){ btn.disabled=true; btn.textContent='Enregistrement…'; }
+    try {
+      const saved = typeof saveLeadDirectToSupabase==='function' ? await saveLeadDirectToSupabase(lead) : {ok:false,message:'Fonction Supabase absente'};
+      if(!saved.ok && !saved.skipped){
+        if(error){ error.textContent='Erreur d’enregistrement Supabase : '+(saved.message||'merci de réessayer.'); error.classList.add('show'); }
+        if(btn){btn.disabled=false;btn.textContent='Valider le formulaire';}
+        return;
+      }
+      window.LEADS = typeof dedupeLeadsList==='function' ? dedupeLeadsList([lead, ...(window.LEADS||[])]) : [lead, ...(window.LEADS||[])];
+      try { if(typeof syncReportingFromLeadsV41==='function') syncReportingFromLeadsV41(); } catch(_) {}
+      if(success) success.classList.add('show');
+      if(error) error.classList.remove('show');
+      ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      preparePublicLeadSelects(ev);
+      if(btn){btn.disabled=false;btn.textContent='Valider le formulaire';}
+    } catch(err){
+      if(error){ error.textContent='Erreur d’enregistrement : '+(err?.message||'merci de réessayer.'); error.classList.add('show'); }
+      if(btn){btn.disabled=false;btn.textContent='Valider le formulaire';}
+    }
   };
 
   window.refreshCurrentPage = function(){
