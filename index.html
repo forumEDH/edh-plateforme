@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EDH Forums">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=yes">
+<link rel="manifest" href="manifest.webmanifest">
 <title>EDH — Forums Lycées 2025·2026</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -916,9 +923,207 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 .student-lookup-main{font-size:13px;font-weight:700;color:var(--text)}
 .student-lookup-sub{font-size:11px;color:var(--text3);margin-top:2px}
 .student-lookup-empty{font-size:12px;color:var(--text3);padding:8px 4px}
+
+
+/* ══════════════════════════════════════
+   V45 — ADAPTATION iPHONE / MODE TERRAIN
+   Ces règles s'activent uniquement sur petits écrans.
+   La version PC reste inchangée.
+══════════════════════════════════════ */
+.mobile-shell-header,
+.mobile-bottom-nav,
+.mobile-backdrop,
+.mobile-qr-fullscreen { display: none; }
+
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: 16px; }
+}
+
+@media (max-width: 768px) {
+  :root { --sidebar-w: 280px; }
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+  body {
+    font-size: 14px;
+    background: #f4f6fb;
+    padding-top: calc(58px + env(safe-area-inset-top));
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-shell-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: calc(58px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 14px 0;
+    z-index: 950;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(226,229,236,.85);
+  }
+  .mobile-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .mobile-menu-btn {
+    width: 42px; height: 42px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: white;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 20px;
+    line-height: 1;
+  }
+  .mobile-brand { min-width: 0; }
+  .mobile-brand-title { font-size: 14px; font-weight: 800; color: var(--text); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px; }
+  .mobile-brand-sub { font-size: 11px; color: var(--text3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px; }
+  .mobile-pill { flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--primary-light); border: 1px solid #bfdbfe; border-radius: 999px; padding: 6px 9px; }
+
+  .mobile-backdrop { position: fixed; inset: 0; z-index: 980; background: rgba(15,20,40,.42); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  body.mobile-sidebar-open .mobile-backdrop { display: block; }
+
+  .sidebar { width: min(88vw, 320px); max-width: 320px; z-index: 1000; transform: translateX(-105%); transition: transform .22s ease; border-right: 1px solid var(--border); box-shadow: 20px 0 60px rgba(15,20,40,.20); }
+  body.mobile-sidebar-open .sidebar { transform: translateX(0); }
+  .sidebar-header { padding-top: 18px; }
+  .school-nav, .sidebar-footer { padding-bottom: 18px; }
+
+  .main { margin-left: 0 !important; min-height: 100vh; }
+  .content { padding: 14px 14px calc(104px + env(safe-area-inset-bottom)); }
+  .topbar { top: calc(58px + env(safe-area-inset-top)); padding: 10px 14px; gap: 8px; overflow-x: auto; flex-wrap: wrap; }
+  #topbar-listing-controls { width: 100%; flex-wrap: wrap; }
+  .search-wrap { max-width: none; width: 100%; flex-basis: 100%; }
+  .search-wrap input, .form-input, .form-select, .form-textarea, .filter-select, .check-dropdown-btn, .multi-filter-btn { min-height: 44px; font-size: 16px; border-radius: 11px; }
+  .topbar-filters { width: 100%; display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .multi-filter { width: 100%; min-width: 0; }
+  .multi-filter-menu { position: fixed; left: 14px; right: 14px; top: calc(112px + env(safe-area-inset-top)); min-width: 0; max-height: 52vh; z-index: 980; }
+
+  .page-header { align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+  .page-title { font-size: 20px; line-height: 1.15; }
+  .page-subtitle { font-size: 12px; line-height: 1.45; }
+  .page-header > div:last-child:not(:first-child) { width: 100%; }
+
+  .kpi-row, .stats-row-4, .school-cards-row, .two-col, .dashboard-v2-grid, .simple-grid-2 { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .kpi-card, .school-card, .event-card, .student-card, .card, .inline-form { border-radius: 15px; box-shadow: 0 3px 14px rgba(15,20,40,.06); }
+  .kpi-card { padding: 14px; }
+  .kpi-value { font-size: 24px; }
+  .card-header { padding: 13px 14px; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+  .card-title { font-size: 14px; }
+  .card-count { font-size: 11px; }
+
+  .form-grid, #modal-user .form-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .form-grid .full, .detail-field.full { grid-column: auto; }
+  .form-section { padding: 12px; border-radius: 13px; }
+  .form-label { font-size: 10px; }
+  .form-textarea { min-height: 110px; }
+
+  .small-actions, .topbar-right, .lead-table-actions, .cal-list-actions, .event-actions { width: 100%; display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .small-actions .btn, .topbar-right .btn, .lead-table-actions .btn, .cal-list-actions .btn, .event-actions .btn { width: 100%; }
+  .btn, .btn-ics, .cal-month-export { min-height: 42px; justify-content: center; border-radius: 11px; white-space: normal; text-align: center; }
+  .btn-ghost { background: white; border: 1px solid var(--border); }
+
+  .table-scroll { overflow: visible; }
+  table { width: 100%; min-width: 0; }
+  table thead { display: none; }
+  table tbody, table tr, table td { display: block; width: 100%; }
+  table tr { background: white; border: 1px solid var(--border); border-radius: 14px; margin: 10px 0; overflow: hidden; box-shadow: 0 3px 12px rgba(15,20,40,.05); }
+  table tr:hover td { background: white; }
+  table td { max-width: none; white-space: normal; text-overflow: clip; overflow: visible; border-bottom: 1px solid rgba(0,0,0,.06); padding: 10px 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; color: var(--text); }
+  table td:last-child { border-bottom: none; }
+  table td::before { content: attr(data-label); flex: 0 0 40%; max-width: 40%; font-size: 10px; text-transform: uppercase; letter-spacing: .55px; font-weight: 700; color: var(--text3); }
+  table td:empty::after { content: '—'; color: var(--text3); }
+  .pagination { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
+  .pagination-btns { flex-wrap: wrap; justify-content: center; }
+
+  .cal-list-item { align-items: stretch; flex-direction: column; gap: 10px; border-radius: 15px; }
+  .cal-list-date { width: 64px; }
+  .cal-list-info { width: 100%; }
+  .cal-grid { display: block; }
+  .cal-grid-header { display: none; }
+  .cal-cell { min-height: auto; margin-bottom: 8px; }
+  .cal-cell.other-month { display: none; }
+  .cal-nav { flex-wrap: wrap; }
+  .cal-nav-title { order: -1; width: 100%; text-align: left; }
+
+  .detail-row { grid-template-columns: 1fr; gap: 10px; }
+  .detail-panel, .muted-box { border-radius: 13px; }
+  .prog-item { align-items: flex-start; flex-wrap: wrap; }
+  .prog-label { width: 100%; }
+
+  .qr-box { flex-direction: column; }
+  .qr-preview { width: 100%; min-height: 220px; }
+  .qr-preview img { width: min(220px, 76vw); height: min(220px, 76vw); }
+  .email-preview { min-height: 180px; font-size: 14px; }
+
+  .modal-overlay, #modal-user.modal-overlay { align-items: flex-end; justify-content: center; padding: 0; }
+  .modal, #modal-user .modal { width: 100% !important; max-width: none !important; max-height: calc(92vh - env(safe-area-inset-top)); border-radius: 22px 22px 0 0; }
+  .modal-header { padding: 18px 18px 12px; }
+  .modal-body, #modal-user .modal-body { padding: 16px 18px; }
+  .modal-footer, #modal-user .modal-footer { padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); flex-wrap: wrap; }
+  .modal-footer .btn { flex: 1 1 46%; }
+  #modal-user #user-delete-btn { flex-basis: 100%; margin-right: 0; }
+
+  .login-overlay, .public-lead-overlay { padding: 14px; align-items: center; }
+  .login-card, .public-lead-card { max-width: 100%; border-radius: 22px; }
+  .login-head, .public-lead-head { padding: 22px 20px 14px; }
+  .login-body, .public-lead-body { padding: 18px 20px 22px; }
+  .public-lead-title, .login-title { font-size: 20px; }
+
+  .mobile-bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 940; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 7px 8px calc(7px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.96); border-top: 1px solid rgba(226,229,236,.95); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 -8px 30px rgba(15,20,40,.08); }
+  .mobile-nav-btn { border: none; background: transparent; border-radius: 14px; min-height: 54px; color: var(--text3); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+  .mobile-nav-btn span:first-child { font-size: 18px; line-height: 1; }
+  .mobile-nav-btn.active { background: var(--primary-light); color: var(--primary); }
+
+  .mobile-qr-fullscreen.open { display: flex; position: fixed; inset: 0; z-index: 2000; background: rgba(15,20,40,.92); align-items: center; justify-content: center; padding: 22px; }
+  .mobile-qr-card { width: min(92vw, 420px); background: white; border-radius: 24px; padding: 22px; text-align: center; box-shadow: var(--shadow-lg); }
+  .mobile-qr-card img { width: min(78vw, 320px); height: min(78vw, 320px); display: block; margin: 12px auto; }
+  .mobile-qr-card .btn { width: 100%; margin-top: 10px; }
+
+  .toast { left: 14px; right: 14px; bottom: calc(92px + env(safe-area-inset-bottom)); text-align: center; }
+}
+
+@media (min-width: 769px) { body.mobile-sidebar-open .mobile-backdrop { display: none !important; } }
+
 </style>
 </head>
 <body>
+
+<!-- ═══ V45 MOBILE SHELL / iPHONE ═══ -->
+<div class="mobile-backdrop" onclick="document.body.classList.remove('mobile-sidebar-open')"></div>
+<header class="mobile-shell-header" aria-label="Navigation mobile">
+  <div class="mobile-header-left">
+    <button class="mobile-menu-btn" type="button" aria-label="Ouvrir le menu" onclick="document.body.classList.toggle('mobile-sidebar-open')">☰</button>
+    <div class="mobile-brand">
+      <div class="mobile-brand-title" id="mobile-page-title">Tableau de bord</div>
+      <div class="mobile-brand-sub" id="mobile-page-subtitle">CRM forums lycées</div>
+    </div>
+  </div>
+  <div class="mobile-pill">EDH</div>
+</header>
+
+<nav class="mobile-bottom-nav" aria-label="Raccourcis terrain mobile">
+  <button class="mobile-nav-btn active" data-mobile-page="dashboard" type="button" onclick="showPage('dashboard')"><span>⌂</span><span>Accueil</span></button>
+  <button class="mobile-nav-btn" data-mobile-page="calendrier" type="button" onclick="showPage('calendrier')"><span>◷</span><span>Forums</span></button>
+  <button class="mobile-nav-btn" data-mobile-page="terrain" type="button" onclick="showPage('terrain')"><span>▣</span><span>Terrain</span></button>
+  <button class="mobile-nav-btn" data-mobile-page="leads" type="button" onclick="showPage('leads')"><span>◎</span><span>Leads</span></button>
+  <button class="mobile-nav-btn" data-mobile-page="myactions" type="button" onclick="showPage('myactions')"><span>✓</span><span>Actions</span></button>
+</nav>
+
+<div class="mobile-qr-fullscreen" id="mobile-qr-fullscreen" onclick="if(event.target.id==='mobile-qr-fullscreen') closeMobileQrFullscreen()">
+  <div class="mobile-qr-card">
+    <div style="font-size:17px;font-weight:800;color:var(--text)">QR code du forum</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:4px" id="mobile-qr-title">À scanner par les prospects</div>
+    <div id="mobile-qr-image"></div>
+    <button class="btn btn-outline" type="button" onclick="copyLeadUrl()">Copier le lien</button>
+    <button class="btn btn-primary" type="button" onclick="closeMobileQrFullscreen()">Fermer</button>
+  </div>
+</div>
+
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar">
@@ -8576,5 +8781,92 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 })();
 </script>
+
+<script>
+(function(){
+  if(window.__EDH_V45_MOBILE_INSTALLED) return;
+  window.__EDH_V45_MOBILE_INSTALLED = true;
+  function isMobile(){ return window.matchMedia && window.matchMedia('(max-width: 768px)').matches; }
+  function applyMobileTableLabels(root){
+    try {
+      const scope = root && root.querySelectorAll ? root : document;
+      scope.querySelectorAll('table').forEach(table => {
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => (th.textContent || '').trim());
+        if(!headers.length) return;
+        table.querySelectorAll('tbody tr').forEach(tr => {
+          Array.from(tr.children).forEach((td, index) => {
+            if(td && td.tagName && td.tagName.toLowerCase() === 'td') td.setAttribute('data-label', headers[index] || 'Info');
+          });
+        });
+      });
+    } catch(err){ console.warn('Labels mobiles non appliqués', err); }
+  }
+  window.edhApplyMobileTableLabels = applyMobileTableLabels;
+  function activePageId(){ const active = document.querySelector('.page.active'); return active ? (active.id || '').replace(/^page-/, '') : 'dashboard'; }
+  function syncMobileChrome(){
+    const page = activePageId();
+    const title = document.querySelector('.page.active .page-title')?.textContent?.trim() || 'CRM forums lycées';
+    const subtitle = document.querySelector('.page.active .page-subtitle')?.textContent?.trim() || 'Mode terrain';
+    const titleEl = document.getElementById('mobile-page-title');
+    const subEl = document.getElementById('mobile-page-subtitle');
+    if(titleEl) titleEl.textContent = title;
+    if(subEl) subEl.textContent = subtitle;
+    document.querySelectorAll('.mobile-nav-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-mobile-page') === page));
+    document.body.classList.remove('mobile-sidebar-open');
+    applyMobileTableLabels(document);
+    installQrFullscreenButton();
+  }
+  window.edhSyncMobileChrome = syncMobileChrome;
+  if(!window.__EDH_V45_SHOWPAGE_WRAPPED && typeof window.showPage === 'function'){
+    window.__EDH_V45_SHOWPAGE_WRAPPED = true;
+    const baseShowPage = window.showPage;
+    window.showPage = function(){
+      const result = baseShowPage.apply(this, arguments);
+      setTimeout(syncMobileChrome, 0);
+      setTimeout(() => applyMobileTableLabels(document), 80);
+      return result;
+    };
+  }
+  window.closeMobileQrFullscreen = function(){ const overlay = document.getElementById('mobile-qr-fullscreen'); if(overlay) overlay.classList.remove('open'); };
+  window.openMobileQrFullscreen = function(){
+    const url = document.getElementById('lead-qr-url')?.value || '';
+    if(!url){ if(typeof showToast === 'function') showToast('Aucun QR code à afficher', 'error'); return; }
+    const evName = document.getElementById('lead-event-select')?.selectedOptions?.[0]?.textContent || 'Forum lycée';
+    const title = document.getElementById('mobile-qr-title');
+    const image = document.getElementById('mobile-qr-image');
+    if(title) title.textContent = evName;
+    if(image){
+      const src = typeof qrImageUrl === 'function' ? qrImageUrl(url) : url;
+      image.innerHTML = '<img alt="QR code du forum" src="' + src.replace(/"/g, '&quot;') + '">';
+    }
+    const overlay = document.getElementById('mobile-qr-fullscreen');
+    if(overlay) overlay.classList.add('open');
+  };
+  function installQrFullscreenButton(){
+    try {
+      const actions = document.querySelector('#page-leads .qr-box .small-actions');
+      if(!actions || document.getElementById('mobile-qr-open-btn')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'mobile-qr-open-btn';
+      btn.className = 'btn btn-outline';
+      btn.textContent = 'Afficher le QR plein écran';
+      btn.onclick = window.openMobileQrFullscreen;
+      actions.appendChild(btn);
+    } catch(err){ console.warn('Bouton QR plein écran non installé', err); }
+  }
+  let tableLabelTimer = null;
+  function scheduleLabels(){ clearTimeout(tableLabelTimer); tableLabelTimer = setTimeout(() => applyMobileTableLabels(document), 60); }
+  document.addEventListener('DOMContentLoaded', () => {
+    syncMobileChrome();
+    applyMobileTableLabels(document);
+    installQrFullscreenButton();
+    const content = document.querySelector('.content');
+    if(content && window.MutationObserver){ new MutationObserver(scheduleLabels).observe(content, { childList: true, subtree: true }); }
+  });
+  window.addEventListener('resize', () => { if(isMobile()) syncMobileChrome(); });
+})();
+</script>
+
 </body>
 </html>
