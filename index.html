@@ -7864,5 +7864,317 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<script>
+/* ============================================================
+   EDH V41 — Correctifs stabilité / todo / QR lead obligatoire
+   ============================================================ */
+(function(){
+  const V41_TASKS_KEY = 'edh_forum_tasks_v41';
+  const V41_ARCHIVE_KEY = 'edh_forum_archived_v41';
+
+  function e(v){
+    try { return typeof escapeHtml === 'function' ? escapeHtml(v) : String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+    catch(_) { return String(v ?? ''); }
+  }
+  function getJson(key, fallback){ try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch(_) { return fallback; } }
+  function setJson(key, value){ try { localStorage.setItem(key, JSON.stringify(value)); } catch(_) {} }
+  function idOf(ev){
+    try { return String((typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.supabase_event_id || ev?.id || ''); }
+    catch(_) { return String(ev?.supabase_event_id || ev?.id || ''); }
+  }
+  function eventTokens(ev){
+    const arr = [];
+    try { if(typeof eventIdCandidates === 'function') arr.push(...eventIdCandidates(ev)); } catch(_) {}
+    ['id','supabase_event_id','eventId','app_id'].forEach(k => { if(ev && ev[k] !== undefined && ev[k] !== null && ev[k] !== '') arr.push(String(ev[k])); });
+    return Array.from(new Set(arr.filter(Boolean).map(String)));
+  }
+  function validatedForums(includeArchived=false){
+    const rows = (typeof getVisibleLycees === 'function' ? getVisibleLycees() : (window.LYCEES || []));
+    return rows.filter(l => {
+      const st = (typeof normalizeStatus === 'function' ? normalizeStatus(l?.statut) : String(l?.statut || ''));
+      const ok = (st === 'Participation Validée' || st === 'Validée' || /valid/i.test(st)) && Boolean(l?.date);
+      if(!ok) return false;
+      return includeArchived || !window.isForumArchived(l);
+    }).sort((a,b)=> new Date(a.date||0) - new Date(b.date||0));
+  }
+  function taskStore(){ return getJson(V41_TASKS_KEY, {}); }
+  function saveTaskStore(s){ setJson(V41_TASKS_KEY, s); }
+  function archivedStore(){ return getJson(V41_ARCHIVE_KEY, []); }
+  function taskKey(ev){ return idOf(ev) || `${ev?.nom || ''}__${ev?.ville || ''}__${ev?.date || ''}`; }
+  function getTaskState(ev, taskId){ const s = taskStore(); const k = taskKey(ev); return Boolean(s[k] && s[k][taskId]); }
+  function setTaskState(ev, taskId, value){ const s = taskStore(); const k = taskKey(ev); if(!s[k]) s[k] = {}; s[k][taskId] = Boolean(value); saveTaskStore(s); }
+  function baseTasks(ev){
+    let hasStudents = false;
+    try { hasStudents = typeof forumHasAssignedStudents === 'function' ? forumHasAssignedStudents(ev) : false; } catch(_) {}
+    return [
+      { id:'ambassadeurs', title:'Trouver des ambassadeurs + attribuer les étudiants à l’événement', desc:'Identifier les étudiants disponibles, confirmer leur présence et les associer au forum.', autoOk:hasStudents },
+      { id:'teams', title:'Créer conversation Teams avec les ambassadeurs', desc:'Créer la conversation, partager les infos clés et rappeler les consignes.' },
+      { id:'outlook', title:'Ajouter l’événement au calendrier Outlook', desc:'Ajouter date, horaire, adresse, participants et rappel.' },
+      { id:'trajet', title:'Préparer le trajet', desc:'Réserver billet de train, bus, métro ou tout transport nécessaire.' },
+      { id:'qr', title:'Préparer le QR Code + tester le QR Code', desc:'Générer le QR code, le scanner avec un téléphone et vérifier l’enregistrement.' },
+      { id:'sacs', title:'Préparer les sacs forums + remise des sacs forums', desc:'Préparer flyers, goodies, sacs, supports et les remettre aux personnes concernées.' },
+      { id:'reporting', title:'Compléter le reporting', desc:'Renseigner les prospects, niveaux, candidats, admis, inscrits et remarques post-forum.' }
+    ];
+  }
+  window.preparationTasksForEvent = function(ev){
+    return baseTasks(ev).map(t => ({...t, ok: getTaskState(ev, t.id) || Boolean(t.autoOk)}));
+  };
+  window.allForumTasksDone = function(ev){ const tasks = window.preparationTasksForEvent(ev); return tasks.length > 0 && tasks.every(t => t.ok); };
+  window.isForumArchived = function(ev){
+    const archived = archivedStore().map(String);
+    const tokens = eventTokens(ev);
+    return tokens.some(t => archived.includes(String(t))) || archived.includes(taskKey(ev));
+  };
+  window.archiveForumNow = function(eventId){
+    const ev = (typeof findCalendarEventById === 'function' ? findCalendarEventById(eventId) : null) || {id:eventId};
+    const set = new Set(archivedStore().map(String));
+    eventTokens(ev).forEach(t => set.add(String(t)));
+    set.add(taskKey(ev));
+    setJson(V41_ARCHIVE_KEY, Array.from(set));
+    if(typeof showToast === 'function') showToast('Forum terminé : il est archivé dans la préparation.');
+    window.renderTerrainPage();
+    window.renderActionsStructurePage();
+    window.renderMyActionsPage();
+    try { window.renderReportingPage(); window.renderPerformancePage(); } catch(_) {}
+  };
+  window.completeForum = function(eventId){ window.archiveForumNow(eventId); };
+  window.toggleForumTask = function(eventId, taskId, checked){
+    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventId) : null;
+    if(!ev) return typeof showToast === 'function' && showToast('Forum introuvable','error');
+    setTaskState(ev, taskId, checked);
+    if(window.allForumTasksDone(ev)) return window.archiveForumNow(idOf(ev));
+    window.selectTerrainEvent(idOf(ev), true);
+    window.renderTerrainPage(false);
+    window.renderActionsStructurePage();
+    window.renderMyActionsPage();
+  };
+  window.renderTerrainPage = function(autoSelect=true){
+    const forums = validatedForums(false);
+    const list = document.getElementById('terrain-forum-list');
+    const count = document.getElementById('terrain-count');
+    if(count) count.textContent = `${forums.length} forum(s) à préparer`;
+    if(list){
+      list.innerHTML = forums.length ? forums.map((l,idx)=>{
+        const id = idOf(l); const tasks = window.preparationTasksForEvent(l); const done = tasks.filter(t=>t.ok).length; const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+        return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${e(id)}" onclick="selectTerrainEvent('${e(id)}')"><div class="terrain-item-title">${e(l.nom)}</div><div class="terrain-item-meta">${typeof fmtDate==='function'?fmtDate(l.date):e(l.date)} · ${e(l.ville||'')} · ${done}/${tasks.length} fait</div><div class="terrain-progress"><span style="width:${pct}%"></span></div></div>`;
+      }).join('') : '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>';
+    }
+    const detail = document.getElementById('terrain-detail');
+    if(forums.length && autoSelect) window.selectTerrainEvent(idOf(forums[0]), true);
+    else if(!forums.length && detail) detail.innerHTML = '<div class="crm-empty">Tous les forums sont préparés ou archivés.</div>';
+  };
+  window.selectTerrainEvent = function(eventId, markActive=true){
+    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventId) : null;
+    const detail = document.getElementById('terrain-detail');
+    if(!ev || !detail) return;
+    if(markActive){ document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active')); const active=document.getElementById('terrain-item-'+eventId); if(active) active.classList.add('active'); }
+    const id = idOf(ev); const tasks = window.preparationTasksForEvent(ev); const done = tasks.filter(t=>t.ok).length;
+    const selectedCount = document.getElementById('terrain-selected-count'); if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} action(s) réalisées`;
+    const rows = tasks.map(t => `<label class="todo-row" style="cursor:pointer"><div><input type="checkbox" ${t.ok?'checked':''} onchange="toggleForumTask('${e(id)}','${e(t.id)}',this.checked)"></div><div><div class="todo-row-title">${e(t.title)}</div><div class="todo-row-desc">${e(t.desc)}</div></div><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'Fait':'À faire'}</span></div></label>`).join('');
+    const kit = typeof kitForumHtml === 'function' ? kitForumHtml(ev) : '';
+    detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${e(ev.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${typeof fmtDate==='function'?fmtDate(ev.date):e(ev.date)} · ${e(ev.heure||'Horaire à confirmer')} · ${e(ev.ville||'')}</div><div style="margin-top:8px">${typeof schoolTags==='function'?schoolTags(ev.ecoles):e(ev.ecoles)}</div></div><div class="small-actions">${typeof actionButton==='function'?actionButton('Itinéraire', `openMapsRoute('${id}')`):''}${typeof actionButton==='function'?actionButton('Fiche terrain', `printForumFieldSheet('${id}')`):''}${typeof actionButton==='function'?actionButton('Fiche lycée', `openDetail('${id}')`):''}${typeof actionButton==='function'?actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary'):''}</div></div><div class="todo-checklist">${rows}</div>${kit}`;
+  };
+
+  function actionRows(){
+    const rows=[];
+    validatedForums(false).forEach(ev => {
+      window.preparationTasksForEvent(ev).filter(t=>!t.ok).forEach(t=> rows.push({prio:t.id==='ambassadeurs'||t.id==='qr'?'Haute':'Moyenne', type:'Forum', obj:ev.nom, sub:`${typeof fmtDate==='function'?fmtDate(ev.date):ev.date} · ${ev.ville||''}`, action:t.title, open:`showPage('terrain'); selectTerrainEvent('${idOf(ev)}')`}));
+    });
+    const leads = (typeof getVisibleLeads === 'function' ? getVisibleLeads() : (window.LEADS||[]));
+    leads.filter(l => !l._treated).slice(0,25).forEach(l=> rows.push({prio:'Moyenne', type:'Lead', obj:`${l.firstName||''} ${l.lastName||''}`.trim()||l.email||'Lead', sub:l.school||'', action:'Qualifier / traiter le lead récolté.', open:`showPage('leads')`}));
+    return rows;
+  }
+  function ensureMyActionsPage(){
+    if(document.getElementById('page-myactions')) return;
+    const content = document.querySelector('.content'); if(!content) return;
+    const div = document.createElement('div'); div.className='page'; div.id='page-myactions';
+    div.innerHTML = `<div class="page-header"><div><div class="page-title">Mes actions</div><div class="page-subtitle">Toutes les tâches à traiter pour préparer les forums, suivre les leads et compléter le reporting.</div></div></div><div class="kpi-row" id="myactions-kpis" style="grid-template-columns:repeat(3,1fr)"></div><div class="card"><div class="card-header"><div class="card-title">Actions à traiter</div><div class="card-count" id="myactions-count"></div></div><div class="table-scroll"><table class="feature-table crm-table"><thead><tr><th>Priorité</th><th>Type</th><th>Objet</th><th>Action</th><th></th></tr></thead><tbody id="myactions-tbody"></tbody></table></div></div>`;
+    content.insertBefore(div, content.firstChild.nextSibling);
+  }
+  window.renderMyActionsPage = function(){
+    ensureMyActionsPage();
+    const rows = actionRows();
+    const high = rows.filter(r=>r.prio==='Haute').length;
+    const forums = rows.filter(r=>r.type==='Forum').length;
+    const leads = rows.filter(r=>r.type==='Lead').length;
+    const kpis = document.getElementById('myactions-kpis');
+    if(kpis) kpis.innerHTML = `<div class="kpi-card kpi-accent-red"><div class="kpi-label">Priorité haute</div><div class="kpi-value">${high}</div><div class="kpi-meta">à traiter rapidement</div></div><div class="kpi-card kpi-accent-orange"><div class="kpi-label">Forums</div><div class="kpi-value">${forums}</div><div class="kpi-meta">actions de préparation</div></div><div class="kpi-card kpi-accent-blue"><div class="kpi-label">Leads</div><div class="kpi-value">${leads}</div><div class="kpi-meta">contacts à qualifier</div></div>`;
+    const count = document.getElementById('myactions-count'); if(count) count.textContent = `${rows.length} action(s)`;
+    const body = document.getElementById('myactions-tbody');
+    if(body) body.innerHTML = rows.length ? rows.map(r=>`<tr><td><span class="todo-status ${r.prio==='Haute'?'todo-blocked':'todo-warning'}">${e(r.prio)}</span></td><td>${e(r.type)}</td><td><strong>${e(r.obj)}</strong><br><span style="font-size:11px;color:var(--text3)">${e(r.sub)}</span></td><td>${e(r.action)}</td><td>${typeof actionButton==='function'?actionButton('Ouvrir', r.open):''}</td></tr>`).join('') : '<tr><td colspan="5"><div class="crm-empty">Aucune action à traiter pour le moment.</div></td></tr>';
+  };
+
+  window.renderActionsStructurePage = function(){
+    const forums = validatedForums(false);
+    const noStudents = forums.filter(l => { try { return typeof forumHasAssignedStudents === 'function' ? !forumHasAssignedStudents(l) : true; } catch(_) { return true; }});
+    const rows = actionRows();
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+    set('actions-a-contacter', (typeof getVisibleLycees==='function'?getVisibleLycees():[]).filter(l => (typeof normalizeStatus==='function'?normalizeStatus(l.statut):l.statut)==='A contacter').length);
+    set('actions-nrp', (typeof getVisibleLycees==='function'?getVisibleLycees():[]).filter(l => (typeof normalizeStatus==='function'?normalizeStatus(l.statut):l.statut)==='NRP').length);
+    set('actions-no-student', noStudents.length);
+    set('actions-reporting', forums.filter(l => window.preparationTasksForEvent(l).some(t=>t.id==='reporting'&&!t.ok)).length);
+    set('actions-no-student-count', `${noStudents.length} forum(s)`);
+    const nsb=document.getElementById('actions-no-student-tbody'); if(nsb) nsb.innerHTML=noStudents.length?noStudents.map(l=>`<tr><td><strong>${e(l.nom)}</strong><br><span style="font-size:11px;color:var(--text3)">${e(l.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(l.date):e(l.date)}</td><td>Attribuer des ambassadeurs.</td><td>${typeof actionButton==='function'?actionButton('Préparer', `showPage('terrain'); selectTerrainEvent('${idOf(l)}')`, 'btn btn-primary'):''}</td></tr>`).join(''):'<tr><td colspan="4"><div class="crm-empty">Aucun forum validé sans ambassadeur.</div></td></tr>';
+    set('actions-priority-count', `${rows.filter(r=>r.prio==='Haute').length} action(s)`);
+    const pr=document.getElementById('actions-priority-tbody'); if(pr) pr.innerHTML=rows.filter(r=>r.prio==='Haute').slice(0,15).map(r=>`<tr><td><span class="todo-status todo-blocked">Haute</span></td><td><strong>${e(r.obj)}</strong></td><td>${e(r.action)}</td><td>${typeof actionButton==='function'?actionButton('Ouvrir', r.open):''}</td></tr>`).join('')||'<tr><td colspan="4"><div class="crm-empty">Aucune priorité haute.</div></td></tr>';
+    set('actions-todo-count', `${rows.length} action(s)`);
+    const tb=document.getElementById('actions-todo-tbody'); if(tb) tb.innerHTML=rows.length?rows.map(r=>`<tr><td><span class="todo-status ${r.prio==='Haute'?'todo-blocked':'todo-warning'}">${e(r.prio)}</span></td><td><strong>${e(r.obj)}</strong><br><span style="font-size:11px;color:var(--text3)">${e(r.sub)}</span></td><td>${e(r.type)}</td><td>${e(r.action)}</td><td>${typeof actionButton==='function'?actionButton('Ouvrir', r.open):''}</td></tr>`).join(''):'<tr><td colspan="5"><div class="crm-empty">Aucune tâche CRM.</div></td></tr>';
+  };
+
+  function reportId(ev){ return idOf(ev); }
+  function syncReportingFromLeadsV41(){
+    const leads = window.LEADS || [];
+    validatedForums(true).forEach(ev => {
+      const tokens = eventTokens(ev);
+      const schools = (typeof getSchoolsArray === 'function' ? getSchoolsArray(ev.ecoles) : ['EFAP']);
+      schools.forEach(school => {
+        const matching = leads.filter(l => String(l.school||'')===String(school) && (tokens.includes(String(l.eventId||'')) || (l.eventName && ev.nom && String(l.eventName)===String(ev.nom)) || (l.lycee && ev.nom && String(l.lycee)===String(ev.nom))));
+        if(!matching.length) return;
+        const rec = typeof getReportRecord === 'function' ? getReportRecord(reportId(ev), school) : null; if(!rec) return;
+        const counts = {seconde:0,premiere:0,terminale:0,autres:0};
+        matching.forEach(l=>{ const lvl=String(l.level||'').toLowerCase(); if(lvl.includes('2nde')||lvl.includes('seconde')) counts.seconde++; else if(lvl.includes('1ère')||lvl.includes('1ere')||lvl.includes('prem')) counts.premiere++; else if(lvl.includes('term')) counts.terminale++; else counts.autres++; });
+        rec.global = Math.max(Number(rec.global||0), matching.length);
+        rec.prospect = Math.max(Number(rec.prospect||0), matching.length);
+        Object.keys(counts).forEach(k=> rec[k] = Math.max(Number(rec[k]||0), counts[k]));
+      });
+    });
+  }
+  window.syncReportingFromLeads = syncReportingFromLeadsV41;
+  window.renderReportingPage = function(){
+    syncReportingFromLeadsV41();
+    const events = validatedForums(true);
+    const visibleSchools = typeof schoolsVisibleForCurrentUser === 'function' ? schoolsVisibleForCurrentUser() : ['EFAP','ICART','CREAD','BRASSART'];
+    const selected = document.getElementById('reporting-school-filter')?.value || '';
+    const kpi=document.getElementById('reporting-summary-kpis');
+    const summary=document.getElementById('reporting-summary-body');
+    const body=document.getElementById('reporting-all-body');
+    const totals={global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
+    const rows = visibleSchools.map(school=>{
+      const evs = events.filter(ev => { try { return typeof schoolMatches==='function' ? schoolMatches(ev.ecoles, school) : true; } catch(_) { return true; }});
+      const sum={global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
+      evs.forEach(ev=>{ const rec=getReportRecord(reportId(ev), school); Object.keys(sum).forEach(k=>sum[k]+=Number(rec[k]||0)); });
+      Object.keys(totals).forEach(k=>totals[k]+=sum[k]);
+      return {school, forums:evs.length, ...sum};
+    });
+    if(kpi) kpi.innerHTML = `<div class="kpi-card"><div class="kpi-label">Forums validés</div><div class="kpi-value">${events.length}</div><div class="kpi-meta">saison active</div></div><div class="kpi-card"><div class="kpi-label">Prospects rencontrés</div><div class="kpi-value">${totals.global}</div><div class="kpi-meta">leads QR + saisie</div></div><div class="kpi-card"><div class="kpi-label">Candidats</div><div class="kpi-value">${totals.candidat}</div><div class="kpi-meta">reporting</div></div><div class="kpi-card"><div class="kpi-label">Inscrits</div><div class="kpi-value">${totals.inscrit}</div><div class="kpi-meta">conversion</div></div>`;
+    if(summary) summary.innerHTML = rows.map(r=>`<tr><td><strong>${e(r.school)}</strong></td><td>${r.forums}</td><td>${r.global}</td><td>${r.seconde}</td><td>${r.premiere}</td><td>${r.terminale}</td><td>${r.autres}</td><td>${r.prospect}</td><td>${r.candidat}</td><td>${r.admis}</td><td>${r.inscrit}</td></tr>`).join('') || '<tr><td colspan="11"><div class="crm-empty">Aucune donnée.</div></td></tr>';
+    if(body){
+      const lines=[];
+      events.forEach(ev=>{
+        const schools=(typeof getSchoolsArray==='function'?getSchoolsArray(ev.ecoles):visibleSchools).filter(s=>visibleSchools.includes(s)).filter(s=>!selected||s===selected);
+        schools.forEach(school=>{ const rec=getReportRecord(reportId(ev), school); const rid=reportId(ev); lines.push(`<tr><td>${e(school)}</td><td><strong>${e(ev.nom||'—')}</strong></td><td>${typeof fmtDate==='function'?fmtDate(ev.date):e(ev.date)}</td><td>${e(ev.ville||'—')}</td><td>${reportInput(rid,school,'global',rec.global)}</td><td>${reportInput(rid,school,'seconde',rec.seconde)}</td><td>${reportInput(rid,school,'premiere',rec.premiere)}</td><td>${reportInput(rid,school,'terminale',rec.terminale)}</td><td>${reportInput(rid,school,'autres',rec.autres)}</td><td>${reportInput(rid,school,'prospect',rec.prospect)}</td><td>${reportInput(rid,school,'candidat',rec.candidat)}</td><td>${reportInput(rid,school,'admis',rec.admis)}</td><td>${reportInput(rid,school,'inscrit',rec.inscrit)}</td></tr>`); });
+      });
+      body.innerHTML = lines.join('') || '<tr><td colspan="13"><div class="crm-empty">Aucun forum validé pour ce filtre.</div></td></tr>';
+    }
+  };
+  window.renderPerformancePage = function(){
+    syncReportingFromLeadsV41();
+    const events = validatedForums(true); const visibleSchools = typeof schoolsVisibleForCurrentUser==='function'?schoolsVisibleForCurrentUser():['EFAP'];
+    let totals={forums:events.length, prospects:0,candidats:0,admis:0,inscrits:0};
+    const rows = events.map(ev=>{ const sum={prospects:0,candidats:0,admis:0,inscrits:0}; visibleSchools.forEach(s=>{ try { if(typeof schoolMatches==='function' && !schoolMatches(ev.ecoles,s)) return; } catch(_) {} const r=getReportRecord(reportId(ev),s); sum.prospects+=Number(r.global||0); sum.candidats+=Number(r.candidat||0); sum.admis+=Number(r.admis||0); sum.inscrits+=Number(r.inscrit||0); }); totals.prospects+=sum.prospects; totals.candidats+=sum.candidats; totals.admis+=sum.admis; totals.inscrits+=sum.inscrits; return {ev,...sum}; });
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+    const pct=(a,b)=>b?Math.round(a/b*100)+'%':'0%';
+    set('perf-forums', totals.forums); set('perf-prospects', totals.prospects); set('perf-candidats', totals.candidats); set('perf-admis', totals.admis); set('perf-inscrits', totals.inscrits); set('perf-taux', pct(totals.inscrits, totals.prospects)); set('perf-count', `${rows.length} lycée(s)`);
+    const body=document.getElementById('performance-tbody'); if(body) body.innerHTML=rows.length?rows.map(r=>`<tr><td><strong>${e(r.ev.nom)}</strong><br><span style="font-size:11px;color:var(--text3)">${e(r.ev.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.ev.date):e(r.ev.date)}</td><td>${typeof schoolTags==='function'?schoolTags(r.ev.ecoles):e(r.ev.ecoles)}</td><td>${r.prospects}</td><td>${r.candidats}</td><td>${r.admis}</td><td>${r.inscrits}</td><td><span class="conversion-rate">${pct(r.inscrits,r.prospects)}</span></td><td>${r.prospects?'À analyser selon les conversions':'Aucun lead/reporting renseigné'}</td></tr>`).join(''):'<tr><td colspan="9"><div class="crm-empty">Aucune donnée de conversion.</div></td></tr>';
+  };
+
+  window.updateLeadProgramOptions = function(scope='lead'){
+    const schoolEl=document.getElementById(scope==='public'?'public-lead-school':'lead-school');
+    const levelEl=document.getElementById(scope==='public'?'public-lead-level':'lead-level');
+    const select=document.getElementById(scope==='public'?'public-lead-program':'lead-program');
+    if(!select) return;
+    const school=schoolEl?.value||''; const level=levelEl?.value||''; const campus=(typeof selectedLeadCampus==='function'?selectedLeadCampus(scope):'Lille') || 'Lille';
+    let opts=[['','Sélectionner le cursus souhaité']];
+    const y=(new Date()).getFullYear()+1;
+    function year(n){ return `${n}/${n+1}`; }
+    const lvl=String(level).toLowerCase();
+    if(school && level){
+      if(lvl.includes('term')) opts.push([`${school} ${campus} - 1ère année grande école - ${year(y)}`,`${school} ${campus} - 1ère année grande école - ${year(y)}`]);
+      else if(lvl.includes('1ère')||lvl.includes('1ere')||lvl.includes('prem')) opts.push([`${school} ${campus} - 1ère année grande école - ${year(y+1)}`,`${school} ${campus} - 1ère année grande école - ${year(y+1)}`]);
+      else if(lvl.includes('2nde')||lvl.includes('seconde')) opts.push([`${school} ${campus} - 1ère année grande école - ${year(y+2)}`,`${school} ${campus} - 1ère année grande école - ${year(y+2)}`]);
+      else if(lvl.includes('bac+1')) opts.push([`${school} ${campus} - 2ème année grande école - ${year(y)}`,`${school} ${campus} - 2ème année grande école - ${year(y)}`]);
+      else if(lvl.includes('bac+2')) opts.push([`${school} ${campus} - 3ème année grande école - ${year(y)}`,`${school} ${campus} - 3ème année grande école - ${year(y)}`]);
+      else opts.push(['À préciser','À préciser']);
+    }
+    select.innerHTML=opts.map(([v,l])=>`<option value="${e(v)}">${e(l)}</option>`).join('');
+  };
+  function preparePublicLeadSelects(ev){
+    const school=document.getElementById('public-lead-school'); const level=document.getElementById('public-lead-level');
+    if(school){ const schools = ev && typeof getSchoolsArray==='function' ? getSchoolsArray(ev.ecoles) : ['EFAP','CREAD','BRASSART','ICART']; const arr=schools.length?schools:['EFAP','CREAD','BRASSART','ICART']; school.innerHTML='<option value="">Sélectionner l’école qui vous intéresse</option>'+arr.map(s=>`<option value="${e(s)}">${e(s)}</option>`).join(''); school.value=''; }
+    if(level){ level.innerHTML='<option value="">Sélectionner votre niveau d’étude</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option>'; level.value=''; }
+    window.updateLeadProgramOptions('public');
+  }
+  window.loadPublicLeadEventContext = async function(eventToken, season){
+    let ev = typeof findCalendarEventById==='function' ? findCalendarEventById(eventToken) : null;
+    if(!ev && window.supabaseClient){ try { const r=await supabaseClient.from('evenements').select('*').eq('id', eventToken).limit(1); if(!r.error && r.data && r.data[0]){ const row=r.data[0]; ev={id:row.id,supabase_event_id:row.id,nom:row.lycee||row.nom||'Forum lycée',ville:row.ville||'',date:row.date||'',heure:row.heure||'',ecoles:row.ecoles||''}; } } catch(_){} }
+    const label=document.getElementById('public-lead-event-label'); const pill=document.getElementById('public-lead-event-pill');
+    if(label) label.textContent = ev ? `${ev.nom||'Forum lycée'}${ev.ville?' · '+ev.ville:''}${ev.date?' · '+(typeof fmtDate==='function'?fmtDate(ev.date):ev.date):''}` : 'Complète tes coordonnées pour être recontacté par notre équipe.';
+    if(pill) pill.textContent = ev ? `${ev.nom||'Forum lycée'}${ev.ville?' · '+ev.ville:''}` : 'Forum lycée';
+    preparePublicLeadSelects(ev);
+    return ev;
+  };
+  window.showPublicLeadForm = function(eventToken, season){
+    window.CURRENT_PUBLIC_LEAD_EVENT_ID = eventToken;
+    if(season && window.S){ S.season=season; try{ initSeasonSelect(); }catch(_){} }
+    const login=document.getElementById('login-modal'); if(login) login.classList.remove('open');
+    const overlay=document.getElementById('public-lead-overlay'); if(overlay) overlay.classList.add('open');
+    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    const success=document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
+    const error=document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
+    window.loadPublicLeadEventContext(eventToken, season).catch(()=>{});
+  };
+  window.submitPublicLead = async function(){
+    const eventToken = window.CURRENT_PUBLIC_LEAD_EVENT_ID;
+    const ev = await window.loadPublicLeadEventContext(eventToken, (window.S&&S.season)||'2025-2026');
+    const val=id=>(document.getElementById(id)?.value||'').trim();
+    const lead={ id:'LEAD'+Date.now(), season:(window.S&&S.season)||'2025-2026', eventId:eventToken, eventName:ev?.nom||'', lycee:ev?.nom||'', ville:ev?.ville||'', firstName:val('public-lead-firstname'), lastName:val('public-lead-lastname'), email:val('public-lead-email').toLowerCase(), phone:val('public-lead-phone'), school:val('public-lead-school'), program:val('public-lead-program'), level:val('public-lead-level'), notes:val('public-lead-notes'), source:'QR public', createdAt:new Date().toISOString() };
+    const required = [['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École intéressée',lead.school],['Cursus souhaité',lead.program],['Niveau d’étude',lead.level],['Prise de notes',lead.notes]];
+    const missing = required.filter(x=>!x[1]).map(x=>x[0]);
+    const error=document.getElementById('public-lead-error'); const success=document.getElementById('public-lead-success');
+    if(missing.length){ if(error){ error.textContent='Merci de compléter tous les champs obligatoires : '+missing.join(', ')+'.'; error.classList.add('show'); } return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lead.email)){ if(error){ error.textContent='Merci de saisir une adresse email valide.'; error.classList.add('show'); } return; }
+    const btn=document.getElementById('public-lead-submit-btn'); if(btn){ btn.disabled=true; btn.textContent='Enregistrement…'; }
+    const saved = typeof saveLeadDirectToSupabase==='function' ? await saveLeadDirectToSupabase(lead) : {ok:false,message:'Fonction Supabase absente'};
+    if(!saved.ok && !saved.skipped){ if(error){ error.textContent='Erreur d’enregistrement Supabase : '+(saved.message||'merci de réessayer.'); error.classList.add('show'); } if(btn){btn.disabled=false;btn.textContent='Envoyer mes coordonnées';} return; }
+    window.LEADS = typeof dedupeLeadsList==='function' ? dedupeLeadsList([lead, ...(window.LEADS||[])]) : [lead, ...(window.LEADS||[])];
+    syncReportingFromLeadsV41();
+    if(success) success.classList.add('show'); if(error) error.classList.remove('show');
+    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    preparePublicLeadSelects(ev);
+    if(btn){btn.disabled=false;btn.textContent='Envoyer mes coordonnées';}
+  };
+
+  window.refreshCurrentPage = function(){
+    const active=document.querySelector('.page.active'); if(!active) return;
+    const id=active.id.replace('page-','');
+    if(id==='dashboard' && typeof renderDashboard==='function') renderDashboard();
+    else if(id==='listing' && typeof renderListing==='function') renderListing();
+    else if(id==='calendrier') { try{ S.calView==='grid'?renderCalGrid():renderCalList(); }catch(_){} }
+    else if(id==='students' && typeof renderStudentsPage==='function') renderStudentsPage();
+    else if(id==='registrations' && typeof renderRegistrationsPage==='function') renderRegistrationsPage();
+    else if(id==='users' && typeof renderUsersPage==='function') renderUsersPage();
+    else if(id==='reporting') window.renderReportingPage();
+    else if(id==='leads' && typeof renderLeadsPage==='function') renderLeadsPage();
+    else if(id==='leadsall' && typeof renderAllLeadsPage==='function') renderAllLeadsPage();
+    else if(id==='myactions') window.renderMyActionsPage();
+    else if(id==='actions') window.renderActionsStructurePage();
+    else if(id==='terrain') window.renderTerrainPage();
+    else if(id==='performance') window.renderPerformancePage();
+    else if(id==='inscriptions' && typeof renderInscriptionPage==='function') renderInscriptionPage();
+  };
+  window.showPage = function(page){
+    try { if(typeof updateTopbarForPage==='function') updateTopbarForPage(page); } catch(_) {}
+    ensureMyActionsPage();
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const target=document.getElementById('page-'+page); if(target) target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const map={dashboard:'Tableau de bord',myactions:'Mes actions',actions:'Pipeline CRM',listing:'Listing lycées',calendrier:'Calendrier forums',terrain:'Préparation forums',leads:'Leads & suivi',leadsall:'Tous les leads',students:'Ambassadeurs',registrations:'Inscriptions étudiants',reporting:'Reporting opérationnel',performance:'Bilan & conversion',users:'Utilisateurs',inscriptions:'Mes évènements'};
+    document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim()===map[page]) btn.classList.add('active'); });
+    window.refreshCurrentPage();
+  };
+  document.addEventListener('DOMContentLoaded', function(){ ensureMyActionsPage(); setTimeout(()=>{ try { if(window.CURRENT_PUBLIC_LEAD_EVENT_ID) preparePublicLeadSelects(); } catch(_) {} }, 300); });
+})();
+</script>
+
 </body>
 </html>
