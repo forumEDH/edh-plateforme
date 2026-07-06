@@ -5948,6 +5948,7 @@ function showPage(page){
     calendrier: "Calendrier forums",
     terrain: "Préparation forums",
     leads: "Leads & suivi",
+    leadsall: "Tous les leads",
     students: "Ambassadeurs",
     registrations: "Inscriptions étudiants",
     reporting: "Reporting opérationnel",
@@ -5973,6 +5974,7 @@ function showPage(page){
   else if(page==='users') { renderUsersPage(); }
   else if(page==='reporting') { renderReportingPage(); }
   else if(page==='leads') renderLeadsPage();
+  else if(page==='leadsall') renderAllLeadsPage();
   else if(page==='actions') renderActionsStructurePage();
   else if(page==='myactions') renderMyActionsPage();
   else if(page==='terrain') renderTerrainPage();
@@ -6074,6 +6076,7 @@ function refreshCurrentPage(){
   else if(id==='users') renderUsersPage();
   else if(id==='reporting') { renderReportingPage(); }
   else if(id==='leads') renderLeadsPage();
+  else if(id==='leadsall') renderAllLeadsPage();
   else if(id==='myactions') renderMyActionsPage();
   else if(id==='actions') renderActionsStructurePage();
   else if(id==='terrain') renderTerrainPage();
@@ -7841,22 +7844,6 @@ function deleteCustomEmailTemplate(id){
   CUSTOM_EMAIL_TEMPLATES = CUSTOM_EMAIL_TEMPLATES.filter(t=>String(t.id)!==String(id));
   saveV39LocalState(); renderCustomEmailTemplatesList(); renderEmailTemplateSelect();
 }
-const EDH_V38_showPage = showPage;
-function showPage(page){
-  EDH_V38_showPage(page);
-  if(page==='leadsall'){
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim()==='Tous les leads') btn.classList.add('active'); });
-    renderAllLeadsPage();
-  }
-}
-const EDH_V38_refreshCurrentPage = refreshCurrentPage;
-function refreshCurrentPage(){
-  EDH_V38_refreshCurrentPage();
-  const active = document.querySelector('.page.active')?.id;
-  if(active === 'page-leadsall') renderAllLeadsPage();
-}
-
 </script>
 
 <!-- DATA -->
