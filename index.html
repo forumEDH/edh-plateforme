@@ -2568,7 +2568,7 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V39-2026-07-06-todo-mail-leads-reporting";
+const APP_PATCH_VERSION = "V46-2026-07-06-stabilite-mobile";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -8868,5 +8868,326 @@ window.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
+
+<script>
+/* ============================================================
+   EDH V46 — Correctifs stabilité globale / anti-récursion / QR / reporting
+   ============================================================ */
+(function(){
+  if(window.__EDH_V46_STABILITY_PATCH) return;
+  window.__EDH_V46_STABILITY_PATCH = true;
+  console.info('EDH patch V46 stabilité chargé');
+
+  function safeText(v){ return String(v ?? ''); }
+  function h(v){ return typeof escapeHtml === 'function' ? escapeHtml(v) : safeText(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function evKey(ev){ try { return (typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.id || ev?.supabase_event_id || ''; } catch(_) { return ev?.id || ''; } }
+  function visibleSchoolsSafe(){ try { return typeof schoolsVisibleForCurrentUser === 'function' ? schoolsVisibleForCurrentUser() : ['EFAP','ICART','CREAD','BRASSART']; } catch(_) { return ['EFAP','ICART','CREAD','BRASSART']; } }
+  function eventSchoolsSafe(ev){ try { const s = typeof getSchoolsArray === 'function' ? getSchoolsArray(ev?.ecoles) : []; return s.length ? s : ['EFAP','ICART','CREAD','BRASSART']; } catch(_) { return ['EFAP','ICART','CREAD','BRASSART']; } }
+  function leadSchool(lead){ try { return (typeof normalizeSchoolName === 'function' && normalizeSchoolName(lead?.school || lead?.ecole)) || lead?.school || lead?.ecole || ''; } catch(_) { return lead?.school || lead?.ecole || ''; } }
+  function leadMatchesEventSafe(lead, ev){
+    try { if(typeof leadBelongsToEvent === 'function' && leadBelongsToEvent(lead, ev)) return true; } catch(_) {}
+    const ids = [];
+    try { if(typeof eventIdCandidates === 'function') ids.push(...eventIdCandidates(ev)); } catch(_) {}
+    ids.push(ev?.id, ev?.supabase_event_id, ev?.id_forum, ev?.eventId);
+    const set = new Set(ids.filter(v => v !== undefined && v !== null && String(v).trim() !== '').map(String));
+    if(set.has(String(lead?.eventId || ''))) return true;
+    const ln = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(lead?.eventName || lead?.lycee || '') : safeText(lead?.eventName || lead?.lycee).toLowerCase();
+    const en = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || ev?.lycee || '') : safeText(ev?.nom || ev?.lycee).toLowerCase();
+    return Boolean(ln && en && ln === en);
+  }
+  function leadLevelCounts(rows){
+    const counts = {seconde:0, premiere:0, terminale:0, autres:0};
+    (rows || []).forEach(l => {
+      const raw = safeText(l.level || l.niveau_etude || l.niveau).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+      if(raw.includes('2nde') || raw.includes('seconde')) counts.seconde++;
+      else if(raw.includes('1ere') || raw.includes('premiere')) counts.premiere++;
+      else if(raw.includes('term')) counts.terminale++;
+      else counts.autres++;
+    });
+    return counts;
+  }
+  function reportRec(ev, school){ return getReportRecord(evKey(ev), school); }
+
+  window.syncReportingFromLeadsV46 = function(){
+    try {
+      const leads = Array.isArray(LEADS) ? LEADS : [];
+      const events = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : (typeof allCalendarEvents === 'function' ? allCalendarEvents() : []);
+      events.forEach(ev => {
+        eventSchoolsSafe(ev).forEach(school => {
+          const matching = leads.filter(l => leadSchool(l) === school && leadMatchesEventSafe(l, ev));
+          if(!matching.length) return;
+          const rec = reportRec(ev, school);
+          const levels = leadLevelCounts(matching);
+          rec.global = Math.max(Number(rec.global || 0), matching.length);
+          rec.nombreProspect = Math.max(Number(rec.nombreProspect || 0), matching.length);
+          rec.prospect = Math.max(Number(rec.prospect || 0), matching.length);
+          rec.seconde = Math.max(Number(rec.seconde || 0), levels.seconde);
+          rec.premiere = Math.max(Number(rec.premiere || 0), levels.premiere);
+          rec.terminale = Math.max(Number(rec.terminale || 0), levels.terminale);
+          rec.autres = Math.max(Number(rec.autres || 0), levels.autres);
+        });
+      });
+      try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
+    } catch(err){ console.warn('syncReportingFromLeadsV46', err); }
+  };
+  window.syncReportingFromLeads = window.syncReportingFromLeadsV46;
+  window.syncReportingFromLeadsV44 = window.syncReportingFromLeadsV46;
+  window.syncReportingFromLeadsV41 = window.syncReportingFromLeadsV46;
+
+  window.renderReportingAllTable = function(validatedEvents){
+    const body = document.getElementById('reporting-all-body');
+    if(!body) return;
+    const visibleSchools = visibleSchoolsSafe();
+    const filterSelect = document.getElementById('reporting-school-filter');
+    if(filterSelect){
+      const current = visibleSchools.includes(filterSelect.value) ? filterSelect.value : '';
+      filterSelect.innerHTML = '<option value="">Toutes les écoles</option>' + visibleSchools.map(s=>`<option value="${h(s)}">${h(s)}</option>`).join('');
+      filterSelect.value = current;
+    }
+    const selectedSchool = filterSelect?.value || '';
+    const rows = [];
+    (validatedEvents || []).forEach(event => {
+      eventSchoolsSafe(event).filter(school => visibleSchools.includes(school) && (!selectedSchool || school === selectedSchool)).forEach(school => rows.push({event, school}));
+    });
+    rows.sort((a,b)=>new Date(a.event.date||0)-new Date(b.event.date||0) || safeText(a.event.nom).localeCompare(safeText(b.event.nom)) || a.school.localeCompare(b.school));
+    if(!rows.length){
+      body.innerHTML = `<tr><td colspan="13"><div class="empty-state"><p>Aucun lycée en “Participation Validée” ou “Validée” n’a été trouvé pour ce filtre.</p></div></td></tr>`;
+      return;
+    }
+    const totals = {global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
+    const lines = rows.map(({event, school}) => {
+      const key = evKey(event);
+      const r = reportRec(event, school);
+      Object.keys(totals).forEach(k => totals[k] += Number(r[k] || 0));
+      return `<tr>
+        <td>${typeof schoolTags === 'function' ? schoolTags(school) : h(school)}</td>
+        <td><strong>${h(event.nom || '—')}</strong></td>
+        <td>${typeof fmtDate === 'function' ? fmtDate(event.date) : h(event.date || '—')}</td>
+        <td>${typeof fmt === 'function' ? fmt(event.ville) : h(event.ville || '—')}</td>
+        <td>${reportInput(key, school, 'global', r.global)}</td>
+        <td>${reportInput(key, school, 'seconde', r.seconde)}</td>
+        <td>${reportInput(key, school, 'premiere', r.premiere)}</td>
+        <td>${reportInput(key, school, 'terminale', r.terminale)}</td>
+        <td>${reportInput(key, school, 'autres', r.autres)}</td>
+        <td>${reportInput(key, school, 'prospect', r.prospect)}</td>
+        <td>${reportInput(key, school, 'candidat', r.candidat)}</td>
+        <td>${reportInput(key, school, 'admis', r.admis)}</td>
+        <td>${reportInput(key, school, 'inscrit', r.inscrit)}</td>
+      </tr>`;
+    }).join('');
+    const totalLabel = selectedSchool ? `TOTAL ${selectedSchool}` : 'TOTAL TOUTES LES ÉCOLES';
+    body.innerHTML = lines + `<tr style="font-weight:700;background:var(--bg);border-top:2px solid var(--border2)"><td colspan="4"><strong>${h(totalLabel)}</strong></td><td>${totals.global}</td><td>${totals.seconde}</td><td>${totals.premiere}</td><td>${totals.terminale}</td><td>${totals.autres}</td><td>${totals.prospect}</td><td>${totals.candidat}</td><td>${totals.admis}</td><td>${totals.inscrit}</td></tr>`;
+  };
+
+  window.renderReportingPage = function(){
+    if(window.__EDH_RENDER_REPORTING_LOCK) return;
+    window.__EDH_RENDER_REPORTING_LOCK = true;
+    try {
+      window.syncReportingFromLeadsV46();
+      const validated = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : [];
+      const visibleSchools = visibleSchoolsSafe();
+      window.renderReportingAllTable(validated);
+      const uniqueLycees = new Set(validated.filter(l=>eventSchoolsSafe(l).some(s=>visibleSchools.includes(s))).map(l=> typeof normalizeLyceeName === 'function' ? normalizeLyceeName(l.nom) : safeText(l.nom).toLowerCase())).size;
+      const totals = {global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
+      visibleSchools.forEach(school => validated.filter(l=>eventSchoolsSafe(l).includes(school)).forEach(l=>{ const r=reportRec(l,school); Object.keys(totals).forEach(k=>totals[k]+=Number(r[k]||0)); }));
+      const kpi = document.getElementById('reporting-summary-kpis');
+      if(kpi){
+        kpi.innerHTML = `<div class="kpi-card"><div class="kpi-label">Forums validés</div><div class="kpi-value">${validated.length}</div><div class="kpi-meta">Participation validée</div></div><div class="kpi-card"><div class="kpi-label">Lycées avec forum</div><div class="kpi-value">${uniqueLycees}</div><div class="kpi-meta">Saison active</div></div><div class="kpi-card"><div class="kpi-label">Prospects rencontrés</div><div class="kpi-value">${totals.global}</div><div class="kpi-meta">Reporting + leads QR</div></div><div class="kpi-card"><div class="kpi-label">Inscrits</div><div class="kpi-value">${totals.inscrit}</div><div class="kpi-meta">Saisie reporting</div></div>`;
+      }
+      const rows = visibleSchools.map(school => { const events = validated.filter(l=>eventSchoolsSafe(l).includes(school)); const sum={global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0}; events.forEach(l=>{ const r=reportRec(l,school); Object.keys(sum).forEach(k=>sum[k]+=Number(r[k]||0)); }); return {school, events:events.length, ...sum}; });
+      const summaryBody = document.getElementById('reporting-summary-body');
+      if(summaryBody){ summaryBody.innerHTML = rows.map(r=>`<tr><td><strong>${h(r.school)}</strong></td><td>${r.events}</td><td>${r.global}</td><td>${r.seconde}</td><td>${r.premiere}</td><td>${r.terminale}</td><td>${r.autres}</td><td>${r.prospect}</td><td>${r.candidat}</td><td>${r.admis}</td><td>${r.inscrit}</td></tr>`).join('') || `<tr><td colspan="11"><div class="empty-state"><p>Aucun lycée validé trouvé.</p></div></td></tr>`; }
+    } finally { window.__EDH_RENDER_REPORTING_LOCK = false; }
+  };
+
+  window.renderPerformancePage = function(){
+    if(window.__EDH_RENDER_PERF_LOCK) return;
+    window.__EDH_RENDER_PERF_LOCK = true;
+    try {
+      window.syncReportingFromLeadsV46();
+      const events = typeof activeValidatedForums === 'function' ? activeValidatedForums() : [];
+      const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
+      const rows = events.map(l => {
+        const report = typeof reportSummaryForEvent === 'function' ? reportSummaryForEvent(l) : {global:0,prospect:0,candidat:0,admis:0,inscrit:0};
+        const leads = typeof eventLeads === 'function' ? eventLeads(l).length : 0;
+        const prospects = Number(report.global || report.prospect || leads || l.prospect_global || 0);
+        totals.prospects += prospects; totals.candidats += Number(report.candidat||0); totals.admis += Number(report.admis||0); totals.inscrits += Number(report.inscrit||0);
+        const rate = typeof pct === 'function' ? pct(report.inscrit, prospects) : (prospects ? Math.round((Number(report.inscrit||0)/prospects)*100)+'%' : '—');
+        const reading = !prospects ? 'Reporting à compléter' : Number(report.inscrit||0) > 0 ? 'Forum générateur d’inscrits' : Number(report.candidat||0) > 0 ? 'Forum à suivre en admissions' : 'Prospects à qualifier';
+        return {l, prospects, report, rate, reading};
+      });
+      const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+      set('perf-forums', totals.forums); set('perf-prospects', totals.prospects); set('perf-candidats', totals.candidats); set('perf-admis', totals.admis); set('perf-inscrits', totals.inscrits); set('perf-taux', typeof pct === 'function' ? pct(totals.inscrits, totals.prospects) : '—'); set('perf-count', `${rows.length} lycée(s)`);
+      const body=document.getElementById('performance-tbody');
+      if(body){ body.innerHTML = rows.length ? rows.map(r=>{ const id=evKey(r.l); return `<tr onclick="openDetail('${h(id)}')" style="cursor:pointer"><td><strong>${h(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${h(r.l.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.l.date):h(r.l.date||'—')}</td><td>${typeof schoolTags==='function'?schoolTags(r.l.ecoles):h(r.l.ecoles||'')}</td><td>${r.prospects}</td><td>${Number(r.report.candidat||0)}</td><td>${Number(r.report.admis||0)}</td><td>${Number(r.report.inscrit||0)}</td><td><span class="conversion-rate">${h(r.rate)}</span></td><td>${h(r.reading)}</td></tr>`; }).join('') : `<tr><td colspan="9"><div class="crm-empty">Aucun forum validé à analyser pour la saison active.</div></td></tr>`; }
+    } finally { window.__EDH_RENDER_PERF_LOCK = false; }
+  };
+
+  function rowsForLeads(){ try { return (typeof getVisibleLeads === 'function' ? getVisibleLeads() : (LEADS || [])).sort((a,b)=>safeText(b.createdAt).localeCompare(safeText(a.createdAt))); } catch(_) { return []; } }
+  window.renderLeadsPage = function(){
+    if(window.__EDH_RENDER_LEADS_LOCK) return;
+    window.__EDH_RENDER_LEADS_LOCK = true;
+    try {
+      try { if(typeof populateLeadEvents === 'function') populateLeadEvents(); if(typeof renderQrPreview === 'function') renderQrPreview(); if(typeof prefillLeadEvent === 'function') prefillLeadEvent(); if(typeof updateLeadProgramOptions === 'function') updateLeadProgramOptions('lead'); } catch(_) {}
+      window.syncReportingFromLeadsV46();
+      const body=document.getElementById('leads-tbody'); const count=document.getElementById('leads-count'); const rows=rowsForLeads();
+      try { if(typeof renderLeadsKpis === 'function') renderLeadsKpis(rows); } catch(_) {}
+      if(count) count.textContent = `${rows.length} lead(s) liés à votre école / campus`;
+      if(body) body.innerHTML = rows.length ? rows.map(l=> typeof leadRowHtml === 'function' ? leadRowHtml(l,false) : `<tr><td>${h(l.email||'')}</td></tr>`).join('') : `<tr><td colspan="12"><div class="crm-empty">Aucun lead accessible pour votre école / campus.</div></td></tr>`;
+    } finally { window.__EDH_RENDER_LEADS_LOCK = false; }
+  };
+
+  window.refreshLeadsFromSupabase = async function(){
+    if(!supabaseClient) return showToast('Supabase indisponible : impossible de recharger les leads', 'error');
+    const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
+    if(error) return showToast('Erreur chargement leads Supabase : ' + getSupabaseErrorMessage(error), 'error');
+    const remote = Array.isArray(data) ? data.map(mapSupabaseLeadToApp) : [];
+    LEADS = typeof dedupeLeadsList === 'function' ? dedupeLeadsList([...remote, ...(Array.isArray(LEADS)?LEADS:[])]) : remote;
+    window.syncReportingFromLeadsV46();
+    try { window.renderLeadsPage(); window.renderReportingPage(); window.renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); if(typeof renderDashboardV2 === 'function') renderDashboardV2(); } catch(_) {}
+    showToast(`${remote.length} lead(s) chargé(s) depuis Supabase`);
+  };
+
+  window.saveLeadFromForm = async function(){
+    const val=id=>(document.getElementById(id)?.value||'').trim();
+    const eventId = val('lead-event-select');
+    const ev = typeof findCalendarEventById === 'function' ? (findCalendarEventById(eventId) || {}) : {};
+    const lead = {id:'LEAD'+Date.now(), season:S.season || DEFAULT_SEASON, eventId, eventName:ev.nom||'', lycee:ev.nom||'', ville:ev.ville||'', firstName:val('lead-firstname'), lastName:val('lead-lastname'), email:val('lead-email').toLowerCase(), phone:val('lead-phone'), school:val('lead-school'), program:val('lead-program'), level:val('lead-level'), notes:val('lead-notes'), source:'Saisie plateforme', createdAt:new Date().toISOString()};
+    const missing = [['Forum',eventId],['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['École',lead.school],['Cursus',lead.program],['Niveau',lead.level]].filter(x=>!x[1]).map(x=>x[0]);
+    if(missing.length) return showToast('Champs requis : ' + missing.join(', '), 'error');
+    const saved = await saveLeadDirectToSupabase(lead);
+    if(!saved.ok && !saved.skipped) return showToast('Lead non enregistré dans Supabase : ' + (saved.message || 'erreur inconnue'), 'error');
+    LEADS = typeof dedupeLeadsList === 'function' ? dedupeLeadsList([lead, ...(Array.isArray(LEADS)?LEADS:[])]) : [lead, ...(LEADS||[])];
+    ['lead-firstname','lead-lastname','lead-email','lead-phone','lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    try { saveLocalData(); } catch(_) {}
+    window.syncReportingFromLeadsV46();
+    try { window.renderLeadsPage(); window.renderReportingPage(); window.renderPerformancePage(); if(typeof renderAllLeadsPage==='function') renderAllLeadsPage(); if(typeof renderDashboardV2==='function') renderDashboardV2(); } catch(_) {}
+    showToast('Lead ajouté dans Supabase');
+  };
+
+  window.updateLeadProgramOptions = function(scope='lead'){
+    const program = document.getElementById(scope === 'public' ? 'public-lead-program' : 'lead-program');
+    if(!program) return;
+    const school = (document.getElementById(scope === 'public' ? 'public-lead-school' : 'lead-school')?.value || '').trim();
+    const level = (document.getElementById(scope === 'public' ? 'public-lead-level' : 'lead-level')?.value || '').trim();
+    const previous = program.value;
+    const options = [];
+    if(school && level && typeof leadProgramRuleFromLevel === 'function'){
+      const rule = leadProgramRuleFromLevel(level);
+      const campus = (typeof selectedLeadCampus === 'function' && selectedLeadCampus(scope)) || 'Lille';
+      if(rule && typeof leadSchoolYearLabel === 'function') options.push(`${school} ${campus} - ${rule.entryLevel} - ${leadSchoolYearLabel(rule.startYear)}`);
+    }
+    program.innerHTML = '<option value="">Sélectionner le cursus souhaité</option>' + options.map(opt=>`<option value="${h(opt)}">${h(opt)}</option>`).join('');
+    if(previous && options.includes(previous)) program.value = previous;
+  };
+
+  function preparePublicLeadSelectsV46(ev){
+    const school=document.getElementById('public-lead-school');
+    const level=document.getElementById('public-lead-level');
+    if(school){
+      const schools = ev && typeof getSchoolsArray === 'function' ? getSchoolsArray(ev.ecoles) : ['EFAP','CREAD','BRASSART','ICART'];
+      const arr = schools.length ? schools : ['EFAP','CREAD','BRASSART','ICART'];
+      school.innerHTML = '<option value="">Sélectionner l’école qui vous intéresse</option>' + arr.map(s=>`<option value="${h(s)}">${h(s)}</option>`).join('');
+      school.value = '';
+    }
+    if(level){
+      level.innerHTML = '<option value="">Sélectionner votre niveau d’étude</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option>';
+      level.value = '';
+    }
+    window.updateLeadProgramOptions('public');
+  }
+
+  window.loadPublicLeadEventContext = async function(eventToken, season){
+    let ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventToken) : null;
+    if(!ev && supabaseClient){
+      try {
+        const r = await supabaseClient.from('evenements').select('*').eq('id', eventToken).limit(1);
+        if(!r.error && r.data && r.data[0]){ const row=r.data[0]; ev={id:row.id, supabase_event_id:row.id, nom:row.lycee||row.nom||'Forum lycée', ville:row.ville||'', date:row.date||'', heure:row.heure||'', ecoles:row.ecoles||''}; }
+      } catch(_) {}
+    }
+    const label=document.getElementById('public-lead-event-label'); const pill=document.getElementById('public-lead-event-pill');
+    if(label) label.textContent = ev ? `${ev.nom||'Forum lycée'}${ev.ville?' · '+ev.ville:''}${ev.date?' · '+(typeof fmtDate==='function'?fmtDate(ev.date):ev.date):''}` : 'Complète tes coordonnées pour être recontacté par notre équipe.';
+    if(pill) pill.textContent = ev ? `${ev.nom||'Forum lycée'}${ev.ville?' · '+ev.ville:''}` : 'Forum lycée';
+    window.CURRENT_PUBLIC_LEAD_EVENT = ev || null;
+    preparePublicLeadSelectsV46(ev);
+    return ev;
+  };
+
+  window.showPublicLeadForm = function(eventToken, season){
+    try { CURRENT_PUBLIC_LEAD_EVENT_ID = eventToken; } catch(_) {}
+    window.CURRENT_PUBLIC_LEAD_EVENT_ID = eventToken;
+    if(season){ try { S.season = season; if(typeof initSeasonSelect === 'function') initSeasonSelect(); } catch(_) {} }
+    const login=document.getElementById('login-modal'); if(login) login.classList.remove('open');
+    const overlay=document.getElementById('public-lead-overlay'); if(overlay) overlay.classList.add('open');
+    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    const success=document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
+    const error=document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
+    window.loadPublicLeadEventContext(eventToken, season).catch(()=>{});
+  };
+
+  window.submitPublicLead = async function(){
+    const eventToken = window.CURRENT_PUBLIC_LEAD_EVENT_ID || (typeof CURRENT_PUBLIC_LEAD_EVENT_ID !== 'undefined' ? CURRENT_PUBLIC_LEAD_EVENT_ID : '');
+    const ev = window.CURRENT_PUBLIC_LEAD_EVENT || (typeof findCalendarEventById === 'function' ? findCalendarEventById(eventToken) : null) || {};
+    const val=id=>(document.getElementById(id)?.value||'').trim();
+    const lead = {id:'LEAD'+Date.now(), season:S.season || DEFAULT_SEASON, eventId:eventToken, eventName:ev.nom||'', lycee:ev.nom||'', ville:ev.ville||'', firstName:val('public-lead-firstname'), lastName:val('public-lead-lastname'), email:val('public-lead-email').toLowerCase(), phone:val('public-lead-phone'), school:val('public-lead-school'), program:val('public-lead-program'), level:val('public-lead-level'), notes:val('public-lead-notes'), source:'QR public', createdAt:new Date().toISOString()};
+    const required = [['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École intéressée',lead.school],['Cursus souhaité',lead.program],['Niveau d’étude',lead.level],['Prise de notes',lead.notes]];
+    const error=document.getElementById('public-lead-error'); const success=document.getElementById('public-lead-success');
+    if(error) error.classList.remove('show'); if(success) success.classList.remove('show');
+    const missing = required.filter(x=>!x[1]).map(x=>x[0]);
+    if(missing.length){ if(error){ error.textContent='Merci de compléter tous les champs obligatoires : '+missing.join(', ')+'.'; error.classList.add('show'); } return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lead.email)){ if(error){ error.textContent='Merci de saisir une adresse email valide.'; error.classList.add('show'); } return; }
+    const btn=document.getElementById('public-lead-submit-btn'); if(btn){ btn.disabled=true; btn.textContent='Enregistrement…'; }
+    try {
+      const saved = await saveLeadDirectToSupabase(lead);
+      if(!saved.ok && !saved.skipped){ if(error){ error.textContent='Erreur d’enregistrement Supabase : '+(saved.message||'merci de réessayer.'); error.classList.add('show'); } if(btn){ btn.disabled=false; btn.textContent='Valider le formulaire'; } return; }
+      LEADS = typeof dedupeLeadsList === 'function' ? dedupeLeadsList([lead, ...(Array.isArray(LEADS)?LEADS:[])]) : [lead, ...(LEADS||[])];
+      try { saveLocalData(); } catch(_) {}
+      window.syncReportingFromLeadsV46();
+      if(success) success.classList.add('show');
+      ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      preparePublicLeadSelectsV46(ev);
+      if(btn){ btn.disabled=false; btn.textContent='Valider le formulaire'; }
+    } catch(err){ if(error){ error.textContent='Erreur d’enregistrement : '+(err?.message||'merci de réessayer.'); error.classList.add('show'); } if(btn){ btn.disabled=false; btn.textContent='Valider le formulaire'; } }
+  };
+
+  window.emailTemplates = function(event, type){
+    try { if(typeof loadV39LocalState === 'function') loadV39LocalState(); } catch(_) {}
+    if(safeText(type).startsWith('custom:')){
+      const id = safeText(type).replace('custom:','');
+      const tpl = (typeof CUSTOM_EMAIL_TEMPLATES !== 'undefined' && Array.isArray(CUSTOM_EMAIL_TEMPLATES) ? CUSTOM_EMAIL_TEMPLATES : []).find(t=>safeText(t.id)===id);
+      if(tpl && typeof replaceTemplateVariables === 'function') return {subject:replaceTemplateVariables(tpl.subject,event), body:replaceTemplateVariables(tpl.body,event)};
+    }
+    const nom = event?.nom || 'votre établissement'; const date = event?.date && typeof fmtDate === 'function' ? fmtDate(event.date) : '[date à préciser]'; const ecoles = typeof eventSchoolsList === 'function' ? eventSchoolsList(event) : 'EDH'; const contact = typeof mailContactName === 'function' ? mailContactName(event) : 'Madame, Monsieur';
+    const templates = {
+      prospection:{subject:`Intervention orientation - ${ecoles}`, body:`Bonjour ${contact},\n\nJe me permets de vous contacter dans le cadre des actions d'orientation menées par le groupe EDH (${ecoles}).\n\nNous souhaiterions proposer une intervention auprès des élèves de ${nom} afin de leur présenter nos formations et de les accompagner dans leur réflexion d'orientation.\n\nSeriez-vous disponible pour échanger à ce sujet ?\n\nBien cordialement,`},
+      relance:{subject:`Relance - intervention orientation`, body:`Bonjour ${contact},\n\nJe me permets de revenir vers vous concernant ma précédente demande d'intervention au sein de ${nom}.\n\nNous serions ravis de pouvoir organiser une rencontre avec vos élèves dans le cadre de leurs choix d'orientation.\n\nBien cordialement,`},
+      confirmation:{subject:`Confirmation de notre participation - ${nom}`, body:`Bonjour ${contact},\n\nJe vous confirme notre participation à l'événement prévu au sein de ${nom} le ${date}.\n\nNous sommes ravis de pouvoir rencontrer vos élèves et échanger avec eux autour des formations du groupe EDH (${ecoles}).\n\nBien cordialement,`},
+      refus:{subject:`Suite à votre invitation - ${nom}`, body:`Bonjour ${contact},\n\nJe vous remercie sincèrement pour votre invitation.\n\nMalheureusement, nous ne serons pas en mesure de participer à votre événement sur cette période.\n\nBien cordialement,`},
+      annulation:{subject:`Annulation de notre intervention - ${nom}`, body:`Bonjour ${contact},\n\nJe suis au regret de vous informer que nous devons annuler notre intervention prévue le ${date} au sein de ${nom}.\n\nNous vous présentons toutes nos excuses pour ce désagrément.\n\nBien cordialement,`},
+      merci:{subject:`Remerciements - ${nom}`, body:`Bonjour ${contact},\n\nNous vous remercions pour votre accueil lors de notre intervention au sein de ${nom}.\n\nCe fut un réel plaisir d'échanger avec vos élèves et de contribuer à leur réflexion d'orientation.\n\nBien cordialement,`}
+    };
+    return templates[type] || templates.prospection;
+  };
+
+  window.openMailModal = function(eventId, type='prospection'){
+    try { MAIL_CONTEXT_ID = eventId; } catch(_) {}
+    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventId) : null;
+    if(!ev) return showToast('Événement introuvable','error');
+    try { if(typeof renderEmailTemplateSelect === 'function') renderEmailTemplateSelect(); } catch(_) {}
+    const sel=document.getElementById('email-template-type'); if(sel) sel.value=type;
+    const to=document.getElementById('email-to'); if(to) to.value = typeof mailRecipient === 'function' ? mailRecipient(ev) : '';
+    const title=document.getElementById('email-modal-title'); if(title) title.textContent='Préparer un mail automatique';
+    const sub=document.getElementById('email-modal-subtitle'); if(sub) sub.textContent=`${ev.nom||''} · ${ev.ville||''}`;
+    if(typeof renderEmailPreview === 'function') renderEmailPreview();
+    const modal=document.getElementById('modal-email'); if(modal) modal.classList.add('open');
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    try { if(typeof updateLeadProgramOptions === 'function'){ updateLeadProgramOptions('public'); updateLeadProgramOptions('lead'); } } catch(_) {}
+    try { if(typeof edhApplyMobileTableLabels === 'function') edhApplyMobileTableLabels(document); } catch(_) {}
+  });
+})();
+
+</script>
 </body>
 </html>
