@@ -12,8 +12,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>EDH — Forums Lycées 2025·2026</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+
+</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1089,6 +1093,29 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 
 @media (min-width: 769px) { body.mobile-sidebar-open .mobile-backdrop { display: none !important; } }
 
+
+
+/* ── V47 RESSOURCES / ADMIN GLOBAL ── */
+.resources-admin-panel { display:none; margin-bottom:18px; }
+.resources-admin-panel.open { display:block; }
+.resources-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:18px; }
+.resource-card { background:white; border:1px solid var(--border); border-radius:14px; padding:16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:10px; min-height:178px; }
+.resource-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); transition:all .12s; }
+.resource-icon { width:42px; height:42px; border-radius:12px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; letter-spacing:.4px; flex-shrink:0; }
+.resource-top { display:flex; gap:12px; align-items:flex-start; }
+.resource-title { font-size:14px; font-weight:850; color:var(--text); line-height:1.25; }
+.resource-meta { font-size:11px; color:var(--text3); margin-top:4px; line-height:1.45; }
+.resource-desc { font-size:12px; color:var(--text2); line-height:1.5; flex:1; }
+.resource-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; }
+.resource-filters { background:white; border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; box-shadow:var(--shadow-sm); }
+.resource-filters .form-grid { grid-template-columns:1.1fr .7fr .7fr .7fr; align-items:end; }
+.resource-empty { padding:32px 18px; text-align:center; color:var(--text3); background:#fbfcff; border:1px dashed var(--border2); border-radius:14px; }
+.resource-upload-drop { border:1px dashed var(--border2); background:#fbfcff; border-radius:13px; padding:14px; color:var(--text2); font-size:12px; line-height:1.55; }
+.resource-admin-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 9px; border-radius:999px; background:var(--green-bg); color:var(--green); border:1px solid var(--green-border); font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.4px; }
+.resource-readonly-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 9px; border-radius:999px; background:var(--gray-bg); color:var(--gray); border:1px solid var(--gray-border); font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.4px; }
+@media (max-width: 1100px){ .resources-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .resource-filters .form-grid { grid-template-columns:1fr 1fr; } }
+@media (max-width: 760px){ .resources-grid, .resource-filters .form-grid { grid-template-columns:1fr !important; } .resource-actions { display:grid; grid-template-columns:1fr; } }
+
 </style>
 </head>
 <body>
@@ -1199,6 +1226,13 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
     <button class="nav-item" data-role="collaborateur" onclick="showPage('terrain')">
       <svg viewBox="0 0 24 24"><path d="M12 21s7-4.4 7-11a7 7 0 1 0-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
       Préparation forums
+    </button>
+
+
+
+    <button class="nav-item" data-role="collaborateur" onclick="showPage('resources')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+      Ressources
     </button>
 
     <button class="nav-item" data-role="collaborateur" onclick="showPage('performance')">
@@ -2002,6 +2036,121 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
       </div>
     </div>
 
+
+
+    <!-- ═══ RESSOURCES PAGE ═══ -->
+    <div class="page" id="page-resources">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Ressources</div>
+          <div class="page-subtitle">Plaquettes écoles, présentations, activités et documents utiles pour les forums lycées.</div>
+        </div>
+        <div id="resources-role-badge" class="resource-readonly-badge">Téléchargement uniquement</div>
+      </div>
+
+      <div class="resources-admin-panel" id="resources-admin-panel">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Ajouter une ressource</div>
+              <div class="card-count">Réservé Admin Global</div>
+            </div>
+          </div>
+          <div style="padding:16px">
+            <div class="muted-box" style="margin-bottom:14px">
+              Seul un compte <strong>Admin global</strong> peut ajouter ou supprimer des fichiers. Les admins campus et collaborateurs peuvent uniquement consulter et télécharger les ressources.
+            </div>
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-label">Titre de la ressource *</label>
+                <input class="form-input" id="resource-title" placeholder="Ex : Plaquette EFAP Bachelor 2026">
+              </div>
+              <div class="form-field">
+                <label class="form-label">École concernée</label>
+                <select class="form-select" id="resource-school">
+                  <option value="Toutes écoles">Toutes écoles</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Type de ressource</label>
+                <select class="form-select" id="resource-category">
+                  <option value="Plaquette">Plaquette</option>
+                  <option value="Présentation PPT">Présentation PPT</option>
+                  <option value="Activité orientation">Activité orientation</option>
+                  <option value="Argumentaire">Argumentaire</option>
+                  <option value="Kit forum">Kit forum</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Fichier *</label>
+                <input class="form-input" type="file" id="resource-file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp,.zip">
+              </div>
+              <div class="form-field full">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="resource-description" rows="3" placeholder="Précision d’utilisation, cible, événement concerné..."></textarea>
+              </div>
+            </div>
+            <div class="resource-upload-drop" style="margin-top:12px">
+              Formats conseillés : PDF pour les plaquettes, PPT/PPTX pour les présentations, DOCX/PDF pour les activités, ZIP si plusieurs fichiers sont nécessaires.
+            </div>
+            <div class="small-actions" style="margin-top:14px">
+              <button class="btn btn-outline" onclick="resetResourceUploadForm()">Réinitialiser</button>
+              <button class="btn btn-primary" onclick="uploadResourceFile()">Uploader la ressource</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="resource-filters">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Recherche</label>
+            <input class="form-input" id="resource-search" placeholder="Rechercher une plaquette, une école, une activité..." oninput="renderResourcesPage()">
+          </div>
+          <div class="form-field">
+            <label class="form-label">École</label>
+            <select class="form-select" id="resource-filter-school" onchange="renderResourcesPage()">
+              <option value="">Toutes les écoles</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="resource-filter-category" onchange="renderResourcesPage()">
+              <option value="">Tous les types</option>
+              <option value="Plaquette">Plaquette</option>
+              <option value="Présentation PPT">Présentation PPT</option>
+              <option value="Activité orientation">Activité orientation</option>
+              <option value="Argumentaire">Argumentaire</option>
+              <option value="Kit forum">Kit forum</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Affichage</label>
+            <select class="form-select" id="resource-view-mode" onchange="renderResourcesPage()">
+              <option value="cards">Cartes</option>
+              <option value="table">Tableau</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Bibliothèque de ressources</div>
+            <div class="card-count" id="resources-count">—</div>
+          </div>
+          <div class="small-actions" style="width:auto">
+            <button class="btn btn-outline" onclick="loadResourcesFromSupabase(true)">Recharger Supabase</button>
+          </div>
+        </div>
+        <div style="padding:16px" id="resources-list"></div>
+      </div>
+    </div>
+
+
     <!-- ═══ BILAN & CONVERSION ═══ -->
     <div class="page" id="page-performance">
       <div class="page-header">
@@ -2568,7 +2717,7 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V46-2026-07-06-stabilite-mobile";
+const APP_PATCH_VERSION = "V47-2026-07-06-ressources-admin-global";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2709,7 +2858,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V38-2026-07-04-kit-forum-crm';
+window.EDH_APP_VERSION = 'V47-2026-07-06-ressources-admin-global';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -5875,7 +6024,8 @@ function kitForumHtml(eventObj){
 }
 function forumFieldSheetHtml(eventObj){
   const leadsUrl = leadPublicUrl(leadEventToken(eventObj));
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Fiche terrain - ${escapeHtml(eventObj.nom||'Forum')}</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#111827}h1{font-size:24px;margin-bottom:4px}.muted{color:#6b7280}.box{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin:14px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.check div{margin:7px 0} @media print{button{display:none}}</style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Fiche terrain - ${escapeHtml(eventObj.nom||'Forum')}</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#111827}h1{font-size:24px;margin-bottom:4px}.muted{color:#6b7280}.box{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin:14px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.check div{margin:7px 0} @media print{button{display:none}}
+</style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
 }
 function printForumFieldSheet(eventId){
   const ev = findCalendarEventById(eventId);
@@ -8131,6 +8281,8 @@ function deleteCustomEmailTemplate(id){
   CUSTOM_EMAIL_TEMPLATES = CUSTOM_EMAIL_TEMPLATES.filter(t=>String(t.id)!==String(id));
   saveV39LocalState(); renderCustomEmailTemplatesList(); renderEmailTemplateSelect();
 }
+
+
 </script>
 
 <!-- DATA -->
@@ -8149,6 +8301,8 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
   }, 500);
 });
+
+
 </script>
 
 <script>
@@ -8501,6 +8655,8 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   document.addEventListener('DOMContentLoaded', function(){ ensureMyActionsPage(); setTimeout(()=>{ try { if(window.CURRENT_PUBLIC_LEAD_EVENT_ID) preparePublicLeadSelects(); } catch(_) {} }, 300); });
 })();
+
+
 </script>
 
 <script>
@@ -8780,6 +8936,8 @@ window.addEventListener('DOMContentLoaded', () => {
     try { document.querySelectorAll('#page-dashboard .advanced-grid').forEach(el => el.remove()); } catch(_) {}
   });
 })();
+
+
 </script>
 
 <script>
@@ -8866,6 +9024,8 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   window.addEventListener('resize', () => { if(isMobile()) syncMobileChrome(); });
 })();
+
+
 </script>
 
 
@@ -9185,6 +9345,324 @@ window.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('DOMContentLoaded', () => {
     try { if(typeof updateLeadProgramOptions === 'function'){ updateLeadProgramOptions('public'); updateLeadProgramOptions('lead'); } } catch(_) {}
     try { if(typeof edhApplyMobileTableLabels === 'function') edhApplyMobileTableLabels(document); } catch(_) {}
+  });
+})();
+
+
+
+
+
+// ══════════════════════════════════════
+// V47 — RESSOURCES : upload Admin Global, téléchargement pour les rôles internes
+// ══════════════════════════════════════
+(function(){
+  const RESOURCE_BUCKET = 'edh-ressources';
+  let RESOURCE_CACHE = [];
+  let RESOURCE_LAST_LOAD_AT = 0;
+  let RESOURCE_LOADING = false;
+
+  function resourceCanRead(){
+    try { return typeof roleIsInternal === 'function' && roleIsInternal(S.role); } catch(_) { return false; }
+  }
+  function resourceCanManage(){
+    try {
+      const cu = typeof currentUser === 'function' ? currentUser() : null;
+      const role = typeof normalizeRoleValue === 'function' ? normalizeRoleValue(cu?.role || S.role) : String(cu?.role || S.role || '').toLowerCase();
+      return role === 'admin_global' || String(cu?.email || '').toLowerCase() === 'admin';
+    } catch(_) { return false; }
+  }
+  window.resourceCanManage = resourceCanManage;
+
+  function populateResourceSelects(){
+    const schoolOptions = ['Toutes écoles', ...(Array.isArray(SCHOOLS) ? SCHOOLS : ['EFAP','ICART','CREAD','BRASSART'])];
+    const uploadSchool = document.getElementById('resource-school');
+    if(uploadSchool && uploadSchool.options.length <= 1){
+      uploadSchool.innerHTML = schoolOptions.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+    }
+    const filterSchool = document.getElementById('resource-filter-school');
+    if(filterSchool && filterSchool.options.length <= 1){
+      filterSchool.innerHTML = '<option value="">Toutes les écoles</option>' + schoolOptions.filter(s=>s!=='Toutes écoles').map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+    }
+  }
+
+  function mapSupabaseResourceToApp(row){
+    return {
+      id: String(row.id || row.app_id || ('RES_' + Date.now())),
+      title: row.title || row.titre || row.file_name || 'Ressource',
+      description: row.description || '',
+      category: row.category || row.type || 'Autre',
+      school: row.school || row.ecole || 'Toutes écoles',
+      fileName: row.file_name || row.filename || '',
+      filePath: row.file_path || row.path || '',
+      mimeType: row.mime_type || '',
+      sizeBytes: Number(row.size_bytes || 0),
+      uploadedBy: row.uploaded_by || '',
+      createdAt: row.created_at || '',
+      updatedAt: row.updated_at || ''
+    };
+  }
+
+  function mapAppResourceToSupabase(r){
+    return {
+      title: r.title || '',
+      description: r.description || '',
+      category: r.category || 'Autre',
+      school: r.school || 'Toutes écoles',
+      file_name: r.fileName || '',
+      file_path: r.filePath || '',
+      mime_type: r.mimeType || '',
+      size_bytes: Number(r.sizeBytes || 0),
+      uploaded_by: r.uploadedBy || '',
+      is_active: true,
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  function resourceFileExt(name){
+    const ext = String(name || '').split('.').pop();
+    return ext && ext.length <= 5 ? ext.toUpperCase() : 'DOC';
+  }
+  function resourceSize(bytes){
+    const n = Number(bytes || 0);
+    if(!n) return 'Taille inconnue';
+    if(n < 1024) return n + ' o';
+    if(n < 1024*1024) return Math.round(n/1024) + ' Ko';
+    return (n/(1024*1024)).toFixed(n >= 10*1024*1024 ? 0 : 1).replace('.', ',') + ' Mo';
+  }
+  function resourceDate(iso){
+    if(!iso) return 'Date inconnue';
+    const d = new Date(iso);
+    if(isNaN(d)) return iso;
+    return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'});
+  }
+  function sanitizePathPart(value){
+    return String(value || 'fichier')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9._-]+/g,'-')
+      .replace(/-+/g,'-')
+      .replace(/^-|-$/g,'')
+      .slice(0,120) || 'fichier';
+  }
+
+  window.loadResourcesFromSupabase = async function(force=false){
+    populateResourceSelects();
+    if(!resourceCanRead()) return false;
+    if(RESOURCE_LOADING) return false;
+    if(!force && RESOURCE_LAST_LOAD_AT && Date.now() - RESOURCE_LAST_LOAD_AT < 15000) { renderResourcesPage(); return true; }
+    if(!supabaseClient){
+      try { RESOURCE_CACHE = JSON.parse(localStorage.getItem('edh_resources_v1') || '[]'); } catch(_) { RESOURCE_CACHE = []; }
+      RESOURCE_LAST_LOAD_AT = Date.now();
+      renderResourcesPage();
+      return true;
+    }
+    RESOURCE_LOADING = true;
+    const count = document.getElementById('resources-count');
+    if(count) count.textContent = 'Chargement…';
+    try {
+      const { data, error } = await supabaseClient
+        .from('ressources')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending:false });
+      if(error) throw error;
+      RESOURCE_CACHE = Array.isArray(data) ? data.map(mapSupabaseResourceToApp) : [];
+      RESOURCE_LAST_LOAD_AT = Date.now();
+      renderResourcesPage();
+      return true;
+    } catch(err){
+      const list = document.getElementById('resources-list');
+      if(list){
+        list.innerHTML = `<div class="resource-empty"><strong>Impossible de charger les ressources Supabase.</strong><br>${escapeHtml(typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(err) : (err?.message || err))}<br><br>Vérifie que la table <strong>ressources</strong> et le bucket Storage <strong>${RESOURCE_BUCKET}</strong> existent.</div>`;
+      }
+      if(count) count.textContent = 'Erreur Supabase';
+      try { showToast('Ressources : table ou droits Supabase à vérifier', 'error'); } catch(_) {}
+      return false;
+    } finally {
+      RESOURCE_LOADING = false;
+    }
+  };
+
+  function filteredResources(){
+    const q = (document.getElementById('resource-search')?.value || '').trim().toLowerCase();
+    const school = document.getElementById('resource-filter-school')?.value || '';
+    const category = document.getElementById('resource-filter-category')?.value || '';
+    return (Array.isArray(RESOURCE_CACHE) ? RESOURCE_CACHE : []).filter(r => {
+      const hay = `${r.title || ''} ${r.description || ''} ${r.category || ''} ${r.school || ''} ${r.fileName || ''}`.toLowerCase();
+      const okQ = !q || hay.includes(q);
+      const okSchool = !school || r.school === school || r.school === 'Toutes écoles';
+      const okCategory = !category || r.category === category;
+      return okQ && okSchool && okCategory;
+    });
+  }
+
+  function resourceCardHtml(r){
+    const admin = resourceCanManage();
+    return `<div class="resource-card">
+      <div class="resource-top">
+        <div class="resource-icon">${escapeHtml(resourceFileExt(r.fileName))}</div>
+        <div style="min-width:0">
+          <div class="resource-title">${escapeHtml(r.title || r.fileName || 'Ressource')}</div>
+          <div class="resource-meta">${escapeHtml(r.category || 'Autre')} · ${escapeHtml(r.school || 'Toutes écoles')} · ${resourceSize(r.sizeBytes)}<br>Ajouté le ${resourceDate(r.createdAt)}</div>
+        </div>
+      </div>
+      <div class="resource-desc">${escapeHtml(r.description || 'Aucune description renseignée.')}</div>
+      <div class="resource-actions">
+        <button class="btn btn-primary" onclick="downloadResourceFile('${escapeHtml(r.id)}')">Télécharger</button>
+        ${admin ? `<button class="btn btn-danger" onclick="deleteResourceFile('${escapeHtml(r.id)}')">Supprimer</button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function resourceTableHtml(rows){
+    const admin = resourceCanManage();
+    return `<div class="table-scroll"><table class="feature-table crm-table"><thead><tr><th>Titre</th><th>École</th><th>Type</th><th>Fichier</th><th>Date</th><th>Actions</th></tr></thead><tbody>${rows.map(r=>`<tr>
+      <td data-label="Titre"><strong>${escapeHtml(r.title || 'Ressource')}</strong><br><span style="font-size:11px;color:var(--text3)">${escapeHtml(r.description || '')}</span></td>
+      <td data-label="École">${escapeHtml(r.school || 'Toutes écoles')}</td>
+      <td data-label="Type"><span class="badge b-blue">${escapeHtml(r.category || 'Autre')}</span></td>
+      <td data-label="Fichier">${escapeHtml(r.fileName || '—')}<br><span style="font-size:11px;color:var(--text3)">${resourceSize(r.sizeBytes)}</span></td>
+      <td data-label="Date">${resourceDate(r.createdAt)}</td>
+      <td data-label="Actions"><div class="lead-table-actions"><button class="btn btn-primary" onclick="downloadResourceFile('${escapeHtml(r.id)}')">Télécharger</button>${admin ? `<button class="btn btn-danger" onclick="deleteResourceFile('${escapeHtml(r.id)}')">Supprimer</button>` : ''}</div></td>
+    </tr>`).join('')}</tbody></table></div>`;
+  }
+
+  window.renderResourcesPage = function(){
+    populateResourceSelects();
+    const admin = resourceCanManage();
+    const badge = document.getElementById('resources-role-badge');
+    if(badge){
+      badge.className = admin ? 'resource-admin-badge' : 'resource-readonly-badge';
+      badge.textContent = admin ? 'Admin global · modification autorisée' : 'Téléchargement uniquement';
+    }
+    const panel = document.getElementById('resources-admin-panel');
+    if(panel) panel.classList.toggle('open', admin);
+    const list = document.getElementById('resources-list');
+    const count = document.getElementById('resources-count');
+    if(!list) return;
+    if(!resourceCanRead()){
+      list.innerHTML = '<div class="resource-empty">Accès réservé aux comptes collaborateurs et administrateurs.</div>';
+      if(count) count.textContent = 'Accès refusé';
+      return;
+    }
+    const rows = filteredResources();
+    if(count) count.textContent = `${rows.length} ressource(s)`;
+    if(!rows.length){
+      list.innerHTML = '<div class="resource-empty"><strong>Aucune ressource disponible.</strong><br>Un Admin global peut ajouter les plaquettes, présentations et activités depuis le formulaire d’upload.</div>';
+      return;
+    }
+    const mode = document.getElementById('resource-view-mode')?.value || 'cards';
+    list.innerHTML = mode === 'table' ? resourceTableHtml(rows) : `<div class="resources-grid">${rows.map(resourceCardHtml).join('')}</div>`;
+    try { if(typeof edhApplyMobileTableLabels === 'function') edhApplyMobileTableLabels(list); } catch(_) {}
+  };
+
+  window.resetResourceUploadForm = function(){
+    ['resource-title','resource-description'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    const file=document.getElementById('resource-file'); if(file) file.value='';
+    const school=document.getElementById('resource-school'); if(school) school.value='Toutes écoles';
+    const cat=document.getElementById('resource-category'); if(cat) cat.value='Plaquette';
+  };
+
+  window.uploadResourceFile = async function(){
+    if(!resourceCanManage()) return showToast('Seul un Admin global peut ajouter des ressources.', 'error');
+    if(!supabaseClient) return showToast('Upload impossible sans Supabase.', 'error');
+    const title = (document.getElementById('resource-title')?.value || '').trim();
+    const description = (document.getElementById('resource-description')?.value || '').trim();
+    const school = document.getElementById('resource-school')?.value || 'Toutes écoles';
+    const category = document.getElementById('resource-category')?.value || 'Autre';
+    const input = document.getElementById('resource-file');
+    const file = input?.files?.[0];
+    if(!title) return showToast('Indique un titre pour la ressource.', 'error');
+    if(!file) return showToast('Sélectionne un fichier à uploader.', 'error');
+    const maxSize = 50 * 1024 * 1024;
+    if(file.size > maxSize) return showToast('Fichier trop lourd : limite conseillée 50 Mo.', 'error');
+    const cu = typeof currentUser === 'function' ? currentUser() : null;
+    const folder = sanitizePathPart(school) + '/' + sanitizePathPart(category);
+    const filePath = `${folder}/${Date.now()}-${sanitizePathPart(file.name)}`;
+    try {
+      showToast('Upload de la ressource en cours…');
+      const up = await supabaseClient.storage.from(RESOURCE_BUCKET).upload(filePath, file, { cacheControl:'3600', upsert:false, contentType:file.type || undefined });
+      if(up.error) throw up.error;
+      const payload = mapAppResourceToSupabase({ title, description, school, category, fileName:file.name, filePath, mimeType:file.type || '', sizeBytes:file.size, uploadedBy:cu?.email || cu?.firstName || 'Admin global' });
+      const { data, error } = await supabaseClient.from('ressources').insert([payload]).select('*').single();
+      if(error) throw error;
+      const saved = mapSupabaseResourceToApp(data || payload);
+      RESOURCE_CACHE = [saved, ...RESOURCE_CACHE];
+      RESOURCE_LAST_LOAD_AT = Date.now();
+      resetResourceUploadForm();
+      renderResourcesPage();
+      showToast('Ressource ajoutée avec succès', 'success');
+    } catch(err){
+      console.error('Erreur upload ressource', err);
+      showToast('Upload impossible : ' + (typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(err) : (err?.message || err)), 'error');
+    }
+  };
+
+  window.downloadResourceFile = async function(id){
+    const r = RESOURCE_CACHE.find(x => String(x.id) === String(id));
+    if(!r) return showToast('Ressource introuvable', 'error');
+    if(!supabaseClient) return showToast('Téléchargement impossible sans Supabase.', 'error');
+    try {
+      let url = '';
+      const pub = supabaseClient.storage.from(RESOURCE_BUCKET).getPublicUrl(r.filePath);
+      url = pub?.data?.publicUrl || '';
+      if(!url){
+        const signed = await supabaseClient.storage.from(RESOURCE_BUCKET).createSignedUrl(r.filePath, 60);
+        if(signed.error) throw signed.error;
+        url = signed.data?.signedUrl || '';
+      }
+      if(!url) throw new Error('URL de téléchargement non générée');
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch(err){
+      showToast('Téléchargement impossible : ' + (typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(err) : (err?.message || err)), 'error');
+    }
+  };
+
+  window.deleteResourceFile = async function(id){
+    if(!resourceCanManage()) return showToast('Seul un Admin global peut supprimer une ressource.', 'error');
+    const r = RESOURCE_CACHE.find(x => String(x.id) === String(id));
+    if(!r) return showToast('Ressource introuvable', 'error');
+    if(!confirm(`Supprimer définitivement la ressource : ${r.title || r.fileName} ?`)) return;
+    if(!supabaseClient) return showToast('Suppression impossible sans Supabase.', 'error');
+    try {
+      const delFile = await supabaseClient.storage.from(RESOURCE_BUCKET).remove([r.filePath]);
+      if(delFile.error) console.warn('Fichier non supprimé du Storage', delFile.error);
+      const { error } = await supabaseClient.from('ressources').delete().eq('id', r.id);
+      if(error) throw error;
+      RESOURCE_CACHE = RESOURCE_CACHE.filter(x => String(x.id) !== String(id));
+      renderResourcesPage();
+      showToast('Ressource supprimée', 'success');
+    } catch(err){
+      showToast('Suppression impossible : ' + (typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(err) : (err?.message || err)), 'error');
+    }
+  };
+
+  const originalShowPage = window.showPage;
+  window.showPage = function(page){
+    if(typeof originalShowPage === 'function') originalShowPage(page);
+    if(page === 'resources'){
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim() === 'Ressources') btn.classList.add('active'); });
+      loadResourcesFromSupabase(false);
+      const mt=document.getElementById('mobile-page-title'); if(mt) mt.textContent='Ressources';
+      const ms=document.getElementById('mobile-page-subtitle'); if(ms) ms.textContent='Documents forums';
+    }
+  };
+
+  const originalRefreshCurrentPage = window.refreshCurrentPage;
+  window.refreshCurrentPage = function(){
+    const active=document.querySelector('.page.active')?.id?.replace('page-','') || '';
+    if(active === 'resources') return renderResourcesPage();
+    if(typeof originalRefreshCurrentPage === 'function') return originalRefreshCurrentPage();
+  };
+
+  const originalSetRole = window.setRole;
+  window.setRole = function(role){
+    const res = typeof originalSetRole === 'function' ? originalSetRole(role) : undefined;
+    try { if(document.querySelector('.page.active')?.id === 'page-resources') renderResourcesPage(); } catch(_) {}
+    return res;
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    try { populateResourceSelects(); } catch(_) {}
   });
 })();
 
