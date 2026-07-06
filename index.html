@@ -908,6 +908,14 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 .email-template-tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px; }
 .template-help { font-size:12px; color:var(--text3); line-height:1.5; }
 
+
+/* V43 — Recherche étudiants inscription */
+.student-lookup-results{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:10px;background:white;padding:8px}
+.student-lookup-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer}
+.student-lookup-item:hover{border-color:var(--primary);background:var(--primary-light)}
+.student-lookup-main{font-size:13px;font-weight:700;color:var(--text)}
+.student-lookup-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.student-lookup-empty{font-size:12px;color:var(--text3);padding:8px 4px}
 </style>
 </head>
 <body>
@@ -2078,10 +2086,11 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-field full" id="admin-student-lookup-wrap" style="display:none">
-          <label class="form-label">Rechercher dans la base Ambassadeurs</label>
-          <input class="form-input" id="admin-student-search" list="admin-student-datalist" placeholder="Tape le nom, prénom, email, lycée ou école de l’étudiant..." oninput="fillAdminStudentFromLookup(this.value)">
-          <datalist id="admin-student-datalist"></datalist>
-          <div class="login-footer-note">Sélectionne un étudiant existant pour préremplir automatiquement prénom, nom, email, téléphone et école.</div>
+          <label class="form-label">Rechercher un ambassadeur</label>
+          <input class="form-input" id="admin-student-search" placeholder="Tape le nom, prénom, email ou lycée de l’étudiant..." oninput="renderAdminStudentLookupResults(this.value)">
+          <div id="admin-student-results" class="student-lookup-results"></div>
+          <div class="login-footer-note">La recherche affiche uniquement les étudiants rattachés à l’école et au campus de l’événement. Clique sur un étudiant pour préremplir ses coordonnées.</div>
+          <button type="button" class="btn btn-outline" id="admin-create-student-btn" style="margin-top:8px;justify-content:center" onclick="createStudentFromRegistrationModal()">Créer la fiche étudiant si absent</button>
         </div>
         <div class="form-field">
           <label class="form-label">Mon école</label>
@@ -2116,7 +2125,8 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-registration')">Annuler</button>
-      <button class="btn btn-primary" onclick="saveRegistration()">Valider mon inscription</button>
+      <button class="btn btn-outline" id="registration-save-mail-btn" onclick="saveRegistration(true)">Enregistrer + mail infos</button>
+      <button class="btn btn-primary" onclick="saveRegistration(false)">Enregistrer l’inscription</button>
     </div>
   </div>
 </div>
@@ -7009,7 +7019,7 @@ function renderInscriptionBox(){
       <div class="form-field full"><label class="form-label">Commentaire</label><textarea class="form-textarea" id="reg-notes" rows="3" placeholder="Disponibilités, précision..."></textarea></div>
     </div>
     <div class="event-actions">
-      <button class="btn btn-primary" onclick="saveRegistration()">Valider mon inscription</button>
+      <button class="btn btn-primary" onclick="saveRegistration()">Enregistrer l’inscription</button>
       <button class="btn btn-outline" onclick="downloadSingleICS('${event.id}')">Ajouter à Outlook / Teams</button>
     </div>
     <div class="divider"></div>
@@ -7019,28 +7029,96 @@ function renderInscriptionBox(){
 }
 
 
+
+function currentCampusForRegistration(){
+  const cu = currentUser && currentUser();
+  const allowed = userCampusAccess ? userCampusAccess(cu) : [];
+  const clean = (allowed || []).filter(c => c && !/tous/i.test(c));
+  return clean[0] || (cu?.campus && !/tous/i.test(cu.campus) ? cu.campus : '') || '';
+}
+function selectedRegistrationSchool(){
+  return document.getElementById('modal-reg-school')?.value || schoolsVisibleForCurrentUser?.()[0] || 'EFAP';
+}
+function registrationStudentPool(filterSchool=''){
+  const school = filterSchool || selectedRegistrationSchool();
+  const campus = currentCampusForRegistration();
+  return (STUDENTS || []).filter(st => {
+    const okSchool = !school || (st.school || '') === school;
+    const stCampus = (st.campus || st.region || '').toString().trim();
+    const okCampus = !campus || !stCampus || stCampus.toLowerCase() === campus.toLowerCase();
+    return okSchool && okCampus;
+  }).sort((a,b)=>`${a.lastName||''} ${a.firstName||''}`.localeCompare(`${b.lastName||''} ${b.firstName||''}`));
+}
 function refreshAdminStudentDatalist(filterSchool=''){
-  const dl = document.getElementById('admin-student-datalist');
-  if(!dl) return;
-  const rows = (STUDENTS || []).filter(st => !filterSchool || (st.school || '') === filterSchool);
-  dl.innerHTML = rows.map(st => {
-    const label = `${st.firstName || ''} ${st.lastName || ''} — ${st.school || ''} — ${st.lycee || ''} — ${st.email || ''}`.replace(/\s+/g,' ').trim();
-    return `<option value="${escapeHtml(label)}"></option>`;
-  }).join('');
+  renderAdminStudentLookupResults(document.getElementById('admin-student-search')?.value || '', filterSchool);
+}
+function renderAdminStudentLookupResults(query='', filterSchool=''){
+  const box = document.getElementById('admin-student-results');
+  if(!box) return;
+  const q = (query || '').toLowerCase().trim();
+  const rows = registrationStudentPool(filterSchool).filter(st => {
+    const hay = `${st.firstName||''} ${st.lastName||''} ${st.email||''} ${st.phone||''} ${st.lycee||''} ${st.lyceeVille||''}`.toLowerCase();
+    return !q || hay.includes(q);
+  }).slice(0, 30);
+  if(!rows.length){
+    box.innerHTML = `<div class="student-lookup-empty">Aucun étudiant trouvé pour ${escapeHtml(selectedRegistrationSchool())}${currentCampusForRegistration() ? ' · '+escapeHtml(currentCampusForRegistration()) : ''}. Tu peux créer sa fiche avec le bouton ci-dessous.</div>`;
+    return;
+  }
+  box.innerHTML = rows.map(st => `
+    <div class="student-lookup-item" onclick="selectStudentForRegistration('${escapeHtml(st.id)}')">
+      <div>
+        <div class="student-lookup-main">${escapeHtml(`${st.firstName||''} ${st.lastName||''}`.trim() || 'Étudiant')}</div>
+        <div class="student-lookup-sub">${escapeHtml(st.school||'—')}${st.campus ? ' · '+escapeHtml(st.campus) : ''}${st.lycee ? ' · '+escapeHtml(st.lycee) : ''}${st.email ? ' · '+escapeHtml(st.email) : ''}</div>
+      </div>
+      <button type="button" class="btn btn-ghost" style="padding:4px 8px;font-size:11px">Choisir</button>
+    </div>`).join('');
+}
+function fillRegistrationFieldsFromStudent(st){
+  if(!st) return;
+  document.getElementById('modal-reg-firstname').value = st.firstName || '';
+  document.getElementById('modal-reg-lastname').value = st.lastName || '';
+  document.getElementById('modal-reg-email').value = st.email || '';
+  document.getElementById('modal-reg-phone').value = st.phone || '';
+  const schoolSel = document.getElementById('modal-reg-school');
+  if(st.school && schoolSel && Array.from(schoolSel.options).some(o => o.value === st.school)) schoolSel.value = st.school;
+  const search = document.getElementById('admin-student-search');
+  if(search) search.value = `${st.firstName || ''} ${st.lastName || ''}`.trim();
+}
+function selectStudentForRegistration(studentId){
+  const st = (STUDENTS || []).find(x => String(x.id) === String(studentId));
+  if(!st) return showToast('Étudiant introuvable', 'error');
+  fillRegistrationFieldsFromStudent(st);
+  renderAdminStudentLookupResults(document.getElementById('admin-student-search')?.value || '');
+  showToast('Coordonnées étudiant préremplies');
 }
 function fillAdminStudentFromLookup(value){
+  renderAdminStudentLookupResults(value);
   const v = (value || '').toLowerCase().trim();
-  if(!v) return;
-  const found = (STUDENTS || []).find(st => {
-    const label = `${st.firstName || ''} ${st.lastName || ''} ${st.school || ''} ${st.lycee || ''} ${st.email || ''}`.toLowerCase();
-    return label && v.includes((st.firstName || '').toLowerCase()) && v.includes((st.lastName || '').toLowerCase()) || label === v || label.includes(v);
+  const found = registrationStudentPool().find(st => {
+    const full = `${st.firstName||''} ${st.lastName||''}`.toLowerCase().trim();
+    return v && (v === full || v.includes(full) || (st.email && v.includes(String(st.email).toLowerCase())));
   });
-  if(!found) return;
-  document.getElementById('modal-reg-firstname').value = found.firstName || '';
-  document.getElementById('modal-reg-lastname').value = found.lastName || '';
-  document.getElementById('modal-reg-email').value = found.email || '';
-  document.getElementById('modal-reg-phone').value = found.phone || '';
-  if(found.school && Array.from(document.getElementById('modal-reg-school').options).some(o => o.value === found.school)) document.getElementById('modal-reg-school').value = found.school;
+  if(found) fillRegistrationFieldsFromStudent(found);
+}
+async function createStudentFromRegistrationModal(){
+  if(!isAdminMode()) return showToast('Accès réservé aux collaborateurs', 'error');
+  const firstName = (document.getElementById('modal-reg-firstname')?.value || '').trim();
+  const lastName = (document.getElementById('modal-reg-lastname')?.value || '').trim();
+  const email = (document.getElementById('modal-reg-email')?.value || '').trim().toLowerCase();
+  const phone = (document.getElementById('modal-reg-phone')?.value || '').trim();
+  const school = selectedRegistrationSchool();
+  const campus = currentCampusForRegistration();
+  const ev = findCalendarEventById(S.selectedEventId) || {};
+  if(!firstName || !lastName) return showToast('Renseigne au minimum le prénom et le nom avant de créer la fiche étudiant', 'error');
+  const existing = (STUDENTS || []).find(st => (email && (st.email||'').toLowerCase()===email) || ((st.firstName||'').toLowerCase()===firstName.toLowerCase() && (st.lastName||'').toLowerCase()===lastName.toLowerCase() && (st.school||'')===school));
+  if(existing){ fillRegistrationFieldsFromStudent(existing); return showToast('Une fiche existante a été retrouvée et préremplie'); }
+  const obj = { id: nextStudentId(), firstName, lastName, email, phone, school, campus, lycee: ev.nom || '', lyceeVille: ev.ville || '', promo:'', notes:'Créé depuis l’inscription à un forum' };
+  STUDENTS.unshift(obj);
+  const supa = await saveStudentDirectToSupabase(obj);
+  saveLocalData();
+  renderAdminStudentLookupResults(`${firstName} ${lastName}`);
+  if(document.getElementById('page-students')?.classList.contains('active')) renderStudentsPage();
+  showToast(supa.ok || supa.skipped ? 'Fiche étudiant créée' : 'Fiche créée localement, erreur Supabase : ' + (supa.message || 'erreur'));
 }
 function openAdminRegistrationModal(eventId, school=''){
   if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
@@ -7055,18 +7133,19 @@ function openAdminRegistrationModal(eventId, school=''){
   schoolSelect.innerHTML = eventSchools.length
     ? eventSchools.map(sc => `<option value="${sc}">${sc}</option>`).join('')
     : visibleSchools.map(sc => `<option value="${sc}">${sc}</option>`).join('');
-  schoolSelect.value = (school && eventSchools.includes(school)) ? school : (eventSchools[0] || visibleSchools[0] || 'EFAP');
+  schoolSelect.value = (school && (eventSchools.includes(school) || visibleSchools.includes(school))) ? school : (eventSchools[0] || visibleSchools[0] || 'EFAP');
   const lookupWrap = document.getElementById('admin-student-lookup-wrap');
   const lookupInput = document.getElementById('admin-student-search');
   if(lookupWrap) lookupWrap.style.display = 'flex';
   if(lookupInput) lookupInput.value = '';
-  refreshAdminStudentDatalist(schoolSelect.value);
-  schoolSelect.onchange = function(){ refreshAdminStudentDatalist(this.value); };
+  schoolSelect.onchange = function(){ renderAdminStudentLookupResults(document.getElementById('admin-student-search')?.value || '', this.value); };
   document.getElementById('modal-reg-firstname').value = '';
   document.getElementById('modal-reg-lastname').value = '';
   document.getElementById('modal-reg-email').value = '';
   document.getElementById('modal-reg-phone').value = '';
-  document.getElementById('modal-reg-notes').value = 'Inscription forcée par un collaborateur';
+  document.getElementById('modal-reg-notes').value = 'Inscription ajoutée par un collaborateur';
+  renderAdminStudentLookupResults('', schoolSelect.value);
+  const mailBtn = document.getElementById('registration-save-mail-btn'); if(mailBtn) mailBtn.style.display = '';
   document.getElementById('modal-registration').classList.add('open');
 }
 
@@ -7092,8 +7171,25 @@ function unregisterCurrentStudent(regId){
   unregisterRegistration(regId, false);
 }
 
+function registrationInfoMail(reg, event){
+  const qrUrl = leadPublicUrl(canonicalEventId(event) || event.id || reg.eventId);
+  const routeUrl = getMapsTrainUrl(event);
+  const phone = lyceePhone(event) || 'Téléphone non renseigné';
+  const address = event.adresse || 'Adresse à confirmer';
+  const subject = `Infos forum lycée - ${event.nom || reg.eventName || 'Forum lycée'}`;
+  const body = `Bonjour ${reg.firstName || ''},\n\nTu es bien inscrit(e) pour représenter ${reg.school || 'le groupe EDH'} lors du forum lycée suivant :\n\nLycée : ${event.nom || reg.eventName || '—'}\nVille : ${event.ville || '—'}\nDate : ${fmtDate(event.date)}\nHeure : ${event.heure || 'À confirmer'}\nAdresse : ${address}\nTéléphone du lycée : ${phone}\n\nQR Code / formulaire prospects à utiliser sur place :\n${qrUrl}\n\nItinéraire :\n${routeUrl}\n\nMerci de tester le QR code avant le jour J et de prévenir l’équipe si tu as un empêchement.\n\nBonne journée,\nGroupe EDH`;
+  return {subject, body};
+}
+function sendRegistrationInfoEmail(regId){
+  const reg = (REGISTRATIONS || []).find(r => String(r.id) === String(regId));
+  if(!reg) return showToast('Inscription introuvable', 'error');
+  const event = findCalendarEventById(reg.eventId) || {nom: reg.eventName || '', date:'', heure:'', adresse:'', ville:''};
+  if(!reg.email) return showToast('Aucun email étudiant renseigné', 'error');
+  const mail = registrationInfoMail(reg, event);
+  window.location.href = `mailto:${encodeURIComponent(reg.email)}?subject=${encodeURIComponent(mail.subject)}&body=${encodeURIComponent(mail.body)}`;
+}
 
-function saveRegistration(){
+function saveRegistration(sendMailAfter=false){
   const event = findCalendarEventById(S.selectedEventId);
   if(!event) return showToast('Évènement introuvable', 'error');
   const firstName = (document.getElementById('modal-reg-firstname')?.value || '').trim();
@@ -7106,10 +7202,18 @@ function saveRegistration(){
 
   if(normalizeRoleValue(S.role) === 'student') S.studentProfile = { firstName, lastName, email, phone, school };
 
-  const existingRegIndex = REGISTRATIONS.findIndex(r => r.eventId === (canonicalEventId(event) || event.id) && (r.email||'').toLowerCase() === email && (r.school||'') === school);
-  const regObj = { id: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].id : nextRegistrationId(), eventId: (canonicalEventId(event) || event.id), eventName: event.nom, school, firstName, lastName, email, phone, notes, forcedByAdmin: S.role === 'collaborateur', createdAt: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].createdAt : new Date().toISOString(), userId: normalizeRoleValue(S.role) === 'student' ? (S.currentUserId || null) : null };
+  const eventKey = (canonicalEventId(event) || event.id);
+  const existingRegIndex = REGISTRATIONS.findIndex(r => r.eventId === eventKey && (r.email||'').toLowerCase() === email && (r.school||'') === school);
+  const regObj = { id: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].id : nextRegistrationId(), eventId: eventKey, eventName: event.nom, school, firstName, lastName, email, phone, notes, forcedByAdmin: roleIsInternal(S.role), createdAt: existingRegIndex > -1 ? REGISTRATIONS[existingRegIndex].createdAt : new Date().toISOString(), userId: normalizeRoleValue(S.role) === 'student' ? (S.currentUserId || null) : null };
   if(existingRegIndex > -1) REGISTRATIONS[existingRegIndex] = regObj;
   else REGISTRATIONS.unshift(regObj);
+
+  const studentExisting = (STUDENTS || []).find(st => (email && (st.email||'').toLowerCase()===email) || ((st.firstName||'').toLowerCase()===firstName.toLowerCase() && (st.lastName||'').toLowerCase()===lastName.toLowerCase() && (st.school||'')===school));
+  if(!studentExisting && roleIsInternal(S.role)){
+    const st = {id: nextStudentId(), firstName, lastName, email, phone, school, campus: currentCampusForRegistration(), lycee: event.nom || '', lyceeVille: event.ville || '', promo:'', notes:'Créé automatiquement depuis une inscription forum'};
+    STUDENTS.unshift(st);
+    saveStudentDirectToSupabase(st).catch(()=>{});
+  }
 
   const cu = currentUser();
   if(normalizeRoleValue(S.role) === 'student' && cu && (cu.role || 'student') === 'student'){
@@ -7125,9 +7229,10 @@ function saveRegistration(){
   closeModal('modal-registration');
   renderInscriptionPage();
   renderRegistrationsPage();
-  if(document.getElementById('page-school').classList.contains('active')) renderSchoolTable();
-  if(document.getElementById('page-calendrier').classList.contains('active')) (S.calView === 'list' ? renderCalList() : renderCalGrid());
-  showToast(S.role === 'collaborateur' ? 'Inscription forcée enregistrée' : 'Inscription enregistrée');
+  if(document.getElementById('page-school')?.classList.contains('active')) renderSchoolTable();
+  if(document.getElementById('page-calendrier')?.classList.contains('active')) (S.calView === 'list' ? renderCalList() : renderCalGrid());
+  showToast(roleIsInternal(S.role) ? 'Inscription étudiant enregistrée' : 'Inscription enregistrée');
+  if(sendMailAfter) setTimeout(()=>sendRegistrationInfoEmail(regObj.id), 150);
 }
 
 
@@ -7279,7 +7384,7 @@ function renderRegistrationsPage(){
       <td>
         <div class="small-actions">
           <button class="btn btn-primary" style="padding:4px 8px;font-size:11px" onclick="openAdminRegistrationModal('${r.ev.id}','${r.school}')">Inscrire</button>
-          ${r.regs.length ? r.regs.map(x=>`<button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="unregisterRegistration('${x.id}', true)">Désinscrire ${x.firstName || ''}</button>`).join('') : ''}
+          ${r.regs.length ? r.regs.map(x=>`<button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="sendRegistrationInfoEmail('${x.id}')">Mail infos ${x.firstName || ''}</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="unregisterRegistration('${x.id}', true)">Désinscrire ${x.firstName || ''}</button>`).join('') : ''}
         </div>
       </td>
     </tr>
