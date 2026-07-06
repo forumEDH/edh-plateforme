@@ -1125,29 +1125,6 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
         </div>
       </div>
 
-      <div class="advanced-grid" style="margin-bottom:20px">
-        <div class="advanced-card" onclick="showPage('myactions')" style="cursor:pointer">
-          <div class="advanced-title">Mes actions</div>
-          <div class="advanced-desc">Voir les relances, forums à préparer, leads à traiter et reportings à compléter en priorité.</div>
-          <div class="advanced-meta"><span class="advanced-pill">Todo</span><span class="advanced-pill">Priorités</span></div>
-        </div>
-        <div class="advanced-card" onclick="showPage('actions')" style="cursor:pointer">
-          <div class="advanced-title">Pipeline CRM</div>
-          <div class="advanced-desc">Prioriser les lycées à contacter, les NRP à relancer, les forums incomplets et les leads à traiter.</div>
-          <div class="advanced-meta"><span class="advanced-pill">Relances</span><span class="advanced-pill">Priorités</span></div>
-        </div>
-        <div class="advanced-card" onclick="showPage('terrain')" style="cursor:pointer">
-          <div class="advanced-title">Préparation forums</div>
-          <div class="advanced-desc">Piloter chaque événement avec checklist, Kit Forum, QR code, sacs, trajet et fiche terrain imprimable.</div>
-          <div class="advanced-meta"><span class="advanced-pill">Terrain</span><span class="advanced-pill">Checklist</span></div>
-        </div>
-        <div class="advanced-card" onclick="showPage('performance')" style="cursor:pointer">
-          <div class="advanced-title">Bilan & conversion</div>
-          <div class="advanced-desc">Mesurer les forums réalisés, les leads, les candidats, les inscrits et le rendement par lycée.</div>
-          <div class="advanced-meta"><span class="advanced-pill">Direction</span><span class="advanced-pill">ROI</span></div>
-        </div>
-      </div>
-
       <div class="kpi-row" id="kpi-row"></div>
 
       <div class="dashboard-v2-grid">
@@ -8321,5 +8298,283 @@ window.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
+<script>
+// ══════════════════════════════════════
+// V44 — Correctifs reporting leads, todo, itinéraires, étudiants Supabase, dashboard
+// ══════════════════════════════════════
+(function(){
+  const e = (v) => (typeof escapeHtml === 'function' ? escapeHtml(v) : String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+  const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const eventId = (ev) => (typeof canonicalEventId === 'function' ? canonicalEventId(ev) : '') || ev?.id || ev?.id_forum || ev?.supabase_event_id || '';
+  const eventTokens = (ev) => [...new Set([ev?.id, ev?.id_forum, ev?.eventId, ev?.supabase_event_id, eventId(ev)].filter(v => v !== undefined && v !== null && String(v).trim() !== '').map(v => String(v)))];
+  const visibleEvents = () => {
+    try { return (typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : (typeof allCalendarEvents === 'function' ? allCalendarEvents() : [])).filter(ev => !isDeletedEvent(ev)); }
+    catch(_) { return []; }
+  };
+  function leadMatchesEventV44(lead, ev){
+    const tokens = eventTokens(ev);
+    const leadTokens = [lead?.eventId, lead?.event_app_id, lead?.eventAppId, lead?.event_id].filter(v => v !== undefined && v !== null && String(v).trim() !== '').map(v => String(v));
+    if(leadTokens.some(t => tokens.includes(t))) return true;
+    const evName = norm(ev?.nom || ev?.lycee || ev?.eventName || '');
+    const leadName = norm(lead?.eventName || lead?.event_name || lead?.lycee || '');
+    if(evName && leadName && evName === leadName){
+      const evVille = norm(ev?.ville || '');
+      const leadVille = norm(lead?.ville || '');
+      return !evVille || !leadVille || evVille === leadVille;
+    }
+    return false;
+  }
+  function leadLevelCountsV44(leads){
+    const counts = {seconde:0, premiere:0, terminale:0, autres:0};
+    leads.forEach(l => {
+      const lvl = norm(l.level || l.niveau_etude || l.niveau || '');
+      if(lvl.includes('2nde') || lvl.includes('seconde')) counts.seconde++;
+      else if(lvl.includes('1ere') || lvl.includes('premiere')) counts.premiere++;
+      else if(lvl.includes('term')) counts.terminale++;
+      else counts.autres++;
+    });
+    return counts;
+  }
+  window.syncReportingFromLeadsV44 = function(){
+    const leads = Array.isArray(LEADS) ? LEADS : [];
+    const events = visibleEvents();
+    events.forEach(ev => {
+      const schools = (typeof getSchoolsArray === 'function' ? getSchoolsArray(ev.ecoles) : []).length ? getSchoolsArray(ev.ecoles) : ['EFAP','ICART','CREAD','BRASSART'];
+      schools.forEach(school => {
+        const matching = leads.filter(l => String(l.school || l.ecole || '').trim() === String(school).trim() && leadMatchesEventV44(l, ev));
+        if(!matching.length) return;
+        const rec = typeof getReportRecord === 'function' ? getReportRecord(eventId(ev), school) : null;
+        if(!rec) return;
+        const levelCounts = leadLevelCountsV44(matching);
+        rec.global = Math.max(Number(rec.global || 0), matching.length);
+        rec.nombreProspect = Math.max(Number(rec.nombreProspect || 0), matching.length);
+        rec.prospect = Math.max(Number(rec.prospect || 0), matching.length);
+        rec.seconde = Math.max(Number(rec.seconde || 0), levelCounts.seconde);
+        rec.premiere = Math.max(Number(rec.premiere || 0), levelCounts.premiere);
+        rec.terminale = Math.max(Number(rec.terminale || 0), levelCounts.terminale);
+        rec.autres = Math.max(Number(rec.autres || 0), levelCounts.autres);
+      });
+    });
+    try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
+  };
+
+  const prevRenderReporting = window.renderReportingPage;
+  window.renderReportingPage = function(){
+    try { window.syncReportingFromLeadsV44(); } catch(err){ console.warn('sync reporting leads V44', err); }
+    if(typeof prevRenderReporting === 'function' && prevRenderReporting !== window.renderReportingPage) return prevRenderReporting.apply(this, arguments);
+  };
+  const prevRenderPerformance = window.renderPerformancePage;
+  window.renderPerformancePage = function(){
+    try { window.syncReportingFromLeadsV44(); } catch(err){ console.warn('sync performance leads V44', err); }
+    if(typeof prevRenderPerformance === 'function' && prevRenderPerformance !== window.renderPerformancePage) return prevRenderPerformance.apply(this, arguments);
+  };
+  const prevRenderLeads = window.renderLeadsPage;
+  window.renderLeadsPage = function(){
+    try { window.syncReportingFromLeadsV44(); } catch(_) {}
+    if(typeof prevRenderLeads === 'function' && prevRenderLeads !== window.renderLeadsPage) return prevRenderLeads.apply(this, arguments);
+  };
+  const prevSubmitLead = window.submitPublicLead;
+  window.submitPublicLead = async function(){
+    const res = typeof prevSubmitLead === 'function' ? await prevSubmitLead.apply(this, arguments) : undefined;
+    try { window.syncReportingFromLeadsV44(); if(typeof renderReportingPage === 'function') renderReportingPage(); if(typeof renderPerformancePage === 'function') renderPerformancePage(); } catch(_) {}
+    return res;
+  };
+  const prevRefreshLeads = window.refreshLeadsFromSupabase;
+  window.refreshLeadsFromSupabase = async function(){
+    const res = typeof prevRefreshLeads === 'function' ? await prevRefreshLeads.apply(this, arguments) : undefined;
+    try { window.syncReportingFromLeadsV44(); } catch(_) {}
+    return res;
+  };
+
+  // TODO préparation : aucune étape n'est cochée automatiquement. Une coche = validation manuelle du collaborateur.
+  function explicitTaskState(ev, taskId){
+    try {
+      if(typeof loadV39LocalState === 'function') loadV39LocalState();
+      const key = typeof taskKeyForEvent === 'function' ? taskKeyForEvent(ev) : eventId(ev);
+      return Boolean(key && FORUM_TODO_STATE && FORUM_TODO_STATE[key] && FORUM_TODO_STATE[key][taskId] === true);
+    } catch(_) { return false; }
+  }
+  window.preparationTasksForEvent = function(ev){
+    const defaults = typeof defaultForumTasksForEvent === 'function' ? defaultForumTasksForEvent(ev) : [];
+    const base = defaults.map(t => ({...t, ok: explicitTaskState(ev, t.id), custom:false}));
+    const customs = typeof customForumTasksForEvent === 'function' ? customForumTasksForEvent(ev).map(t => ({...t, step:t.step || 'Action personnalisée', ok: explicitTaskState(ev, t.id), custom:true})) : [];
+    return [...base, ...customs];
+  };
+  window.allForumTasksDone = function(ev){
+    const tasks = window.preparationTasksForEvent(ev);
+    return tasks.length > 0 && tasks.every(t => t.ok === true);
+  };
+  window.toggleForumTask = function(eventIdParam, taskId, checked){
+    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventIdParam) : null;
+    if(!ev) return showToast('Forum introuvable','error');
+    if(typeof setForumTaskState === 'function') setForumTaskState(ev, taskId, checked);
+    if(window.allForumTasksDone(ev)){
+      if(typeof archiveForumNow === 'function') archiveForumNow(eventId(ev));
+      showToast('Toutes les actions sont cochées : forum terminé et archivé');
+      try { renderTerrainPage(); renderActionsStructurePage(); renderMyActionsPage(); renderReportingPage(); renderPerformancePage(); } catch(_) {}
+      return;
+    }
+    try { selectTerrainEvent(eventId(ev), true); renderTerrainPage(); renderActionsStructurePage(); renderMyActionsPage(); } catch(_) {}
+  };
+
+  // Itinéraires : bouton Itinéraire = SNCF, bouton Google Map = Google Maps.
+  const TRAIN_ORIGINS = {
+    'Paris':'Paris Gare du Nord','Lille':'Lille Flandres','Rennes':'Rennes','Strasbourg':'Strasbourg','Nice':'Nice Ville','Bordeaux':'Bordeaux Saint-Jean','Lyon':'Lyon Part-Dieu','Toulouse':'Toulouse Matabiau','Montpellier':'Montpellier Saint-Roch','Aix-En-Provence':'Aix-en-Provence TGV'
+  };
+  function parseTimeForRoute(raw){
+    const s = String(raw || '').trim();
+    const m = s.match(/(\d{1,2})\s*[hH:]\s*(\d{2})?/);
+    if(!m) return '08:00';
+    return String(m[1]).padStart(2,'0') + ':' + String(m[2] || '00').padStart(2,'0');
+  }
+  window.getSncfRouteUrl = function(ev){
+    const campus = typeof currentEfapCampus === 'function' ? currentEfapCampus(ev) : 'Lille';
+    const origin = TRAIN_ORIGINS[campus] || `${campus}`;
+    const destination = ev?.ville || ev?.nom || '';
+    const date = ev?.date || '';
+    const time = parseTimeForRoute(ev?.heure);
+    return `https://www.sncf-connect.com/app/fr-fr/itinerary/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&departureDate=${encodeURIComponent(date)}&departureTime=${encodeURIComponent(time)}`;
+  };
+  window.getGoogleMapsRouteUrl = function(ev){
+    const campus = typeof currentEfapCampus === 'function' ? currentEfapCampus(ev) : 'Lille';
+    const origin = encodeURIComponent(`EFAP ${campus}`);
+    const destLabel = `${ev?.adresse || ''} ${ev?.cp || ''} ${ev?.ville || ''}`.trim() || `${ev?.nom || ''} ${ev?.ville || ''}`.trim();
+    return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodeURIComponent(destLabel)}&travelmode=transit`;
+  };
+  window.openSncfRoute = function(eventIdParam){
+    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventIdParam) : null;
+    if(!ev) return showToast('Évènement introuvable', 'error');
+    window.open(window.getSncfRouteUrl(ev), '_blank');
+  };
+  window.openGoogleMapsRoute = function(eventIdParam){
+    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventIdParam) : null;
+    if(!ev) return showToast('Évènement introuvable', 'error');
+    window.open(window.getGoogleMapsRouteUrl(ev), '_blank');
+  };
+  window.openMapsRoute = window.openSncfRoute;
+
+  window.selectTerrainEvent = function(eventIdParam, markActive=true){
+    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventIdParam) : null;
+    const detail = document.getElementById('terrain-detail');
+    if(!ev || !detail) return;
+    if(markActive){
+      document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active'));
+      const active = document.getElementById('terrain-item-' + eventId(ev));
+      if(active) active.classList.add('active');
+    }
+    const tasks = window.preparationTasksForEvent(ev);
+    const done = tasks.filter(t=>t.ok).length;
+    const selectedCount = document.getElementById('terrain-selected-count');
+    if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions cochées`;
+    const id = eventId(ev);
+    const taskHtml = tasks.map(t => `
+      <div class="todo-row interactive">
+        <input class="todo-checkbox" type="checkbox" ${t.ok?'checked':''} onchange="toggleForumTask('${e(id)}','${e(t.id)}',this.checked)">
+        <div style="flex:1">
+          <div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'Fait':'À faire'}</span></div>
+          <div class="todo-row-title" style="margin-top:5px">${e(t.step)} — ${e(t.title)}</div>
+          <div class="todo-row-desc">${e(t.desc || '')}</div>
+          ${t.custom ? `<div class="todo-row-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="deleteForumCustomTask('${e(id)}','${e(t.id)}')">Supprimer</button></div>` : ''}
+        </div>
+      </div>`).join('');
+    detail.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
+        <div><div style="font-size:18px;font-weight:800;color:var(--text)">${e(ev.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${typeof fmtDate==='function'?fmtDate(ev.date):e(ev.date)} · ${e(ev.heure||'Horaire à confirmer')} · ${e(ev.ville||'')}</div><div style="margin-top:8px">${typeof schoolTags==='function'?schoolTags(ev.ecoles):e(ev.ecoles)}</div></div>
+        <div class="small-actions">${typeof actionButton==='function'?actionButton('Itinéraire', `openSncfRoute('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Google Map', `openGoogleMapsRoute('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Fiche terrain', `printForumFieldSheet('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Fiche lycée', `openDetail('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Forum terminé', `completeForum('${e(id)}')`, 'btn btn-primary'):''}</div>
+      </div>
+      <div class="todo-checklist">${taskHtml}</div>
+      <div class="todo-custom-form"><div class="form-grid"><div class="form-field"><label class="form-label">Ajouter une action personnalisée</label><input class="form-input" id="new-forum-task-title" placeholder="Ex : imprimer les flyers EFAP"></div><div class="form-field" style="justify-content:flex-end"><button class="btn btn-primary" onclick="addForumCustomTask('${e(id)}')">Ajouter</button></div><div class="form-field full"><label class="form-label">Détail optionnel</label><input class="form-input" id="new-forum-task-desc" placeholder="Précision, responsable, ressource à prévoir..."></div></div></div>
+      ${typeof kitForumHtml==='function'?kitForumHtml(ev):''}`;
+  };
+  window.renderTerrainPage = function(){
+    const events = typeof activeValidatedForums === 'function' ? activeValidatedForums() : visibleEvents();
+    const list = document.getElementById('terrain-forum-list');
+    const count = document.getElementById('terrain-count');
+    if(count) count.textContent = `${events.length} forum(s)`;
+    if(list){
+      list.innerHTML = events.length ? events.map((ev, idx) => {
+        const id = eventId(ev);
+        const tasks = window.preparationTasksForEvent(ev);
+        const done = tasks.filter(t => t.ok).length;
+        const pctDone = Math.round((done / Math.max(1,tasks.length)) * 100);
+        return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${e(id)}" onclick="selectTerrainEvent('${e(id)}')"><div class="terrain-item-title">${e(ev.nom)}</div><div class="terrain-item-meta">${typeof fmtDate==='function'?fmtDate(ev.date):e(ev.date)} · ${e(ev.ville||'')} · ${done}/${tasks.length} fait</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
+      }).join('') : `<div class="crm-empty">Aucun forum à préparer : les forums terminés sont archivés et les autres ne sont pas encore validés.</div>`;
+    }
+    if(events.length) window.selectTerrainEvent(eventId(events[0]), false);
+    else { const detail = document.getElementById('terrain-detail'); if(detail) detail.innerHTML = '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>'; }
+  };
+
+  const prevOpenDetail = window.openDetail;
+  window.openDetail = function(id){
+    const res = typeof prevOpenDetail === 'function' ? prevOpenDetail.apply(this, arguments) : undefined;
+    setTimeout(() => {
+      const routeBtn = document.getElementById('detail-route-btn');
+      if(routeBtn){ routeBtn.innerHTML = 'Itinéraire'; routeBtn.onclick = () => window.openSncfRoute(id); }
+      let g = document.getElementById('detail-google-map-btn');
+      if(!g){
+        g = document.createElement('button');
+        g.className = 'btn btn-outline';
+        g.id = 'detail-google-map-btn';
+        g.textContent = 'Google Map';
+        const footer = document.querySelector('#modal-detail .modal-footer');
+        if(footer && routeBtn) footer.insertBefore(g, routeBtn.nextSibling);
+      }
+      g.onclick = () => window.openGoogleMapsRoute(id);
+    }, 0);
+    return res;
+  };
+
+  async function saveStudentToSupabaseV44(student){
+    if(typeof saveStudentDirectToSupabase === 'function'){
+      const first = await saveStudentDirectToSupabase(student);
+      if(first && first.ok) return first;
+      if(first && first.skipped && typeof supabaseClient === 'undefined') return first;
+    }
+    if(typeof supabaseClient === 'undefined' || !supabaseClient) return {ok:false, message:'Client Supabase non initialisé'};
+    let payload = typeof mapAppStudentToSupabase === 'function' ? mapAppStudentToSupabase(student) : {
+      app_id: student.id, first_name: student.firstName, last_name: student.lastName, email: student.email, phone: student.phone, school: student.school, campus: student.campus, lycee: student.lycee, lycee_ville: student.lyceeVille, promo: student.promo, notes: student.notes
+    };
+    try{
+      const { data: existing, error: findError } = student.email ? await supabaseClient.from('etudiants').select('id').eq('email', student.email).limit(1) : {data:null,error:null};
+      if(findError) throw findError;
+      const existingId = existing && existing.length ? existing[0].id : null;
+      const response = existingId ? await supabaseClient.from('etudiants').update(payload).eq('id', existingId).select('id').single() : await supabaseClient.from('etudiants').insert([payload]).select('id').single();
+      if(response.error) throw response.error;
+      student.supabase_id = response.data?.id || existingId || student.supabase_id || null;
+      return {ok:true, id:student.supabase_id};
+    } catch(err){
+      return {ok:false, error:err, message: (typeof getSupabaseErrorMessage==='function'?getSupabaseErrorMessage(err):(err?.message||String(err)))};
+    }
+  }
+  window.createStudentFromRegistrationModal = async function(){
+    if(typeof isAdminMode === 'function' && !isAdminMode()) return showToast('Accès réservé aux collaborateurs', 'error');
+    const firstName = (document.getElementById('modal-reg-firstname')?.value || '').trim();
+    const lastName = (document.getElementById('modal-reg-lastname')?.value || '').trim();
+    const email = (document.getElementById('modal-reg-email')?.value || '').trim().toLowerCase();
+    const phone = (document.getElementById('modal-reg-phone')?.value || '').trim();
+    const school = typeof selectedRegistrationSchool === 'function' ? selectedRegistrationSchool() : (document.getElementById('modal-reg-school')?.value || '');
+    const campus = typeof currentCampusForRegistration === 'function' ? currentCampusForRegistration() : '';
+    const ev = typeof findCalendarEventById === 'function' ? (findCalendarEventById(S.selectedEventId) || {}) : {};
+    if(!firstName || !lastName) return showToast('Renseigne au minimum le prénom et le nom avant de créer la fiche étudiant', 'error');
+    const existing = (Array.isArray(STUDENTS)?STUDENTS:[]).find(st => (email && (st.email||'').toLowerCase()===email) || ((st.firstName||'').toLowerCase()===firstName.toLowerCase() && (st.lastName||'').toLowerCase()===lastName.toLowerCase() && (st.school||'')===school));
+    if(existing){ if(typeof fillRegistrationFieldsFromStudent==='function') fillRegistrationFieldsFromStudent(existing); return showToast('Une fiche existante a été retrouvée et préremplie'); }
+    const obj = { id: typeof nextStudentId === 'function' ? nextStudentId() : ('STD'+Date.now()), firstName, lastName, email, phone, school, campus, lycee: ev.nom || '', lyceeVille: ev.ville || '', promo:'', notes:'Créé depuis l’inscription à un forum' };
+    const supa = await saveStudentToSupabaseV44(obj);
+    if(!supa.ok){
+      showToast('Erreur Supabase : fiche étudiant non créée en base — ' + (supa.message || 'erreur inconnue'), 'error');
+      return;
+    }
+    STUDENTS.unshift(obj);
+    try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
+    if(typeof renderAdminStudentLookupResults === 'function') renderAdminStudentLookupResults(`${firstName} ${lastName}`);
+    if(document.getElementById('page-students')?.classList.contains('active') && typeof renderStudentsPage === 'function') renderStudentsPage();
+    showToast('Fiche étudiant créée dans Supabase');
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    try { document.querySelectorAll('#page-dashboard .advanced-grid').forEach(el => el.remove()); } catch(_) {}
+  });
+})();
+</script>
 </body>
 </html>
