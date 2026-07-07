@@ -2774,7 +2774,7 @@ body.public-lead-mode {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V49-2026-07-07-sync-auto-leads";
+const APP_PATCH_VERSION = "V50-2026-07-07-sync-auto-leads-fix";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2861,8 +2861,8 @@ let SUPABASE_PERIODIC_REFRESH_TIMER = null;
 // automatique et le polling permanent pour éviter de multiplier les connexions
 // lorsque plusieurs onglets ou collaborateurs sont ouverts. Les écritures restent
 // directes vers Supabase lors des vraies actions utilisateur.
-const EDH_SUPABASE_REALTIME_ENABLED = false;
-const EDH_SUPABASE_AUTO_REFRESH_MS = 0;
+const EDH_SUPABASE_REALTIME_ENABLED = true;
+const EDH_SUPABASE_AUTO_REFRESH_MS = 10000;
 let SUPABASE_USERS_LAST_LOAD_AT = 0;
 let SUPABASE_USERS_PAGE_REFRESHING = false;
 
@@ -2915,7 +2915,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V49-2026-07-07-sync-auto-leads';
+window.EDH_APP_VERSION = 'V50-2026-07-07-sync-auto-leads-fix';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -3545,6 +3545,8 @@ function scheduleRemoteReload(reason='remote-change'){
 }
 async function refreshFromSupabaseAndRender(silent=true, reason='manual', seasonOverride=null){
   if(!supabaseClient || SUPABASE_IS_PUSHING) return false;
+  // Ne pas recharger l'interface pendant qu'un lycéen remplit le formulaire QR public.
+  if(document.body && document.body.classList.contains('public-lead-mode')) return false;
   const requestedSeason = seasonOverride || S.season || DEFAULT_SEASON;
   const loaded = await loadFromSupabase({ silent, reason, season: requestedSeason });
   // V25 : si l'utilisateur a changé d'année pendant le chargement, on ne rend pas l'ancien résultat.
@@ -3561,7 +3563,10 @@ function setupSupabaseRealtime(){
   clearInterval(SUPABASE_PERIODIC_REFRESH_TIMER);
 
   if(EDH_SUPABASE_AUTO_REFRESH_MS && EDH_SUPABASE_AUTO_REFRESH_MS > 0){
-    SUPABASE_PERIODIC_REFRESH_TIMER = setInterval(() => refreshFromSupabaseAndRender(true, 'polling'), EDH_SUPABASE_AUTO_REFRESH_MS);
+    SUPABASE_PERIODIC_REFRESH_TIMER = setInterval(() => {
+      if(document.hidden) return;
+      refreshFromSupabaseAndRender(true, 'polling');
+    }, EDH_SUPABASE_AUTO_REFRESH_MS);
   }
 
   if(!EDH_SUPABASE_REALTIME_ENABLED){
@@ -3577,6 +3582,8 @@ function setupSupabaseRealtime(){
       .on('postgres_changes', { event:'*', schema:'public', table:'evenements' }, () => scheduleRemoteReload('evenements'))
       .on('postgres_changes', { event:'*', schema:'public', table:'etudiants' }, () => scheduleRemoteReload('etudiants'))
       .on('postgres_changes', { event:'*', schema:'public', table:'utilisateurs' }, () => scheduleRemoteReload('utilisateurs'))
+      .on('postgres_changes', { event:'*', schema:'public', table:'leads' }, () => scheduleRemoteReload('leads'))
+      .on('postgres_changes', { event:'*', schema:'public', table:'ressources' }, () => scheduleRemoteReload('ressources'))
       .subscribe((status) => {
         if(status === 'SUBSCRIBED') setSupabaseStatus('ok', 'Supabase : synchronisation temps réel active');
       });
@@ -7958,6 +7965,9 @@ async function init(){
   if(supabaseClient){
     SUPABASE_SYNC_READY = true;
     setupSupabaseRealtime();
+    window.addEventListener('focus', () => refreshFromSupabaseAndRender(true, 'window-focus'));
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) refreshFromSupabaseAndRender(true, 'visible-again'); });
+    window.addEventListener('online', () => refreshFromSupabaseAndRender(true, 'online-again'));
     setTimeout(async () => {
       try {
         const supabaseLoaded = await refreshFromSupabaseAndRender(false, 'initial', S.season || DEFAULT_SEASON);
