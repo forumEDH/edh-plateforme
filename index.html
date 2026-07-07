@@ -2774,7 +2774,7 @@ body.public-lead-mode {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V48-2026-07-07-qr-mobile-scroll";
+const APP_PATCH_VERSION = "V49-2026-07-07-sync-auto-leads";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2915,7 +2915,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V47-2026-07-06-ressources-admin-global';
+window.EDH_APP_VERSION = 'V49-2026-07-07-sync-auto-leads';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -9725,6 +9725,129 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 })();
 
+
+
+/* ══════════════════════════════════════
+   V48 — SYNCHRONISATION FLUIDE SUPABASE / GITHUB
+   Objectif : éviter de devoir recharger GitHub Pages pour voir les nouveaux leads,
+   notamment les formulaires QR remplis depuis un autre téléphone.
+══════════════════════════════════════ */
+(function(){
+  if(window.__EDH_V48_SMART_SYNC_INSTALLED__) return;
+  window.__EDH_V48_SMART_SYNC_INSTALLED__ = true;
+
+  const SMART_SYNC_MS = 12000;
+  const SMART_SYNC_MIN_GAP_MS = 6500;
+  let smartSyncTimer = null;
+  let smartSyncRunning = false;
+  let smartSyncLastAt = 0;
+  let smartRealtimeChannel = null;
+
+  function activePageIdV48(){
+    return document.querySelector('.page.active')?.id?.replace('page-','') || '';
+  }
+
+  function shouldSkipSmartSyncV48(){
+    if(!window.supabaseClient && typeof supabaseClient === 'undefined') return true;
+    if(document.hidden) return true;
+    if(document.body.classList.contains('public-lead-mode')) return true;
+    const publicOverlay = document.getElementById('public-lead-overlay');
+    if(publicOverlay && publicOverlay.classList.contains('open')) return true;
+    return false;
+  }
+
+  async function runSmartSyncV48(reason='auto'){
+    if(shouldSkipSmartSyncV48()) return false;
+    if(smartSyncRunning) return false;
+    const now = Date.now();
+    if(now - smartSyncLastAt < SMART_SYNC_MIN_GAP_MS) return false;
+    if(typeof refreshFromSupabaseAndRender !== 'function') return false;
+
+    smartSyncRunning = true;
+    smartSyncLastAt = now;
+    try {
+      if(typeof setSupabaseStatus === 'function') setSupabaseStatus('syncing', 'Supabase : synchronisation automatique…');
+      const ok = await refreshFromSupabaseAndRender(true, 'smart-sync-' + reason);
+      try {
+        if(activePageIdV48() === 'resources' && typeof loadResourcesFromSupabase === 'function') await loadResourcesFromSupabase(true);
+      } catch(_) {}
+      if(typeof setSupabaseStatus === 'function') {
+        const time = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        setSupabaseStatus(ok === false ? 'error' : 'ok', 'Supabase : sync auto active · dernier contrôle ' + time);
+      }
+      return ok;
+    } catch(err){
+      console.warn('Smart sync Supabase impossible', err);
+      if(typeof setSupabaseStatus === 'function') setSupabaseStatus('error', 'Supabase : sync auto momentanément indisponible');
+      return false;
+    } finally {
+      smartSyncRunning = false;
+    }
+  }
+
+  function startSmartSyncV48(){
+    if(smartSyncTimer) clearInterval(smartSyncTimer);
+    smartSyncTimer = setInterval(() => runSmartSyncV48('timer'), SMART_SYNC_MS);
+    setTimeout(() => runSmartSyncV48('startup'), 1800);
+  }
+
+  function installRealtimeHintV48(){
+    try {
+      if(!supabaseClient || smartRealtimeChannel) return;
+      smartRealtimeChannel = supabaseClient
+        .channel('edh-v48-smart-sync')
+        .on('postgres_changes', { event:'*', schema:'public', table:'leads' }, () => runSmartSyncV48('realtime-leads'))
+        .on('postgres_changes', { event:'*', schema:'public', table:'reporting' }, () => runSmartSyncV48('realtime-reporting'))
+        .on('postgres_changes', { event:'*', schema:'public', table:'evenements' }, () => runSmartSyncV48('realtime-events'))
+        .on('postgres_changes', { event:'*', schema:'public', table:'lycees' }, () => runSmartSyncV48('realtime-lycees'))
+        .on('postgres_changes', { event:'*', schema:'public', table:'ressources' }, () => runSmartSyncV48('realtime-resources'))
+        .subscribe((status) => {
+          if(status === 'SUBSCRIBED' && typeof setSupabaseStatus === 'function') {
+            setSupabaseStatus('ok', 'Supabase : temps réel + sync auto actifs');
+          }
+        });
+    } catch(err){
+      console.warn('Realtime V48 non activé, polling conservé', err);
+    }
+  }
+
+  const previousSaveLeadFromForm = window.saveLeadFromForm;
+  if(typeof previousSaveLeadFromForm === 'function'){
+    window.saveLeadFromForm = async function(){
+      const result = await previousSaveLeadFromForm.apply(this, arguments);
+      setTimeout(() => runSmartSyncV48('lead-created-local'), 900);
+      return result;
+    };
+  }
+
+  const previousSubmitPublicLead = window.submitPublicLead;
+  if(typeof previousSubmitPublicLead === 'function'){
+    window.submitPublicLead = async function(){
+      const result = await previousSubmitPublicLead.apply(this, arguments);
+      setTimeout(() => runSmartSyncV48('lead-created-public'), 900);
+      return result;
+    };
+  }
+
+  window.forceSmartSync = function(){ return runSmartSyncV48('manual'); };
+
+  document.addEventListener('visibilitychange', () => {
+    if(!document.hidden) setTimeout(() => runSmartSyncV48('visibility'), 500);
+  });
+  window.addEventListener('focus', () => setTimeout(() => runSmartSyncV48('focus'), 500));
+  window.addEventListener('online', () => setTimeout(() => runSmartSyncV48('online'), 500));
+
+  document.addEventListener('DOMContentLoaded', () => {
+    startSmartSyncV48();
+    installRealtimeHintV48();
+  });
+
+  // Si le script est exécuté après DOMContentLoaded, on démarre quand même.
+  if(document.readyState !== 'loading'){
+    startSmartSyncV48();
+    installRealtimeHintV48();
+  }
+})();
 </script>
 </body>
 </html>
