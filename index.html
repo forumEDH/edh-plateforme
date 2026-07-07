@@ -1116,6 +1116,63 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 @media (max-width: 1100px){ .resources-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .resource-filters .form-grid { grid-template-columns:1fr 1fr; } }
 @media (max-width: 760px){ .resources-grid, .resource-filters .form-grid { grid-template-columns:1fr !important; } .resource-actions { display:grid; grid-template-columns:1fr; } }
 
+
+/* ── V48 FIX QR PUBLIC MOBILE : le formulaire doit scroller au-dessus de l'app ── */
+.public-lead-overlay.crm-public {
+  z-index: 3000;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 18px;
+}
+.public-lead-overlay.crm-public .public-lead-card {
+  margin: 18px auto;
+  max-height: none;
+}
+.public-lead-overlay.crm-public .public-lead-body {
+  overflow: visible;
+}
+body.public-lead-mode .mobile-shell-header,
+body.public-lead-mode .mobile-bottom-nav,
+body.public-lead-mode .topbar {
+  display: none !important;
+}
+body.public-lead-mode {
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .public-lead-overlay.crm-public {
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    padding: 10px 10px calc(22px + env(safe-area-inset-bottom));
+    align-items: flex-start !important;
+  }
+  .public-lead-overlay.crm-public .public-lead-card {
+    width: 100%;
+    max-width: 100%;
+    margin: calc(8px + env(safe-area-inset-top)) auto calc(18px + env(safe-area-inset-bottom));
+    border-radius: 20px;
+  }
+  .public-lead-overlay.crm-public .public-lead-head {
+    padding: 18px 18px 12px;
+  }
+  .public-lead-overlay.crm-public .public-lead-body {
+    padding: 16px 18px calc(24px + env(safe-area-inset-bottom));
+  }
+  .public-lead-overlay.crm-public #public-lead-submit-btn {
+    position: sticky;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    z-index: 2;
+    box-shadow: 0 10px 28px rgba(37,99,235,.24);
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1725,8 +1782,8 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
             <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="lead-email" type="email"></div>
             <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="lead-phone"></div>
             <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="lead-school" onchange="updateLeadProgramOptions('lead')"><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
-            <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="lead-program"></select></div>
             <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="lead-level" onchange="updateLeadProgramOptions('lead')"><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+            <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="lead-program"></select></div>
             <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="lead-notes" rows="3" placeholder="Question posée, niveau d’intérêt, rappel à prévoir..."></textarea></div>
           </div>
         </div>
@@ -2702,8 +2759,8 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
         <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="public-lead-email" type="email" autocomplete="email" required></div>
         <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone" autocomplete="tel" required></div>
         <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner l’école qui vous intéresse</option><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
-        <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="public-lead-program" required><option value="">Sélectionner le cursus souhaité</option></select></div>
         <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner votre niveau d’étude</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+        <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="public-lead-program" required><option value="">Sélectionner le cursus souhaité</option></select></div>
         <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..." required></textarea></div>
       </div>
       <button class="btn btn-primary" id="public-lead-submit-btn" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Valider le formulaire</button>
@@ -2717,7 +2774,7 @@ body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V47-2026-07-06-ressources-admin-global";
+const APP_PATCH_VERSION = "V48-2026-07-07-qr-mobile-scroll";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -6025,6 +6082,8 @@ function kitForumHtml(eventObj){
 function forumFieldSheetHtml(eventObj){
   const leadsUrl = leadPublicUrl(leadEventToken(eventObj));
   return `<!doctype html><html><head><meta charset="utf-8"><title>Fiche terrain - ${escapeHtml(eventObj.nom||'Forum')}</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#111827}h1{font-size:24px;margin-bottom:4px}.muted{color:#6b7280}.box{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin:14px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.check div{margin:7px 0} @media print{button{display:none}}
+
+
 </style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
 }
 function printForumFieldSheet(eventId){
@@ -6566,7 +6625,7 @@ function showPublicLeadForm(eventToken, season){
   CURRENT_PUBLIC_LEAD_EVENT_ID = eventToken;
   if(season){ S.season = season; initSeasonSelect(); }
   const login = document.getElementById('login-modal'); if(login) login.classList.remove('open');
-  const overlay = document.getElementById('public-lead-overlay'); if(overlay) overlay.classList.add('open');
+  const overlay = document.getElementById('public-lead-overlay'); if(overlay){ overlay.classList.add('open'); document.body.classList.add('public-lead-mode'); overlay.scrollTop = 0; }
   const success = document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
   const error = document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
   loadPublicLeadEventContext(eventToken, season).catch(()=>{});
@@ -8559,7 +8618,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.CURRENT_PUBLIC_LEAD_EVENT_ID = eventToken;
     if(season && window.S){ S.season=season; try{ initSeasonSelect(); }catch(_){} }
     const login=document.getElementById('login-modal'); if(login) login.classList.remove('open');
-    const overlay=document.getElementById('public-lead-overlay'); if(overlay) overlay.classList.add('open');
+    const overlay=document.getElementById('public-lead-overlay'); if(overlay){ overlay.classList.add('open'); document.body.classList.add('public-lead-mode'); overlay.scrollTop = 0; }
     ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const success=document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
     const error=document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
@@ -9278,7 +9337,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.CURRENT_PUBLIC_LEAD_EVENT_ID = eventToken;
     if(season){ try { S.season = season; if(typeof initSeasonSelect === 'function') initSeasonSelect(); } catch(_) {} }
     const login=document.getElementById('login-modal'); if(login) login.classList.remove('open');
-    const overlay=document.getElementById('public-lead-overlay'); if(overlay) overlay.classList.add('open');
+    const overlay=document.getElementById('public-lead-overlay'); if(overlay){ overlay.classList.add('open'); document.body.classList.add('public-lead-mode'); overlay.scrollTop = 0; }
     ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const success=document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
     const error=document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
