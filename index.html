@@ -2774,7 +2774,7 @@ body.public-lead-mode {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V50-2026-07-07-sync-auto-leads-fix";
+const APP_PATCH_VERSION = "V51-2026-07-08-reporting-leads-cleanup";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -9857,6 +9857,303 @@ window.addEventListener('DOMContentLoaded', () => {
     startSmartSyncV48();
     installRealtimeHintV48();
   }
+})();
+
+
+/* ══════════════════════════════════════
+   V51 — Correctifs reporting / leads fantômes
+   - Supprime durablement les leads absents de Supabase ou supprimés par l'utilisateur.
+   - Empêche le rechargement Supabase de fusionner avec d'anciens leads locaux.
+   - Stabilise le filtre école du reporting.
+   - Autorise la baisse du global en ajustant automatiquement la répartition des niveaux.
+══════════════════════════════════════ */
+(function(){
+  const V51 = 'V51-2026-07-08-reporting-leads-cleanup';
+  window.EDH_APP_VERSION = V51;
+  console.info('EDH app version:', V51);
+
+  const DELETED_LEADS_STORAGE_KEY = 'edh_deleted_leads_v51';
+  let reportingSelectedSchoolV51 = '';
+
+  function txt(v){ return String(v ?? '').trim(); }
+  function norm(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' '); }
+  function getDeletedLeadTombstones(){
+    try { return JSON.parse(localStorage.getItem(DELETED_LEADS_STORAGE_KEY) || '[]').filter(Boolean); }
+    catch(_) { return []; }
+  }
+  function saveDeletedLeadTombstones(list){
+    try { localStorage.setItem(DELETED_LEADS_STORAGE_KEY, JSON.stringify((list || []).slice(-1200))); } catch(_) {}
+  }
+  function leadSignatureV51(lead){
+    if(!lead) return '';
+    return [
+      norm(lead.email),
+      norm(lead.phone),
+      norm(lead.firstName || lead.prenom),
+      norm(lead.lastName || lead.nom),
+      norm(lead.school || lead.ecole),
+      norm(lead.eventId || lead.event_app_id || lead.event_id || lead.eventName || lead.lycee),
+      norm(lead.level || lead.niveau_etude || lead.niveau)
+    ].join('|');
+  }
+  function tombstoneForLead(lead){
+    return {
+      id: txt(lead?.id),
+      supabase_id: txt(lead?.supabase_id || lead?.uuid),
+      signature: leadSignatureV51(lead),
+      email: norm(lead?.email),
+      event: norm(lead?.eventId || lead?.eventName || lead?.lycee),
+      school: norm(lead?.school),
+      deletedAt: new Date().toISOString()
+    };
+  }
+  function isLeadDeletedV51(lead){
+    const tombstones = getDeletedLeadTombstones();
+    const id = txt(lead?.id);
+    const supa = txt(lead?.supabase_id || lead?.uuid);
+    const sig = leadSignatureV51(lead);
+    const email = norm(lead?.email);
+    const event = norm(lead?.eventId || lead?.eventName || lead?.lycee);
+    const school = norm(lead?.school);
+    return tombstones.some(t =>
+      (id && t.id && t.id === id) ||
+      (supa && t.supabase_id && t.supabase_id === supa) ||
+      (sig && t.signature && t.signature === sig) ||
+      (email && t.email === email && (!t.event || !event || t.event === event) && (!t.school || !school || t.school === school))
+    );
+  }
+  function markLeadDeletedV51(lead){
+    if(!lead) return;
+    const next = [...getDeletedLeadTombstones(), tombstoneForLead(lead)];
+    const seen = new Set();
+    saveDeletedLeadTombstones(next.filter(t => {
+      const key = [t.id, t.supabase_id, t.signature, t.email, t.event, t.school].filter(Boolean).join('::');
+      if(!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }));
+  }
+  function filterDeletedLeadsV51(list){
+    return (Array.isArray(list) ? list : []).filter(l => !isLeadDeletedV51(l));
+  }
+  function purgeLeadsMemoryV51(){
+    if(Array.isArray(window.LEADS)) window.LEADS = filterDeletedLeadsV51(window.LEADS);
+    try { LEADS = filterDeletedLeadsV51(LEADS); } catch(_) {}
+  }
+
+  const previousDedupe = window.dedupeLeadsList;
+  if(typeof previousDedupe === 'function'){
+    window.dedupeLeadsList = function(list){ return filterDeletedLeadsV51(previousDedupe.call(this, list)); };
+  }
+
+  const previousSaveLocalData = window.saveLocalData;
+  if(typeof previousSaveLocalData === 'function'){
+    window.saveLocalData = function(){
+      purgeLeadsMemoryV51();
+      return previousSaveLocalData.apply(this, arguments);
+    };
+  }
+
+  function getEventIdV51(ev){
+    try { if(typeof evKey === 'function') return evKey(ev); } catch(_) {}
+    try { if(typeof canonicalEventId === 'function') return canonicalEventId(ev) || ev.id; } catch(_) {}
+    return ev?.id || ev?.app_id || ev?.id_forum || '';
+  }
+  function eventSchoolsV51(ev){
+    try { return eventSchoolsSafe(ev); } catch(_) {}
+    try { return getSchoolsArray(ev?.ecoles || ev?.school || ''); } catch(_) {}
+    return [];
+  }
+  function leadSchoolV51(lead){
+    try { return leadSchool(lead); } catch(_) {}
+    try { return normalizeSchoolName(lead?.school || lead?.ecole) || txt(lead?.school || lead?.ecole); } catch(_) {}
+    return txt(lead?.school || lead?.ecole);
+  }
+  function leadMatchesEventV51(lead, ev){
+    try { if(typeof leadMatchesEventSafe === 'function') return leadMatchesEventSafe(lead, ev); } catch(_) {}
+    const evId = norm(getEventIdV51(ev));
+    const evName = norm(ev?.nom || ev?.eventName || ev?.lycee);
+    const leadEvent = norm(lead?.eventId || lead?.event_app_id || lead?.event_id);
+    const leadName = norm(lead?.eventName || lead?.lycee || lead?.event);
+    return Boolean((evId && leadEvent && evId === leadEvent) || (evName && leadName && evName === leadName));
+  }
+  function levelCountsV51(leads){
+    const counts = {seconde:0,premiere:0,terminale:0,autres:0};
+    (leads || []).forEach(l => {
+      const raw = norm(l.level || l.niveau_etude || l.niveau);
+      if(raw.includes('2nde') || raw.includes('seconde')) counts.seconde++;
+      else if(raw.includes('1ere') || raw.includes('premiere') || raw.includes('prem')) counts.premiere++;
+      else if(raw.includes('term')) counts.terminale++;
+      else counts.autres++;
+    });
+    return counts;
+  }
+  function matchingLeadsV51(ev, school){
+    return filterDeletedLeadsV51(window.LEADS || LEADS || []).filter(l => leadSchoolV51(l) === school && leadMatchesEventV51(l, ev));
+  }
+  function cleanReportingAfterLeadChangeV51(targetLead){
+    try {
+      const events = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : [];
+      const targetSchool = leadSchoolV51(targetLead);
+      events.forEach(ev => {
+        const schools = eventSchoolsV51(ev).filter(s => !targetSchool || s === targetSchool);
+        schools.forEach(school => {
+          const matching = matchingLeadsV51(ev, school);
+          const rec = typeof getReportRecord === 'function' ? getReportRecord(getEventIdV51(ev), school) : null;
+          if(!rec) return;
+          const levels = levelCountsV51(matching);
+          const exact = {global: matching.length, prospect: matching.length, nombreProspect: matching.length, ...levels};
+          const commercialEmpty = !Number(rec.candidat||0) && !Number(rec.admis||0) && !Number(rec.inscrit||0);
+          ['seconde','premiere','terminale','autres','global','prospect','nombreProspect'].forEach(field => {
+            const current = Number(rec[field] || 0);
+            const next = Number(exact[field] || 0);
+            if(next > current || (targetLead && commercialEmpty && current <= 1) || (matching.length === 0 && commercialEmpty && current <= 1)) rec[field] = next;
+          });
+        });
+      });
+    } catch(err){ console.warn('cleanReportingAfterLeadChangeV51', err); }
+  }
+
+  window.syncReportingFromLeadsV51 = function(){
+    try {
+      purgeLeadsMemoryV51();
+      const events = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : [];
+      events.forEach(ev => eventSchoolsV51(ev).forEach(school => {
+        const matching = matchingLeadsV51(ev, school);
+        if(!matching.length) return;
+        const rec = typeof getReportRecord === 'function' ? getReportRecord(getEventIdV51(ev), school) : null;
+        if(!rec) return;
+        const levels = levelCountsV51(matching);
+        rec.global = Math.max(Number(rec.global || 0), matching.length);
+        rec.nombreProspect = Math.max(Number(rec.nombreProspect || 0), matching.length);
+        rec.prospect = Math.max(Number(rec.prospect || 0), matching.length);
+        rec.seconde = Math.max(Number(rec.seconde || 0), levels.seconde);
+        rec.premiere = Math.max(Number(rec.premiere || 0), levels.premiere);
+        rec.terminale = Math.max(Number(rec.terminale || 0), levels.terminale);
+        rec.autres = Math.max(Number(rec.autres || 0), levels.autres);
+      }));
+    } catch(err){ console.warn('syncReportingFromLeadsV51', err); }
+  };
+  window.syncReportingFromLeads = window.syncReportingFromLeadsV51;
+  window.syncReportingFromLeadsV46 = window.syncReportingFromLeadsV51;
+  window.syncReportingFromLeadsV44 = window.syncReportingFromLeadsV51;
+  window.syncReportingFromLeadsV41 = window.syncReportingFromLeadsV51;
+
+  const previousLoadFromSupabase = window.loadFromSupabase;
+  if(typeof previousLoadFromSupabase === 'function'){
+    window.loadFromSupabase = async function(){
+      const result = await previousLoadFromSupabase.apply(this, arguments);
+      purgeLeadsMemoryV51();
+      cleanReportingAfterLeadChangeV51(null);
+      try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
+      return result;
+    };
+  }
+
+  window.refreshLeadsFromSupabase = async function(){
+    if(!supabaseClient) return showToast('Supabase indisponible : impossible de recharger les leads', 'error');
+    const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
+    if(error) return showToast('Erreur chargement leads Supabase : ' + getSupabaseErrorMessage(error), 'error');
+    const remote = Array.isArray(data) ? data.map(mapSupabaseLeadToApp) : [];
+    LEADS = filterDeletedLeadsV51(typeof dedupeLeadsList === 'function' ? dedupeLeadsList(remote) : remote);
+    window.LEADS = LEADS;
+    cleanReportingAfterLeadChangeV51(null);
+    try { saveLocalData(); } catch(_) {}
+    try { renderLeadsPage(); renderReportingPage(); renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); if(typeof renderDashboardV2 === 'function') renderDashboardV2(); } catch(_) {}
+    showToast(`${LEADS.length} lead(s) chargé(s) depuis Supabase`);
+  };
+
+  window.deleteLead = async function(id){
+    if(!confirm('Supprimer ce lead ?')) return;
+    const oldLead = (Array.isArray(LEADS) ? LEADS : []).find(l => String(l.id) === String(id));
+    if(!oldLead) return showToast('Lead introuvable dans la liste actuelle.', 'error');
+    markLeadDeletedV51(oldLead);
+    const supa = await deleteLeadDirectFromSupabase(oldLead);
+    if(!supa.ok && !supa.skipped) console.warn('Suppression Supabase lead non bloquante', supa.error || supa.message);
+    const sig = leadSignatureV51(oldLead);
+    LEADS = (Array.isArray(LEADS) ? LEADS : []).filter(l => String(l.id) !== String(id) && (!oldLead.supabase_id || l.supabase_id !== oldLead.supabase_id) && leadSignatureV51(l) !== sig && !isLeadDeletedV51(l));
+    window.LEADS = LEADS;
+    cleanReportingAfterLeadChangeV51(oldLead);
+    try { saveLocalData(); } catch(_) {}
+    try { renderLeadsPage(); renderReportingPage(); renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); if(typeof renderDashboardV2 === 'function') renderDashboardV2(); } catch(_) {}
+    showToast(supa.ok ? 'Lead supprimé définitivement' : 'Lead supprimé de la plateforme. Supabase ne contenait pas ce lead ou n’a pas répondu.');
+  };
+
+  window.updateReportField = function(eventId, school, field, value){
+    window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 18000;
+    const rec = getReportRecord(eventId, school);
+    if(field === 'statut'){
+      rec[field] = value;
+    } else {
+      const nextValue = Math.max(0, Number(value || 0));
+      rec[field] = nextValue;
+      if(field === 'global'){
+        let allowed = nextValue;
+        ['seconde','premiere','terminale','autres'].forEach(levelField => {
+          const current = Number(rec[levelField] || 0);
+          const kept = Math.min(current, allowed);
+          rec[levelField] = kept;
+          allowed -= kept;
+        });
+      } else if(['seconde','premiere','terminale','autres'].includes(field)){
+        const levelsTotal = Number(rec.seconde||0) + Number(rec.premiere||0) + Number(rec.terminale||0) + Number(rec.autres||0);
+        if(levelsTotal > Number(rec.global || 0)) rec.global = levelsTotal;
+        if(Number(rec.prospect || 0) < levelsTotal) rec.prospect = levelsTotal;
+      }
+      const levelsTotal = Number(rec.seconde||0) + Number(rec.premiere||0) + Number(rec.terminale||0) + Number(rec.autres||0);
+      if(Number(rec.global || 0) < levelsTotal) rec.global = levelsTotal;
+      if(Number(rec.prospect || 0) < levelsTotal) rec.prospect = levelsTotal;
+    }
+    try { saveLocalData(); } catch(_) {}
+    const eventObj = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventId) : null;
+    if(eventObj && typeof saveEventExtrasToSupabase === 'function') saveEventExtrasToSupabase(eventObj).catch(err => showToast('Reporting local enregistré, mais erreur Supabase : ' + getSupabaseErrorMessage(err), 'error'));
+    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+  };
+
+  const previousRenderReportingAllTable = window.renderReportingAllTable;
+  window.renderReportingAllTable = function(validatedEvents){
+    const select = document.getElementById('reporting-school-filter');
+    const before = reportingSelectedSchoolV51 || select?.value || '';
+    if(typeof previousRenderReportingAllTable === 'function') previousRenderReportingAllTable.apply(this, arguments);
+    const visibleSchools = (() => { try { return visibleSchoolsSafe(); } catch(_) { try { return schoolsVisibleForCurrentUser(); } catch(__) { return ['EFAP','ICART','CREAD','BRASSART']; } } })();
+    if(select){
+      const restored = visibleSchools.includes(before) ? before : '';
+      select.value = restored;
+      reportingSelectedSchoolV51 = restored;
+      if(restored && previousRenderReportingAllTable && select.value !== before){
+        previousRenderReportingAllTable.call(this, validatedEvents);
+        select.value = restored;
+      }
+    }
+  };
+
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.id === 'reporting-school-filter') reportingSelectedSchoolV51 = e.target.value || '';
+  }, true);
+
+
+
+  const previousRefreshFromSupabaseAndRenderV51 = window.refreshFromSupabaseAndRender;
+  if(typeof previousRefreshFromSupabaseAndRenderV51 === 'function'){
+    window.refreshFromSupabaseAndRender = async function(silent=true, reason='manual', seasonOverride=null){
+      const active = document.activeElement;
+      const editingReporting = active && active.classList && active.classList.contains('report-input');
+      const dirty = Date.now() < Number(window.__EDH_REPORTING_DIRTY_UNTIL || 0);
+      if(silent && (editingReporting || dirty)){
+        try { if(typeof setSupabaseStatus === 'function') setSupabaseStatus('ok', 'Supabase : sync reportée pendant la saisie reporting'); } catch(_) {}
+        return false;
+      }
+      return previousRefreshFromSupabaseAndRenderV51.apply(this, arguments);
+    };
+  }
+
+  window.cleanGhostLeadsAndReporting = function(){
+    purgeLeadsMemoryV51();
+    cleanReportingAfterLeadChangeV51(null);
+    try { saveLocalData(); } catch(_) {}
+    try { renderLeadsPage(); renderReportingPage(); renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); } catch(_) {}
+    showToast('Nettoyage leads/reporting terminé.', 'success');
+  };
 })();
 </script>
 </body>
