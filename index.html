@@ -11,6 +11,8 @@
 <meta name="format-detection" content="telephone=yes">
 <link rel="manifest" href="manifest.webmanifest">
 <title>EDH — Forums Lycées 2025·2026</title>
+<meta name="description" content="Plateforme interne EDH pour gérer les forums lycées, les leads, les ambassadeurs et le reporting opérationnel.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial' font-size='20' font-weight='700' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 
@@ -1172,6 +1174,54 @@ body.public-lead-mode {
     box-shadow: 0 10px 28px rgba(37,99,235,.24);
   }
 }
+
+
+/* ── V53 POLISH / ACCESSIBILITÉ / DARK MODE ── */
+.sync-topline { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 3px; z-index: 1200; pointer-events: none; opacity: 0; overflow: hidden; background: rgba(37,99,235,.08); transition: opacity .18s ease; }
+.sync-topline::after { content:''; position:absolute; top:0; bottom:0; width:36%; left:-36%; background: var(--primary); animation: edh-sync-slide 1.05s linear infinite; }
+body.edh-syncing .sync-topline { opacity: 1; }
+@keyframes edh-sync-slide { to { left:100%; } }
+.skeleton { position:relative; overflow:hidden; background:var(--bg2); border-radius:10px; min-height:18px; }
+.skeleton::after { content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation:edh-skeleton 1.35s infinite; }
+@keyframes edh-skeleton { 100% { transform:translateX(100%); } }
+.btn.is-loading { opacity:.72; pointer-events:none; }
+.btn.is-loading::before { content:''; width:13px; height:13px; border-radius:999px; border:2px solid currentColor; border-right-color:transparent; animation:edh-spin .7s linear infinite; }
+@keyframes edh-spin { to { transform:rotate(360deg); } }
+.page { opacity:0; transform:translateY(6px); transition:opacity .16s ease, transform .16s ease; }
+.page.active { opacity:1; transform:translateY(0); }
+.field-error { display:none; margin-top:5px; color:var(--red); font-size:11px; line-height:1.35; }
+.form-field.invalid .field-error { display:block; }
+.form-field.invalid .form-input, .form-field.invalid .form-select, .form-field.invalid .form-textarea { border-color:var(--red); box-shadow:0 0 0 3px rgba(220,38,38,.08); }
+.report-save-status { display:inline-flex; align-items:center; gap:5px; margin-left:6px; color:var(--green); font-size:10px; font-weight:800; opacity:0; transition:opacity .18s ease; }
+.report-save-status.show { opacity:1; }
+.school-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid var(--border); background:var(--bg); color:var(--text2); }
+.school-badge-dot { width:7px; height:7px; border-radius:999px; background:currentColor; }
+.conversion-pill { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid transparent; white-space:nowrap; }
+.conversion-low { background:var(--red-bg); color:var(--red); border-color:var(--red-border); }
+.conversion-mid { background:var(--yellow-bg); color:var(--yellow); border-color:var(--yellow-border); }
+.conversion-high { background:var(--green-bg); color:var(--green); border-color:var(--green-border); }
+.active-filter-chips { display:flex; gap:6px; flex-wrap:wrap; margin:0 0 12px; }
+.filter-chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:white; color:var(--text2); border-radius:999px; padding:5px 9px; font-size:11px; font-weight:700; }
+.filter-chip button { border:none; background:transparent; color:inherit; cursor:pointer; font-weight:900; }
+.command-overlay { position:fixed; inset:0; z-index:2500; display:none; align-items:flex-start; justify-content:center; background:rgba(15,20,40,.35); padding:9vh 18px 18px; backdrop-filter:blur(4px); }
+.command-overlay.open { display:flex; }
+.command-panel { width:min(680px,100%); background:white; border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-lg); overflow:hidden; }
+.command-input { width:100%; border:none; border-bottom:1px solid var(--border); padding:17px 18px; font-size:16px; font-family:'DM Sans',sans-serif; outline:none; }
+.command-results { max-height:420px; overflow:auto; padding:8px; }
+.command-item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 12px; border-radius:11px; cursor:pointer; color:var(--text2); }
+.command-item:hover, .command-item.active { background:var(--primary-light); color:var(--primary); }
+.command-item strong { color:var(--text); }
+.confirm-overlay { position:fixed; inset:0; z-index:2600; display:none; align-items:center; justify-content:center; background:rgba(15,20,40,.42); padding:18px; backdrop-filter:blur(3px); }
+.confirm-overlay.open { display:flex; }
+.confirm-panel { width:min(430px,100%); background:white; border-radius:16px; border:1px solid var(--border); box-shadow:var(--shadow-lg); padding:20px; }
+.confirm-title { font-size:16px; font-weight:850; color:var(--text); margin-bottom:6px; }
+.confirm-text { color:var(--text2); font-size:13px; line-height:1.55; margin-bottom:16px; }
+.confirm-actions { display:flex; justify-content:flex-end; gap:8px; }
+[data-theme="dark"] { --white:#0f172a; --bg:#0f172a; --bg2:#1e293b; --surface:#111827; --border:#243247; --border2:#334155; --text:#f8fafc; --text2:#cbd5e1; --text3:#94a3b8; --primary-light:#1e3a8a; --gray-bg:#1f2937; --green-bg:#052e16; --yellow-bg:#422006; --red-bg:#450a0a; --orange-bg:#431407; }
+[data-theme="dark"] body, body[data-theme="dark"] { background:#0f172a; }
+[data-theme="dark"] .card, [data-theme="dark"] .modal, [data-theme="dark"] .sidebar, [data-theme="dark"] .topbar, [data-theme="dark"] .command-panel, [data-theme="dark"] .confirm-panel, [data-theme="dark"] .login-card { background:var(--surface); }
+[data-theme="dark"] .form-input, [data-theme="dark"] .form-select, [data-theme="dark"] .form-textarea, [data-theme="dark"] .filter-select, [data-theme="dark"] .check-dropdown-btn, [data-theme="dark"] .multi-filter-btn { background:#0b1220; color:var(--text); }
+@media (max-width:768px){ .sync-topline{ left:0; top:calc(58px + env(safe-area-inset-top)); } .confirm-actions{ display:grid; grid-template-columns:1fr; } }
 
 </style>
 </head>
@@ -2774,7 +2824,7 @@ body.public-lead-mode {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V52-2026-07-08-reporting-import-manuel-stable";
+const APP_PATCH_VERSION = "V53-2026-07-08-supabase-source-of-truth";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -3007,12 +3057,33 @@ function getMissingSupabaseColumn(err){
   const m = msg.match(/could not find the "([^"]+)" column/i) || msg.match(/column "([^"]+)".*does not exist/i);
   return m ? m[1] : '';
 }
+function rememberMissingSupabaseColumn(column){
+  if(!column) return;
+  try {
+    window.__EDH_MISSING_SUPABASE_COLUMNS__ = window.__EDH_MISSING_SUPABASE_COLUMNS__ || new Set();
+    window.__EDH_MISSING_SUPABASE_COLUMNS__.add(column);
+    console.warn('Schéma Supabase à compléter — colonne manquante détectée :', column, 'Colonnes cumulées :', Array.from(window.__EDH_MISSING_SUPABASE_COLUMNS__));
+    const admin = typeof currentUser === 'function' ? currentUser() : null;
+    const role = typeof normalizeRoleValue === 'function' ? normalizeRoleValue(admin?.role) : admin?.role;
+    if((role === 'admin_global' || role === 'admin_campus') && typeof showToast === 'function'){
+      clearTimeout(window.__EDH_MISSING_COLUMN_TOAST_TIMER__);
+      window.__EDH_MISSING_COLUMN_TOAST_TIMER__ = setTimeout(() => {
+        showToast('Schéma Supabase incomplet : colonne manquante ' + column + '. Voir console.', 'error');
+      }, 250);
+    }
+  } catch(_) {}
+}
 function removeMissingColumnAndRetryPayload(payload, err){
   const missing = getMissingSupabaseColumn(err);
   if(!missing || !(missing in payload)) return null;
   const cleaned = { ...payload };
   delete cleaned[missing];
-  console.warn(`Colonne Supabase absente ignorée pour cette sauvegarde : ${missing}`);
+  rememberMissingSupabaseColumn(missing);
+  const remainingUsefulKeys = Object.keys(cleaned).filter(k => !['updated_at','created_at'].includes(k));
+  if(remainingUsefulKeys.length < 2){
+    console.error('Payload Supabase trop réduit après suppression de colonnes manquantes. Sauvegarde stoppée.', { missing, cleaned });
+    return null;
+  }
   return cleaned;
 }
 
@@ -9882,7 +9953,9 @@ window.addEventListener('DOMContentLoaded', () => {
     catch(_) { return []; }
   }
   function saveDeletedLeadTombstones(list){
-    try { localStorage.setItem(DELETED_LEADS_STORAGE_KEY, JSON.stringify((list || []).slice(-1200))); } catch(_) {}
+    // Filet de sécurité local : limite portée à 20 000 suppressions pour éviter la réapparition d'anciens leads.
+    // À remplacer idéalement par une colonne Supabase deleted_at si le schéma peut être migré.
+    try { localStorage.setItem(DELETED_LEADS_STORAGE_KEY, JSON.stringify((list || []).slice(-20000))); } catch(_) {}
   }
   function leadSignatureV51(lead){
     if(!lead) return '';
@@ -10156,177 +10229,126 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 })();
 
+
+
+
 /* ══════════════════════════════════════
-   V52 — Import reporting historique stable
-   - L'import Excel 2025-2026 devient une source manuelle conservée.
-   - Le rechargement Supabase ne remet plus les chiffres importés à 0.
-   - L'import tente aussi de pousser reporting_json + agrégats dans Supabase.
-   - Les prochaines saisons peuvent continuer à se remplir automatiquement via les leads QR.
+   V53 — Correctifs consolidés : reporting, Supabase, UX
+   Rôle : couche finale unique pour l'import reporting, la synchronisation leads→reporting,
+   les garde-fous Supabase, les confirmations stylées et les retours visuels utilisateur.
 ══════════════════════════════════════ */
 (function(){
-  const V52 = 'V52-2026-07-08-reporting-import-manuel-stable';
-  window.EDH_APP_VERSION = V52;
-  console.info('EDH app version:', V52);
+  const V53 = 'V53-2026-07-08-supabase-source-of-truth';
+  window.EDH_APP_VERSION = V53;
+  console.info('EDH app version:', V53);
 
-  const MANUAL_REPORTING_STORAGE_KEY = 'edh_manual_reporting_v52';
+  const REPORTING_FIELDS = ['global','nombreProspect','seconde','premiere','terminale','autres','prospect','candidat','admis','inscrit'];
+  const KNOWN_SCHOOLS = ['EFAP','ICART','CREAD','BRASSART','EFJ','MOPA','ESEC','Ecole Bleue','3W','IFA Paris','À préciser'];
 
-  function safeTxt(v){ return String(v ?? '').trim(); }
-  function normTxt(v){
-    return safeTxt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  }
-  function n(v){
+  function txt(v){ return String(v ?? '').trim(); }
+  function norm(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+  function esc(v){ return typeof escapeHtml === 'function' ? escapeHtml(v) : txt(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function num(v){
     if(v === null || v === undefined || v === '') return 0;
-    const raw = String(v).replace(/\s/g,'').replace(',', '.');
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+    const n = Number(String(v).replace(/\s/g,'').replace(',', '.'));
+    return Number.isFinite(n) ? Math.max(0, n) : 0;
   }
-  function excelDateToIso(v){
+  function normalizeSchoolLabel(v){
+    const raw = txt(v);
+    if(!raw) return '';
+    if(typeof normalizeSchoolName === 'function'){
+      const n = normalizeSchoolName(raw);
+      if(n) return n;
+    }
+    const simple = norm(raw);
+    const match = KNOWN_SCHOOLS.find(s => norm(s) === simple || simple.includes(norm(s)) || norm(s).includes(simple));
+    return match || raw.toUpperCase();
+  }
+  function eventCanonicalId(ev){
+    try { return (typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.id || ev?.supabase_event_id || ''; }
+    catch(_) { return ev?.id || ev?.supabase_event_id || ''; }
+  }
+  function eventSchoolsFor(ev){
+    try { const arr = typeof getSchoolsArray === 'function' ? getSchoolsArray(ev?.ecoles || ev?.school || '') : []; return arr.length ? arr : ['EFAP','ICART','CREAD','BRASSART']; }
+    catch(_) { return ['EFAP','ICART','CREAD','BRASSART']; }
+  }
+  function schoolBelongsToEvent(ev, school){
+    try { return typeof schoolMatches === 'function' ? schoolMatches(ev?.ecoles, school) : eventSchoolsFor(ev).includes(school); }
+    catch(_) { return eventSchoolsFor(ev).includes(school); }
+  }
+  function excelIso(v){
     if(!v && v !== 0) return '';
     if(v instanceof Date && !isNaN(v.getTime())) return v.toISOString().slice(0,10);
-    const s = safeTxt(v);
+    const s = txt(v);
     if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
     const fr = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
-    if(fr){
-      const yyyy = fr[3].length === 2 ? '20' + fr[3] : fr[3];
-      return `${yyyy}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}`;
-    }
+    if(fr){ const y = fr[3].length === 2 ? '20' + fr[3] : fr[3]; return `${y}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}`; }
     const serial = Number(v);
     if(Number.isFinite(serial) && serial > 20000 && serial < 70000){
       const d = new Date(Date.UTC(1899, 11, 30 + Math.floor(serial)));
       return d.toISOString().slice(0,10);
     }
-    try {
-      if(typeof cleanDateForSupabase === 'function') return cleanDateForSupabase(v) || '';
-    } catch(_) {}
+    try { if(typeof cleanDateForSupabase === 'function') return cleanDateForSupabase(v) || ''; } catch(_) {}
     return '';
   }
-  function findColV52(headers, aliases){
-    const scored = (headers || []).map(h => ({ raw:h, norm:normTxt(h) }));
-    for(const alias of aliases){
-      const a = normTxt(alias);
-      const exact = scored.find(x => x.norm === a);
-      if(exact) return exact.raw;
-    }
-    for(const alias of aliases){
-      const a = normTxt(alias);
-      const partial = scored.find(x => x.norm.includes(a) || a.includes(x.norm));
-      if(partial) return partial.raw;
-    }
+  function findColumn(headers, aliases){
+    const indexed = (headers || []).map(h => ({ raw:h, n:norm(h) }));
+    for(const alias of aliases){ const a = norm(alias); const exact = indexed.find(x => x.n === a); if(exact) return exact.raw; }
+    for(const alias of aliases){ const a = norm(alias); const partial = indexed.find(x => x.n.includes(a) || a.includes(x.n)); if(partial) return partial.raw; }
     return '';
   }
-  function getManualStore(){
-    try {
-      const obj = JSON.parse(localStorage.getItem(MANUAL_REPORTING_STORAGE_KEY) || '{}');
-      return obj && typeof obj === 'object' ? obj : {};
-    } catch(_) { return {}; }
-  }
-  function setManualStore(obj){
-    try { localStorage.setItem(MANUAL_REPORTING_STORAGE_KEY, JSON.stringify(obj || {})); } catch(err){ console.warn('Sauvegarde reporting manuel impossible', err); }
-  }
-  function seasonKey(){ return S?.season || '2025-2026'; }
-  function manualBucket(){
-    const store = getManualStore();
-    const season = seasonKey();
-    if(!store[season]) store[season] = {};
-    return { store, season, bucket: store[season] };
-  }
-  function recHasNumbers(rec){
-    return ['global','seconde','premiere','terminale','autres','prospect','candidat','admis','inscrit'].some(k => Number(rec?.[k] || 0) > 0);
-  }
-  function mergeManualReportingV52(){
-    try {
-      const bucket = getManualStore()[seasonKey()] || {};
-      Object.entries(bucket).forEach(([key, rec]) => {
-        if(!rec || typeof rec !== 'object') return;
-        const current = (REPORTING_DATA && REPORTING_DATA[key]) || {};
-        REPORTING_DATA[key] = { ...current, ...rec, source:'manual_import' };
-      });
-    } catch(err){ console.warn('Merge reporting manuel V52', err); }
-  }
-  window.mergeManualReportingV52 = mergeManualReportingV52;
-
-  function saveManualRecord(key, rec){
-    if(!key || !rec) return;
-    const {store, season, bucket} = manualBucket();
-    bucket[key] = { ...rec, source:'manual_import', updatedAt:new Date().toISOString() };
-    store[season] = bucket;
-    setManualStore(store);
-  }
-
-  function eventSchools(ev){
-    try {
-      const arr = typeof getSchoolsArray === 'function' ? getSchoolsArray(ev?.ecoles) : [];
-      return arr.length ? arr : ['EFAP','ICART','CREAD','BRASSART'];
-    } catch(_) { return ['EFAP','ICART','CREAD','BRASSART']; }
-  }
-  function eventId(ev){
-    try { return (typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.id || ev?.supabase_event_id || ''; }
-    catch(_) { return ev?.id || ev?.supabase_event_id || ''; }
-  }
-  function schoolOk(ev, school){
-    try { return typeof schoolMatches === 'function' ? schoolMatches(ev?.ecoles, school) : eventSchools(ev).includes(school); }
-    catch(_) { return eventSchools(ev).includes(school); }
-  }
-  function findEventForImport(row, cols){
+  function findImportEvent(row, cols){
     const rawName = row[cols.event] || row[cols.name] || '';
     const rawCity = row[cols.city] || '';
     const rawDate = row[cols.date] || '';
-    const school = normalizeSchoolName(row[cols.school] || '') || safeTxt(row[cols.school] || '').toUpperCase();
-    const nameN = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(rawName) : normTxt(rawName);
-    const cityN = normTxt(rawCity);
-    const iso = excelDateToIso(rawDate);
+    const school = normalizeSchoolLabel(row[cols.school] || '');
+    const nameN = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(rawName) : norm(rawName);
+    const cityN = norm(rawCity);
+    const iso = excelIso(rawDate);
     const events = (typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : (Array.isArray(LYCEES) ? LYCEES : [])) || [];
     let matches = events.filter(ev => {
-      const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || ev?.lycee || '') : normTxt(ev?.nom || ev?.lycee || '');
-      return evName && evName === nameN && (!school || schoolOk(ev, school));
+      const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || ev?.lycee || '') : norm(ev?.nom || ev?.lycee || '');
+      return evName && evName === nameN && (!school || schoolBelongsToEvent(ev, school));
     });
-    if(cityN){
-      const cityMatches = matches.filter(ev => normTxt(ev?.ville || '') === cityN);
-      if(cityMatches.length) matches = cityMatches;
-    }
-    if(iso){
-      const dateMatches = matches.filter(ev => excelDateToIso(ev?.date) === iso);
-      if(dateMatches.length) matches = dateMatches;
-    }
+    if(cityN){ const cityMatches = matches.filter(ev => norm(ev?.ville || '') === cityN); if(cityMatches.length) matches = cityMatches; }
+    if(iso){ const dateMatches = matches.filter(ev => excelIso(ev?.date) === iso); if(dateMatches.length) matches = dateMatches; }
     return matches[0] || null;
   }
-
-  async function persistImportedReportingToSupabase(eventsMap){
-    if(!eventsMap || !eventsMap.size) return {ok:0, failed:0};
-    let ok = 0, failed = 0;
-    for(const ev of eventsMap.values()){
-      try {
-        if(typeof saveEventExtrasToSupabase === 'function'){
-          const res = await saveEventExtrasToSupabase(ev);
-          if(res?.ok || res?.skipped) ok++; else failed++;
-        } else if(typeof saveEventDirectToSupabase === 'function'){
-          const res = await saveEventDirectToSupabase(ev);
-          if(res?.ok || res?.skipped) ok++; else failed++;
-        }
-      } catch(err){ failed++; console.warn('Import reporting : sauvegarde Supabase événement impossible', ev?.nom, err); }
-    }
-    return {ok, failed};
+  function ensureSyncBar(){
+    if(document.querySelector('.sync-topline')) return;
+    const bar = document.createElement('div');
+    bar.className = 'sync-topline';
+    bar.setAttribute('aria-hidden','true');
+    document.body.appendChild(bar);
+  }
+  function setSyncing(on){ ensureSyncBar(); document.body.classList.toggle('edh-syncing', Boolean(on)); }
+  async function withButtonLoading(btn, work){
+    if(!btn || typeof work !== 'function') return work?.();
+    const oldText = btn.textContent;
+    btn.classList.add('is-loading');
+    btn.disabled = true;
+    try { return await work(); }
+    finally { btn.classList.remove('is-loading'); btn.disabled = false; btn.textContent = oldText; }
   }
 
-  const previousHandleReportingFile = window.handleReportingFile;
+  // Import Excel reporting : persiste chaque événement touché dans Supabase via reporting_json.
   window.handleReportingFile = function(event){
     const file = event.target?.files?.[0];
     if(!file) return;
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:false});
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellDates:false });
         const sheet = wb.Sheets['Import reporting'] || wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval:'' });
         IMPORT_REPORTING_ROWS = rows;
         IMPORT_REPORTING_HEADERS = rows.length ? Object.keys(rows[0]) : [];
         const box = document.getElementById('import-reporting-box');
-        if(box) box.innerHTML = `<strong>${rows.length} ligne(s) détectée(s)</strong><br>Mode V52 : import historique manuel, sauvegarde locale protégée + tentative d'enregistrement Supabase.`;
+        if(box) box.innerHTML = `<strong>${rows.length} ligne(s) détectée(s)</strong><br>Vérification des colonnes et sauvegarde Supabase au moment de l'import.`;
       } catch(err){
-        console.warn('Lecture reporting V52 impossible, fallback ancienne lecture', err);
-        if(typeof previousHandleReportingFile === 'function') return previousHandleReportingFile(event);
+        console.error('Lecture Excel reporting impossible', err);
         const box = document.getElementById('import-reporting-box');
-        if(box) box.innerHTML = '<span style="color:var(--red)">Impossible de lire ce fichier.</span>';
+        if(box) box.innerHTML = '<span style="color:var(--red)">Impossible de lire ce fichier Excel.</span>';
       }
     };
     reader.readAsArrayBuffer(file);
@@ -10334,148 +10356,405 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.importReportingFromFile = async function(){
     if(!Array.isArray(IMPORT_REPORTING_ROWS) || !IMPORT_REPORTING_ROWS.length) return showToast('Aucun reporting à importer','error');
-    window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 120000;
-    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 120000;
+    const trigger = document.activeElement;
+    return withButtonLoading(trigger?.tagName === 'BUTTON' ? trigger : null, async () => {
+      window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 180000;
+      window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 180000;
+      setSyncing(true);
 
-    const h = IMPORT_REPORTING_HEADERS || [];
-    const cols = {
-      school: findColV52(h, ['École','Ecole','School']),
-      event: findColV52(h, ['Nom du lycée','Nom du lycee','Lycée','Lycee','Établissement','Etablissement','Evènement','Evenement']),
-      city: findColV52(h, ['Ville']),
-      date: findColV52(h, ['Date']),
-      statut: findColV52(h, ['Statuts','Statut']),
-      global: findColV52(h, ['Global','Prospects rencontrés','Prospects rencontres']),
-      seconde: findColV52(h, ['2nd','Seconde','2nde']),
-      premiere: findColV52(h, ['1ere','1ère','Première','Premiere']),
-      terminale: findColV52(h, ['Term','Terminale']),
-      autres: findColV52(h, ['Autres (Collège, Bac, BAC+1, Bac+2)','Autres','College','Bac+1','Bac+2']),
-      prospect: findColV52(h, ['Prospect']),
-      candidat: findColV52(h, ['Candidat']),
-      admis: findColV52(h, ['Admis']),
-      inscrit: findColV52(h, ['Inscrit'])
-    };
-    if(!cols.school || !cols.event) return showToast('Colonnes École et Nom du lycée introuvables dans le fichier','error');
-
-    let imported = 0, unmatched = 0;
-    const touchedEvents = new Map();
-    const unmatchedRows = [];
-
-    IMPORT_REPORTING_ROWS.forEach((row, idx) => {
-      const school = normalizeSchoolName(row[cols.school] || '') || safeTxt(row[cols.school] || '').toUpperCase();
-      const event = findEventForImport(row, cols);
-      if(!school || !event){
-        unmatched++;
-        if(unmatchedRows.length < 12) unmatchedRows.push(`${idx + 2}. ${safeTxt(row[cols.event]) || 'Lycée vide'}${row[cols.city] ? ' · ' + row[cols.city] : ''}${school ? ' · ' + school : ''}`);
-        return;
-      }
-      const key = getReportKey(eventId(event), school);
-      const rec = getReportRecord(eventId(event), school);
-      const importedRec = {
-        ...rec,
-        statut: cols.statut ? (safeTxt(row[cols.statut]) || rec.statut || 'Prospect') : (rec.statut || 'Prospect'),
-        nombreProspect: n(row[cols.global]),
-        global: n(row[cols.global]),
-        seconde: n(row[cols.seconde]),
-        premiere: n(row[cols.premiere]),
-        terminale: n(row[cols.terminale]),
-        autres: n(row[cols.autres]),
-        prospect: n(row[cols.prospect]),
-        candidat: n(row[cols.candidat]),
-        admis: n(row[cols.admis]),
-        inscrit: n(row[cols.inscrit]),
-        source:'manual_import',
-        importedAt:new Date().toISOString()
+      const h = IMPORT_REPORTING_HEADERS || [];
+      const cols = {
+        school: findColumn(h, ['École','Ecole','School']),
+        event: findColumn(h, ['Nom du lycée','Nom du lycee','Lycée','Lycee','Établissement','Etablissement','Evènement','Evenement','Forum']),
+        city: findColumn(h, ['Ville']),
+        date: findColumn(h, ['Date']),
+        statut: findColumn(h, ['Statuts','Statut']),
+        global: findColumn(h, ['Global','Prospects rencontrés','Prospects rencontres','Contacts rencontrés','Contacts rencontres']),
+        seconde: findColumn(h, ['2nd','2nde','Seconde']),
+        premiere: findColumn(h, ['1ere','1ère','Première','Premiere']),
+        terminale: findColumn(h, ['Term','Terminale']),
+        autres: findColumn(h, ['Autres (Collège, Bac, BAC+1, Bac+2)','Autres','College','Bac','Bac+1','Bac+2']),
+        prospect: findColumn(h, ['Prospect','Prospects']),
+        candidat: findColumn(h, ['Candidat','Candidats']),
+        admis: findColumn(h, ['Admis']),
+        inscrit: findColumn(h, ['Inscrit','Inscrits'])
       };
-      const levelsTotal = importedRec.seconde + importedRec.premiere + importedRec.terminale + importedRec.autres;
-      if(importedRec.global < levelsTotal) importedRec.global = levelsTotal;
-      if(importedRec.prospect < importedRec.global) importedRec.prospect = importedRec.global;
-      REPORTING_DATA[key] = importedRec;
-      saveManualRecord(key, importedRec);
-      touchedEvents.set(eventId(event), event);
-      imported++;
+      const missingRequired = [];
+      if(!cols.school) missingRequired.push('École');
+      if(!cols.event) missingRequired.push('Nom du lycée / Forum');
+      if(missingRequired.length){
+        setSyncing(false);
+        window.__EDH_IMPORTING_REPORTING_UNTIL = 0;
+        return showToast('Colonnes obligatoires manquantes : ' + missingRequired.join(', '), 'error');
+      }
+
+      let imported = 0;
+      const ignored = [];
+      const touchedEvents = new Map();
+      for(const [i,row] of IMPORT_REPORTING_ROWS.entries()){
+        const school = normalizeSchoolLabel(row[cols.school] || '');
+        const ev = findImportEvent(row, cols);
+        const lineLabel = `${i + 2}. ${txt(row[cols.event]) || 'Lycée vide'}${row[cols.city] ? ' · ' + txt(row[cols.city]) : ''}${school ? ' · ' + school : ''}`;
+        if(!school || !KNOWN_SCHOOLS.map(norm).includes(norm(school))){ ignored.push(`${lineLabel} — école non reconnue`); continue; }
+        if(!ev){ ignored.push(`${lineLabel} — forum validé introuvable`); continue; }
+        const id = eventCanonicalId(ev);
+        if(!id){ ignored.push(`${lineLabel} — identifiant événement introuvable`); continue; }
+        const key = typeof getReportKey === 'function' ? getReportKey(id, school) : `${id}__${school}`;
+        const rec = typeof getReportRecord === 'function' ? getReportRecord(id, school) : (REPORTING_DATA[key] || {});
+        const next = { ...rec };
+        if(cols.statut) next.statut = txt(row[cols.statut]) || next.statut || 'Prospect';
+        next.global = num(row[cols.global]);
+        next.nombreProspect = next.global;
+        next.seconde = num(row[cols.seconde]);
+        next.premiere = num(row[cols.premiere]);
+        next.terminale = num(row[cols.terminale]);
+        next.autres = num(row[cols.autres]);
+        next.prospect = num(row[cols.prospect]);
+        next.candidat = num(row[cols.candidat]);
+        next.admis = num(row[cols.admis]);
+        next.inscrit = num(row[cols.inscrit]);
+        next.source = 'manual_import';
+        next.updatedAt = new Date().toISOString();
+        const levels = next.seconde + next.premiere + next.terminale + next.autres;
+        if(next.global < levels) next.global = levels;
+        if(next.nombreProspect < next.global) next.nombreProspect = next.global;
+        if(next.prospect < next.global) next.prospect = next.global;
+        REPORTING_DATA[key] = next;
+        touchedEvents.set(id, ev);
+        imported++;
+      }
+
+      try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
+      try { renderReportingPage(); renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); if(typeof renderDashboardV2 === 'function') renderDashboardV2(); } catch(_) {}
+
+      let saved = 0, failed = 0;
+      const errors = [];
+      for(const ev of touchedEvents.values()){
+        try {
+          const res = typeof saveEventExtrasToSupabase === 'function' ? await saveEventExtrasToSupabase(ev) : { ok:false, message:'saveEventExtrasToSupabase absent' };
+          if(res?.ok || res?.skipped){ saved++; }
+          else { failed++; errors.push(`${ev?.nom || 'Événement'} : ${res?.message || 'échec inconnu'}`); }
+        } catch(err){ failed++; errors.push(`${ev?.nom || 'Événement'} : ${typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(err) : (err?.message || err)}`); }
+      }
+
+      const box = document.getElementById('import-reporting-box');
+      if(box){
+        const ignoredHtml = ignored.length ? `<br><br><span style="color:var(--orange)">${ignored.length} ligne(s) ignorée(s)</span><br><small>${ignored.slice(0,16).map(esc).join('<br>')}${ignored.length>16?'<br>…':''}</small>` : '';
+        const errorHtml = errors.length ? `<br><br><span style="color:var(--red)">Sauvegardes Supabase à vérifier</span><br><small>${errors.slice(0,8).map(esc).join('<br>')}${errors.length>8?'<br>…':''}</small>` : '';
+        box.innerHTML = `<strong>${imported} ligne(s) importée(s) en mémoire</strong><br>${saved} événement(s) sauvegardé(s) sur Supabase · ${failed} échec(s)${ignoredHtml}${errorHtml}`;
+      }
+
+      window.__EDH_IMPORTING_REPORTING_UNTIL = failed ? Date.now() + 60000 : Date.now() + 8000;
+      window.__EDH_REPORTING_DIRTY_UNTIL = failed ? Date.now() + 60000 : Date.now() + 8000;
+      setSyncing(false);
+      try { renderReportingPage(); renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); } catch(_) {}
+      closeModal('modal-import-reporting');
+      const msg = `${imported} ligne(s) importée(s) · ${saved} événement(s) sauvegardé(s) Supabase` + (ignored.length ? ` · ${ignored.length} ignorée(s)` : '') + (failed ? ` · ${failed} échec(s)` : '');
+      showToast(msg, failed ? 'error' : 'success');
     });
-
-    mergeManualReportingV52();
-    try { saveLocalData(); } catch(_) {}
-    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
-
-    const box = document.getElementById('import-reporting-box');
-    if(box){
-      box.innerHTML = `<strong>${imported} ligne(s) importée(s)</strong>${unmatched ? `<br><span style="color:var(--orange)">${unmatched} ligne(s) non associée(s) à un forum validé.</span>` : ''}${unmatchedRows.length ? `<br><br><small>${unmatchedRows.map(x=>x.replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))).join('<br>')}</small>` : ''}<br><br>Sauvegarde Supabase en cours si la table événements contient reporting_json.`;
-    }
-
-    let syncResult = {ok:0, failed:0};
-    try { syncResult = await persistImportedReportingToSupabase(touchedEvents); } catch(err){ console.warn(err); }
-    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 8000;
-    try { if(typeof refreshFromSupabaseAndRender === 'function') await refreshFromSupabaseAndRender(true, 'after-reporting-import'); } catch(_) {}
-    mergeManualReportingV52();
-    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
-
-    closeModal('modal-import-reporting');
-    const msg = `${imported} ligne(s) importée(s)` + (unmatched ? ` · ${unmatched} non associée(s)` : '') + (syncResult.failed ? ` · ${syncResult.failed} sauvegarde(s) Supabase à vérifier` : '');
-    showToast(msg, syncResult.failed ? 'error' : 'success');
   };
 
-  const previousLoadFromSupabaseV52 = window.loadFromSupabase;
-  if(typeof previousLoadFromSupabaseV52 === 'function'){
-    window.loadFromSupabase = async function(){
-      const res = await previousLoadFromSupabaseV52.apply(this, arguments);
-      mergeManualReportingV52();
-      return res;
-    };
-  }
+  // Synchronisation leads → reporting : ne baisse jamais une valeur manuelle/importée.
+  window.syncReportingFromLeads = function(){
+    try {
+      const events = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : [];
+      const allLeads = Array.isArray(window.LEADS) ? window.LEADS : (Array.isArray(LEADS) ? LEADS : []);
+      events.forEach(ev => eventSchoolsFor(ev).forEach(school => {
+        const matching = allLeads.filter(l => {
+          const s = normalizeSchoolLabel(l.school || l.ecole || '');
+          if(s !== school) return false;
+          const evId = norm(eventCanonicalId(ev));
+          const leadEvId = norm(l.eventId || l.event_app_id || l.event_id || '');
+          const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || '') : norm(ev?.nom || '');
+          const leadName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(l.eventName || l.lycee || '') : norm(l.eventName || l.lycee || '');
+          return Boolean((evId && leadEvId && evId === leadEvId) || (evName && leadName && evName === leadName));
+        });
+        if(!matching.length) return;
+        const rec = typeof getReportRecord === 'function' ? getReportRecord(eventCanonicalId(ev), school) : null;
+        if(!rec) return;
+        const levels = { seconde:0, premiere:0, terminale:0, autres:0 };
+        matching.forEach(l => {
+          const lv = norm(l.level || l.niveau_etude || l.niveau || '');
+          if(lv.includes('2nde') || lv.includes('seconde')) levels.seconde++;
+          else if(lv.includes('1ere') || lv.includes('premiere') || lv.includes('prem')) levels.premiere++;
+          else if(lv.includes('term')) levels.terminale++;
+          else levels.autres++;
+        });
+        rec.global = Math.max(num(rec.global), matching.length);
+        rec.nombreProspect = Math.max(num(rec.nombreProspect), matching.length);
+        rec.prospect = Math.max(num(rec.prospect), matching.length);
+        rec.seconde = Math.max(num(rec.seconde), levels.seconde);
+        rec.premiere = Math.max(num(rec.premiere), levels.premiere);
+        rec.terminale = Math.max(num(rec.terminale), levels.terminale);
+        rec.autres = Math.max(num(rec.autres), levels.autres);
+      }));
+    } catch(err){ console.warn('syncReportingFromLeads V53', err); }
+  };
+  window.syncReportingFromLeadsV51 = window.syncReportingFromLeads;
+  window.syncReportingFromLeadsV46 = window.syncReportingFromLeads;
+  window.syncReportingFromLeadsV44 = window.syncReportingFromLeads;
+  window.syncReportingFromLeadsV41 = window.syncReportingFromLeads;
 
-  const previousRefreshV52 = window.refreshFromSupabaseAndRender;
-  if(typeof previousRefreshV52 === 'function'){
+  const previousRefreshFromSupabaseAndRender = window.refreshFromSupabaseAndRender;
+  if(typeof previousRefreshFromSupabaseAndRender === 'function'){
     window.refreshFromSupabaseAndRender = async function(silent=true, reason='manual', seasonOverride=null){
-      const importing = Date.now() < Number(window.__EDH_IMPORTING_REPORTING_UNTIL || 0);
-      if(silent && importing){
-        try { if(typeof setSupabaseStatus === 'function') setSupabaseStatus('ok', 'Supabase : sync reportée pendant import reporting'); } catch(_) {}
-        mergeManualReportingV52();
-        try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+      const active = document.activeElement;
+      const editingReporting = active && active.classList && active.classList.contains('report-input');
+      const protectedUntil = Math.max(Number(window.__EDH_REPORTING_DIRTY_UNTIL || 0), Number(window.__EDH_IMPORTING_REPORTING_UNTIL || 0));
+      if(silent && (editingReporting || Date.now() < protectedUntil)){
+        try { if(typeof setSupabaseStatus === 'function') setSupabaseStatus('ok', 'Supabase : synchronisation différée pendant édition/import reporting'); } catch(_) {}
         return false;
       }
-      const res = await previousRefreshV52.apply(this, arguments);
-      mergeManualReportingV52();
+      setSyncing(true);
+      try { return await previousRefreshFromSupabaseAndRender.apply(this, arguments); }
+      finally { setSyncing(false); }
+    };
+  }
+
+  const previousRenderReportingPage = window.renderReportingPage;
+  if(typeof previousRenderReportingPage === 'function'){
+    window.renderReportingPage = function(){
+      try { window.syncReportingFromLeads(); } catch(_) {}
+      const res = previousRenderReportingPage.apply(this, arguments);
+      try { decorateReportingUi(); } catch(_) {}
+      return res;
+    };
+  }
+  const previousRenderPerformancePage = window.renderPerformancePage;
+  if(typeof previousRenderPerformancePage === 'function'){
+    window.renderPerformancePage = function(){
+      try { window.syncReportingFromLeads(); } catch(_) {}
+      const res = previousRenderPerformancePage.apply(this, arguments);
+      try { decorateConversionUi(); } catch(_) {}
       return res;
     };
   }
 
-  const previousRenderReportingV52 = window.renderReportingPage;
-  if(typeof previousRenderReportingV52 === 'function'){
-    window.renderReportingPage = function(){
-      mergeManualReportingV52();
-      return previousRenderReportingV52.apply(this, arguments);
-    };
-  }
-  const previousRenderPerformanceV52 = window.renderPerformancePage;
-  if(typeof previousRenderPerformanceV52 === 'function'){
-    window.renderPerformancePage = function(){
-      mergeManualReportingV52();
-      return previousRenderPerformanceV52.apply(this, arguments);
-    };
-  }
-
-  const previousUpdateReportFieldV52 = window.updateReportField;
-  if(typeof previousUpdateReportFieldV52 === 'function'){
-    window.updateReportField = function(eventId, school, field, value){
-      const result = previousUpdateReportFieldV52.apply(this, arguments);
-      try {
-        const rec = getReportRecord(eventId, school);
-        if(recHasNumbers(rec) || rec?.source === 'manual_import') saveManualRecord(getReportKey(eventId, school), rec);
-      } catch(_) {}
-      return result;
-    };
-  }
-
-  window.clearManualReportingImportV52 = function(){
-    const store = getManualStore();
-    delete store[seasonKey()];
-    setManualStore(store);
-    showToast('Import manuel reporting supprimé pour la saison active. Recharge Supabase pour revenir aux données partagées.', 'success');
+  const previousUpdateReportField = window.updateReportField;
+  window.updateReportField = function(eventId, school, field, value){
+    window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 22000;
+    const result = typeof previousUpdateReportField === 'function' ? previousUpdateReportField.apply(this, arguments) : undefined;
+    try { showReportSavedIndicator(eventId, school, field); } catch(_) {}
+    return result;
   };
 
-  try { mergeManualReportingV52(); } catch(_) {}
+  function showReportSavedIndicator(eventId, school, field){
+    const key = `report-save-${String(eventId).replace(/[^a-zA-Z0-9_-]/g,'_')}-${String(school).replace(/[^a-zA-Z0-9_-]/g,'_')}-${String(field).replace(/[^a-zA-Z0-9_-]/g,'_')}`;
+    let el = document.getElementById(key);
+    if(!el){
+      const active = document.activeElement;
+      if(active && active.classList && active.classList.contains('report-input')){
+        el = document.createElement('span');
+        el.id = key;
+        el.className = 'report-save-status';
+        el.textContent = 'Enregistré';
+        active.insertAdjacentElement('afterend', el);
+      }
+    }
+    if(el){ el.classList.add('show'); clearTimeout(el.__timer); el.__timer = setTimeout(() => el.classList.remove('show'), 1400); }
+  }
+  function decorateReportingUi(){
+    document.querySelectorAll('#reporting-all-body tr').forEach(tr => {
+      const cells = Array.from(tr.children);
+      if(!cells.length) return;
+      const schoolCell = cells[0];
+      const school = txt(schoolCell.textContent);
+      if(school && !schoolCell.querySelector('.school-badge')) schoolCell.innerHTML = schoolBadgeHtml(school);
+      const prospects = num(cells[4]?.textContent);
+      const inscrits = num(cells[12]?.textContent);
+      if(prospects && cells[12] && !cells[12].querySelector('.conversion-pill')){
+        const rate = Math.round((inscrits / prospects) * 100);
+        const cls = rate >= 8 ? 'conversion-high' : rate >= 3 ? 'conversion-mid' : 'conversion-low';
+        cells[12].innerHTML = `${esc(cells[12].textContent)} <span class="conversion-pill ${cls}">${rate}%</span>`;
+      }
+    });
+  }
+  function decorateConversionUi(){
+    document.querySelectorAll('#performance-tbody tr').forEach(tr => {
+      const cells = Array.from(tr.children);
+      const c = cells[7];
+      if(!c || c.querySelector('.conversion-pill')) return;
+      const m = txt(c.textContent).match(/(\d+(?:[,.]\d+)?)/);
+      if(!m) return;
+      const rate = Number(m[1].replace(',', '.'));
+      const cls = rate >= 8 ? 'conversion-high' : rate >= 3 ? 'conversion-mid' : 'conversion-low';
+      c.innerHTML = `<span class="conversion-pill ${cls}">${esc(c.textContent)}</span>`;
+    });
+  }
+  function schoolBadgeHtml(school){
+    const color = (window.SCHOOL_COLOR && window.SCHOOL_COLOR[school]) || (typeof SCHOOL_COLOR !== 'undefined' && SCHOOL_COLOR[school]) || '#64748b';
+    return `<span class="school-badge" style="color:${esc(color)}"><span class="school-badge-dot"></span>${esc(school)}</span>`;
+  }
+
+  // Confirmation stylée réutilisable. Remplace au moins la suppression de lead.
+  function ensureConfirmModal(){
+    if(document.getElementById('edh-confirm-overlay')) return;
+    const html = `<div class="confirm-overlay" id="edh-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="edh-confirm-title"><div class="confirm-panel"><div class="confirm-title" id="edh-confirm-title">Confirmer l'action</div><div class="confirm-text" id="edh-confirm-text"></div><div class="confirm-actions"><button class="btn btn-outline" id="edh-confirm-cancel" type="button">Annuler</button><button class="btn btn-danger" id="edh-confirm-ok" type="button">Confirmer</button></div></div></div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+  window.edhConfirm = function(message, title='Confirmation'){
+    ensureConfirmModal();
+    return new Promise(resolve => {
+      const overlay = document.getElementById('edh-confirm-overlay');
+      const titleEl = document.getElementById('edh-confirm-title');
+      const textEl = document.getElementById('edh-confirm-text');
+      const cancel = document.getElementById('edh-confirm-cancel');
+      const ok = document.getElementById('edh-confirm-ok');
+      const lastFocus = document.activeElement;
+      titleEl.textContent = title;
+      textEl.textContent = message;
+      overlay.classList.add('open');
+      const done = val => { overlay.classList.remove('open'); cleanup(); try { lastFocus?.focus?.(); } catch(_){} resolve(val); };
+      const onKey = e => { if(e.key === 'Escape') done(false); trapFocus(e, overlay); };
+      const cleanup = () => { cancel.onclick = ok.onclick = null; document.removeEventListener('keydown', onKey, true); };
+      cancel.onclick = () => done(false);
+      ok.onclick = () => done(true);
+      document.addEventListener('keydown', onKey, true);
+      setTimeout(() => ok.focus(), 0);
+    });
+  };
+  const previousDeleteLead = window.deleteLead;
+  if(typeof previousDeleteLead === 'function'){
+    window.deleteLead = async function(id){
+      const ok = await window.edhConfirm('Supprimer définitivement ce lead de la plateforme ?', 'Supprimer le lead');
+      if(!ok) return;
+      // L'ancienne fonction contenait un confirm() natif : on le neutralise ici pour éviter une double confirmation.
+      const nativeConfirm = window.confirm;
+      window.confirm = () => true;
+      try { return await previousDeleteLead.apply(this, arguments); }
+      finally { window.confirm = nativeConfirm; }
+    };
+  }
+
+  function trapFocus(e, root){
+    if(e.key !== 'Tab') return;
+    const focusables = Array.from(root.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
+    if(!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  }
+  function installModalA11y(){
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.setAttribute('role','dialog');
+      modal.setAttribute('aria-modal','true');
+      const close = modal.querySelector('.modal-close');
+      if(close && !close.getAttribute('aria-label')) close.setAttribute('aria-label','Fermer la fenêtre');
+    });
+    document.addEventListener('keydown', e => {
+      const open = document.querySelector('.modal-overlay.open');
+      if(open) trapFocus(e, open);
+    }, true);
+    document.querySelectorAll('button:not([aria-label])').forEach(btn => {
+      const t = txt(btn.textContent);
+      if(t) btn.setAttribute('aria-label', t);
+    });
+  }
+
+  // Validation temps réel du formulaire public leads.
+  function installPublicLeadValidation(){
+    const rules = {
+      'public-lead-email': v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : 'Email invalide.',
+      'public-lead-phone': v => !v || /^[+\d][\d\s().-]{7,}$/.test(v) ? '' : 'Téléphone invalide.',
+      'public-lead-firstname': v => v ? '' : 'Prénom obligatoire.',
+      'public-lead-lastname': v => v ? '' : 'Nom obligatoire.',
+      'public-lead-school': v => v ? '' : 'École obligatoire.',
+      'public-lead-level': v => v ? '' : 'Niveau obligatoire.',
+      'public-lead-program': v => v ? '' : 'Cursus obligatoire.'
+    };
+    Object.entries(rules).forEach(([id, validate]) => {
+      const el = document.getElementById(id);
+      if(!el || el.__edhValidationInstalled) return;
+      el.__edhValidationInstalled = true;
+      const field = el.closest('.form-field');
+      let err = field?.querySelector('.field-error');
+      if(field && !err){ err = document.createElement('div'); err.className = 'field-error'; field.appendChild(err); }
+      const run = () => {
+        const msg = validate(txt(el.value));
+        if(field) field.classList.toggle('invalid', Boolean(msg));
+        if(err) err.textContent = msg;
+        return !msg;
+      };
+      el.addEventListener('blur', run);
+      el.addEventListener('input', () => { if(field?.classList.contains('invalid')) run(); });
+    });
+  }
+  const previousSubmitPublicLead = window.submitPublicLead;
+  if(typeof previousSubmitPublicLead === 'function'){
+    window.submitPublicLead = function(){
+      installPublicLeadValidation();
+      let ok = true;
+      document.querySelectorAll('#public-lead-overlay .form-input, #public-lead-overlay .form-select, #public-lead-overlay .form-textarea').forEach(el => { el.dispatchEvent(new Event('blur')); if(el.closest('.form-field')?.classList.contains('invalid')) ok = false; });
+      if(!ok) return showToast('Corrige les champs du formulaire avant de valider.', 'error');
+      return previousSubmitPublicLead.apply(this, arguments);
+    };
+  }
+
+  // Command palette Cmd/Ctrl+K pour retrouver lycée, forum ou lead.
+  function ensureCommandPalette(){
+    if(document.getElementById('edh-command-overlay')) return;
+    const html = `<div class="command-overlay" id="edh-command-overlay" role="dialog" aria-modal="true" aria-label="Recherche globale"><div class="command-panel"><input class="command-input" id="edh-command-input" placeholder="Rechercher un lycée, un forum ou un lead…"><div class="command-results" id="edh-command-results"></div></div></div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+    const overlay = document.getElementById('edh-command-overlay');
+    const input = document.getElementById('edh-command-input');
+    input.addEventListener('input', renderCommandResults);
+    input.addEventListener('keydown', e => { if(e.key === 'Escape') closeCommandPalette(); });
+    overlay.addEventListener('click', e => { if(e.target === overlay) closeCommandPalette(); });
+  }
+  function openCommandPalette(){ ensureCommandPalette(); const overlay=document.getElementById('edh-command-overlay'); const input=document.getElementById('edh-command-input'); overlay.classList.add('open'); input.value=''; renderCommandResults(); setTimeout(()=>input.focus(),0); }
+  function closeCommandPalette(){ document.getElementById('edh-command-overlay')?.classList.remove('open'); }
+  function renderCommandResults(){
+    const q = norm(document.getElementById('edh-command-input')?.value || '');
+    const results = [];
+    (Array.isArray(LYCEES)?LYCEES:[]).slice(0,2000).forEach(l => { const text = `${l.nom||''} ${l.ville||''} ${l.departement||''}`; if(!q || norm(text).includes(q)) results.push({type:'Lycée', title:l.nom, sub:l.ville || '', action:() => { closeCommandPalette(); showPage('listing'); setTimeout(()=>{ const gs=document.getElementById('global-search'); if(gs){ gs.value=l.nom || ''; onSearch(); } },60); }}); });
+    (typeof allCalendarEvents === 'function' ? allCalendarEvents() : []).forEach(ev => { const text = `${ev.nom||''} ${ev.ville||''} ${ev.date||''}`; if(!q || norm(text).includes(q)) results.push({type:'Forum', title:ev.nom, sub:`${ev.ville||''} · ${typeof fmtDate==='function'?fmtDate(ev.date):ev.date||''}`, action:() => { closeCommandPalette(); showPage('calendrier'); setTimeout(()=>openDetail(eventCanonicalId(ev)),80); }}); });
+    (Array.isArray(LEADS)?LEADS:[]).forEach(l => { const name = `${l.firstName||''} ${l.lastName||''}`.trim(); const text = `${name} ${l.email||''} ${l.phone||''}`; if(q && norm(text).includes(q)) results.push({type:'Lead', title:name || l.email, sub:l.email || l.phone || '', action:() => { closeCommandPalette(); showPage('leadsall'); }}); });
+    const box = document.getElementById('edh-command-results');
+    const visible = results.slice(0,30);
+    box.innerHTML = visible.length ? visible.map((r,i)=>`<div class="command-item" data-i="${i}"><div><strong>${esc(r.title||'—')}</strong><div style="font-size:12px;color:var(--text3);margin-top:2px">${esc(r.sub||'')}</div></div><span class="badge b-blue">${esc(r.type)}</span></div>`).join('') : '<div class="empty-state" style="padding:26px"><p>Aucun résultat</p></div>';
+    Array.from(box.querySelectorAll('.command-item')).forEach(el => { el.onclick = () => visible[Number(el.dataset.i)]?.action?.(); });
+  }
+  document.addEventListener('keydown', e => { if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openCommandPalette(); } });
+
+  function installThemeToggle(){
+    const saved = localStorage.getItem('edh_theme_v53');
+    if(saved) document.documentElement.setAttribute('data-theme', saved);
+    if(document.getElementById('edh-theme-toggle')) return;
+    const container = document.querySelector('.sidebar-footer .role-box');
+    if(!container) return;
+    const btn = document.createElement('button');
+    btn.id = 'edh-theme-toggle';
+    btn.className = 'btn btn-outline';
+    btn.type = 'button';
+    btn.style.cssText = 'width:100%;justify-content:center;margin-top:8px';
+    btn.textContent = 'Basculer thème sombre';
+    btn.onclick = () => { const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('edh_theme_v53', next); };
+    container.appendChild(btn);
+  }
+
+  function installFilterChips(){
+    const listing = document.querySelector('#page-listing .card');
+    if(listing && !document.getElementById('listing-filter-chips')) listing.insertAdjacentHTML('beforebegin','<div class="active-filter-chips" id="listing-filter-chips"></div>');
+    const allLeads = document.querySelector('#page-leadsall .card');
+    if(allLeads && !document.getElementById('all-leads-filter-chips')) allLeads.insertAdjacentHTML('beforebegin','<div class="active-filter-chips" id="all-leads-filter-chips"></div>');
+  }
+  function renderListingFilterChips(){
+    const box = document.getElementById('listing-filter-chips'); if(!box) return;
+    const chips=[];
+    if(S.search) chips.push(['Recherche', S.search, () => { document.getElementById('global-search').value=''; onSearch(); }]);
+    if(S.type) chips.push(['Type', S.type, () => { document.getElementById('filter-type').value=''; applyFilters(); }]);
+    box.innerHTML = chips.map(([k,v],i)=>`<span class="filter-chip">${esc(k)} : ${esc(v)} <button type="button" data-i="${i}">×</button></span>`).join('');
+    box.querySelectorAll('button').forEach(btn => btn.onclick = () => chips[Number(btn.dataset.i)][2]());
+  }
+  const previousApplyFilters = window.applyFilters;
+  if(typeof previousApplyFilters === 'function') window.applyFilters = function(){ const r = previousApplyFilters.apply(this, arguments); setTimeout(renderListingFilterChips,0); return r; };
+  const previousOnSearch = window.onSearch;
+  if(typeof previousOnSearch === 'function') window.onSearch = function(){ const r = previousOnSearch.apply(this, arguments); setTimeout(renderListingFilterChips,0); return r; };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    ensureSyncBar(); installModalA11y(); installPublicLeadValidation(); ensureCommandPalette(); installThemeToggle(); installFilterChips(); renderListingFilterChips();
+    try { decorateReportingUi(); decorateConversionUi(); } catch(_) {}
+  });
 })();
 
 </script>
