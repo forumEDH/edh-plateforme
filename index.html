@@ -1223,6 +1223,75 @@ body.edh-syncing .sync-topline { opacity: 1; }
 [data-theme="dark"] .form-input, [data-theme="dark"] .form-select, [data-theme="dark"] .form-textarea, [data-theme="dark"] .filter-select, [data-theme="dark"] .check-dropdown-btn, [data-theme="dark"] .multi-filter-btn { background:#0b1220; color:var(--text); }
 @media (max-width:768px){ .sync-topline{ left:0; top:calc(58px + env(safe-area-inset-top)); } .confirm-actions{ display:grid; grid-template-columns:1fr; } }
 
+
+
+/* ══════════════════════════════════════
+   V54 — STABILITÉ + UX SAAS FINALISÉE
+   Objectif : brancher les états loading, empty states, chips, dark mode et micro-interactions
+   sans modifier la logique métier Supabase/source de vérité.
+══════════════════════════════════════ */
+:root{
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --ease-out: cubic-bezier(.22,.61,.36,1);
+  --ring: 0 0 0 3px rgba(37,99,235,.16);
+}
+.btn, .nav-item, .school-btn, .card, .kpi-card, .modal, .form-input, .form-select, .form-textarea{
+  transition: background-color .16s var(--ease-out), border-color .16s var(--ease-out), color .16s var(--ease-out), box-shadow .16s var(--ease-out), transform .16s var(--ease-out), opacity .16s var(--ease-out);
+}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+  outline: none !important;
+  box-shadow: var(--ring) !important;
+}
+.card, .kpi-card, .event-card, .student-card, .resource-card, .advanced-card, .checklist-box{
+  border-radius: var(--radius-md);
+}
+.card:hover, .kpi-card:hover, .event-card:hover, .student-card:hover, .resource-card:hover{
+  transform: translateY(-1px);
+}
+.table-scroll table tbody tr{ transition: background-color .12s var(--ease-out), box-shadow .12s var(--ease-out); }
+.table-scroll table tbody tr:hover td{ background: #f8fbff; }
+.btn[disabled], .btn.is-loading, button[disabled]{ cursor:not-allowed !important; opacity:.64; }
+.btn.is-loading{ position:relative; }
+.btn.is-loading::before{ flex:0 0 auto; }
+[data-loading-scope="true"]{ position:relative; }
+.loading-soft-overlay{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.58); backdrop-filter:blur(1px); z-index:5; border-radius:inherit; }
+.loading-soft-overlay::before{ content:''; width:20px; height:20px; border:2px solid var(--primary); border-right-color:transparent; border-radius:999px; animation:edh-spin .75s linear infinite; }
+.empty-state{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:128px; padding:34px 18px; color:var(--text3); text-align:center; background:linear-gradient(180deg, rgba(248,250,252,.82), rgba(255,255,255,.65)); border:1px dashed var(--border2); border-radius:var(--radius-md); }
+.empty-state-icon{ width:42px; height:42px; display:flex; align-items:center; justify-content:center; border-radius:14px; background:var(--primary-light); color:var(--primary); font-size:20px; font-weight:900; }
+.empty-state-title{ font-size:14px; font-weight:850; color:var(--text); }
+.empty-state-text{ max-width:440px; font-size:12px; line-height:1.55; color:var(--text3); }
+.crm-empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:96px; padding:24px 18px !important; text-align:center; color:var(--text3); background:linear-gradient(180deg, rgba(248,250,252,.76), rgba(255,255,255,.55)); border:1px dashed var(--border2); border-radius:var(--radius-md); }
+.conversion-stack{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.conversion-meter{ width:74px; height:6px; border-radius:999px; background:var(--bg2); overflow:hidden; display:inline-flex; vertical-align:middle; }
+.conversion-meter span{ display:block; height:100%; min-width:2px; border-radius:999px; background:currentColor; }
+.lead-heat-pill{ display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:999px; font-size:10px; font-weight:900; border:1px solid transparent; margin-left:4px; white-space:nowrap; }
+.lead-heat-new{ background:var(--primary-light); color:var(--primary); border-color:#bfdbfe; }
+.lead-heat-hot{ background:var(--green-bg); color:var(--green); border-color:var(--green-border); }
+.lead-heat-qualify{ background:var(--yellow-bg); color:var(--yellow); border-color:var(--yellow-border); }
+.lead-heat-follow{ background:var(--orange-bg); color:var(--orange); border-color:var(--orange-border); }
+.active-filter-chips:empty{ display:none; }
+.filter-chip{ box-shadow:0 1px 4px rgba(15,23,42,.04); }
+.filter-chip button{ width:18px; height:18px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; }
+.filter-chip button:hover{ background:rgba(15,23,42,.08); }
+.command-item[aria-selected="true"]{ background:var(--primary-light); color:var(--primary); }
+.command-shortcut{ font-family:'DM Mono',monospace; font-size:10px; color:var(--text3); border:1px solid var(--border); border-radius:6px; padding:2px 5px; }
+.public-lead-success.show{ display:flex; align-items:flex-start; gap:8px; }
+.public-lead-success.show::before{ content:'✓'; width:20px; height:20px; border-radius:999px; background:var(--green); color:white; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:900; }
+#public-lead-submit-btn[disabled]{ box-shadow:none !important; }
+body.edh-page-transitioning .page.active{ opacity:.45; transform:translateY(4px); }
+[data-theme="dark"] .empty-state, [data-theme="dark"] .crm-empty{ background:linear-gradient(180deg, rgba(15,23,42,.75), rgba(17,24,39,.88)); border-color:#334155; }
+[data-theme="dark"] .loading-soft-overlay{ background:rgba(15,23,42,.58); }
+[data-theme="dark"] .table-scroll table tbody tr:hover td{ background:#111f34; }
+[data-theme="dark"] .filter-chip, [data-theme="dark"] .pag-btn, [data-theme="dark"] .btn-outline, [data-theme="dark"] .train-link{ background:#0b1220; }
+[data-theme="dark"] .mobile-shell-header, [data-theme="dark"] .mobile-bottom-nav{ background:rgba(15,23,42,.94); border-color:#243247; }
+@media (max-width:768px){
+  .empty-state{ min-height:116px; padding:24px 14px; }
+  .conversion-meter{ width:58px; }
+  .lead-heat-pill{ margin-left:0; margin-top:4px; }
+}
+
 </style>
 </head>
 <body>
@@ -2824,7 +2893,7 @@ body.edh-syncing .sync-topline { opacity: 1; }
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V53-2026-07-08-supabase-source-of-truth";
+const APP_PATCH_VERSION = "V54-2026-07-08-stability-ux-supabase";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2965,7 +3034,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V50-2026-07-07-sync-auto-leads-fix';
+window.EDH_APP_VERSION = 'V54-2026-07-08-stability-ux-supabase';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -4490,7 +4559,6 @@ function dedupeLeadsList(list){
   });
   return Array.from(map.values());
 }
-function getVisibleLeads(){ const ids=new Set(getVisibleLycees().flatMap(l=>eventIdCandidates(l))); return dedupeLeadsList((Array.isArray(LEADS)?LEADS:[]).filter(l=>!l.eventId||ids.has(String(l.eventId))||canSeeRecord(l))); }
 
 function normalizeSchoolName(value){
   const raw = (value || '').toString().trim();
@@ -5619,7 +5687,6 @@ function renderDashboardV2(){
 function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
 function qrImageUrl(url){ return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(url)}`; }
 function leadEventToken(eventObj){ return eventObj?.supabase_event_id || canonicalEventId(eventObj) || eventObj?.id || ''; }
-function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
 function populateLeadEvents(){
   const sel = document.getElementById('lead-event-select'); if(!sel) return;
   const current = sel.value;
@@ -5779,15 +5846,7 @@ function renderLeadsKpis(rows){
     <div class="kpi-card"><div class="kpi-label">Emails uniques</div><div class="kpi-value">${uniqueEmails}</div><div class="kpi-meta">Déduplication indicative</div></div>
     <div class="kpi-card"><div class="kpi-label">École dominante</div><div class="kpi-value" style="font-size:22px">${escapeHtml(topSchool ? topSchool[0] : '—')}</div><div class="kpi-meta">${topSchool ? topSchool[1]+' lead(s)' : 'À venir'}</div></div>`;
 }
-function renderLeadsPage(){
-  populateLeadEvents(); renderQrPreview(); prefillLeadEvent(); updateLeadProgramOptions('lead');
-  const body = document.getElementById('leads-tbody'); const count = document.getElementById('leads-count');
-  const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  renderLeadsKpis(rows);
-  if(count) count.textContent = `${rows.length} lead(s)`;
-  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const eventName=ev.nom||l.eventName||l.lycee||'—'; const ville=ev.ville||l.ville||''; const status=leadTreatmentStatus(l); return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(eventName)}</td><td>${escapeHtml((l.lycee||ev.nom||'—'))}${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(((l.firstName||'')+' '+(l.lastName||'')).trim())}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${status.html}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openLeadDetail('${l.id}')">Fiche</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="12"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
-}
-async function saveLeadFromForm(){
+async function EDH_BASE_saveLeadFromForm(){
   const eventId = document.getElementById('lead-event-select')?.value || '';
   const ev = findCalendarEventById(eventId) || {};
   const firstName = (document.getElementById('lead-firstname')?.value||'').trim();
@@ -5814,8 +5873,7 @@ async function deleteLead(id){
 function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun lien à copier','error'); navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
 function downloadQrCode(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun QR code à télécharger','error'); const ev=findCalendarEventById(document.getElementById('lead-event-select')?.value)||{}; const a=document.createElement('a'); a.href=qrImageUrl(url); a.download=`QR_leads_${(ev.nom||'forum').replace(/[^a-z0-9]+/gi,'_')}.png`; a.target='_blank'; a.click(); }
 function openLeadPublicForm(){ const url=document.getElementById('lead-qr-url')?.value||''; if(url) window.open(url,'_blank'); }
-function downloadLeadsExcel(){ const rows=getVisibleLeads().map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const origine=ev.nom||l.eventName||l.lycee||'—'; return {Origine:origine, Date:l.createdAt, Saison:l.season||S.season, Evenement:origine, Ville:ev.ville||l.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Ecole_interessee:l.school, Cursus_souhaite:l.program||l.cursus, Niveau_etude:l.level, Notes:l.notes, Source:l.source}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
-async function refreshLeadsFromSupabase(){
+async function EDH_BASE_refreshLeadsFromSupabase(){
   if(!supabaseClient) return showToast('Supabase indisponible : impossible de recharger les leads', 'error');
   const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
   if(error) return showToast('Erreur chargement leads Supabase : ' + getSupabaseErrorMessage(error), 'error');
@@ -5826,7 +5884,7 @@ async function refreshLeadsFromSupabase(){
 function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!lead) return; const ev=findCalendarEventById(lead.eventId)||{}; window.location.href=`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Suite à notre échange - Groupe EDH')}&body=${encodeURIComponent(`Bonjour ${lead.firstName},\n\nMerci pour ton échange avec nous lors de l'événement ${ev.nom||lead.eventName||''}.\n\nNous restons disponibles si tu souhaites recevoir plus d'informations sur ${lead.school||'nos écoles'}${lead.program ? ' - '+lead.program : ''}.\n\nBien cordialement,\nGroupe EDH`)}`; }
 function mailRecipient(event){ return event.mail_organisateur || event.mail_ecole || ''; }
 function mailContactName(event){ return event.organisateur || 'Madame, Monsieur'; }
-function emailTemplates(event, type){
+function EDH_BASE_emailTemplates(event, type){
   const nom = event.nom || 'votre établissement'; const date = event.date ? fmtDate(event.date) : '[date à préciser]'; const ecoles = eventSchoolsList(event);
   const templates = {
     prospection:{subject:`Intervention orientation - ${ecoles}`, body:`Bonjour ${mailContactName(event)},\n\nJe me permets de vous contacter dans le cadre des actions d'orientation menées par le groupe EDH (${ecoles}).\n\nNous souhaiterions proposer une intervention auprès des élèves de ${nom} afin de leur présenter nos formations et de les accompagner dans leur réflexion d'orientation.\n\nSeriez-vous disponible pour échanger à ce sujet ?\n\nJe reste à votre disposition et vous remercie par avance pour votre retour.\n\nBien cordialement,`},
@@ -5837,14 +5895,6 @@ function emailTemplates(event, type){
     merci:{subject:`Remerciements - ${nom}`, body:`Bonjour ${mailContactName(event)},\n\nNous vous remercions pour votre accueil lors de notre intervention au sein de ${nom}.\n\nCe fut un réel plaisir d'échanger avec vos élèves et de contribuer à leur réflexion d'orientation.\n\nNous restons à votre disposition pour toute future collaboration.\n\nBien cordialement,`}
   };
   return templates[type] || templates.prospection;
-}
-function openMailModal(eventId, type='prospection'){
-  MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
-  document.getElementById('email-template-type').value=type;
-  document.getElementById('email-to').value=mailRecipient(ev);
-  document.getElementById('email-modal-title').textContent='Préparer un mail automatique';
-  document.getElementById('email-modal-subtitle').textContent=`${ev.nom||''} · ${ev.ville||''}`;
-  renderEmailPreview(); document.getElementById('modal-email').classList.add('open');
 }
 function renderEmailPreview(){ const ev=findCalendarEventById(MAIL_CONTEXT_ID)||{}; const type=document.getElementById('email-template-type')?.value||'prospection'; const tpl=emailTemplates(ev,type); document.getElementById('email-subject').value=tpl.subject; document.getElementById('email-preview').textContent=tpl.body; }
 function copyEmailPreview(){ const text=document.getElementById('email-preview')?.textContent||''; navigator.clipboard?.writeText(text); showToast('Mail copié'); }
@@ -6310,56 +6360,7 @@ function renderActionsStructurePage(){
   }
 }
 
-function preparationTasksForEvent(l){
-  const leads = eventLeads(l);
-  const report = reportSummaryForEvent(l);
-  return [
-    {step:'Ambassadeurs', ok:forumHasAssignedStudents(l), title:'Trouver des ambassadeurs + attribuer les étudiants à l’événement', desc:'Identifier les étudiants disponibles, les inscrire à l’événement et confirmer qui représente chaque école sur place.'},
-    {step:'Teams', ok:false, title:'Créer conversation Teams avec les ambassadeurs', desc:'Créer une conversation Teams dédiée au forum avec les étudiants et collaborateurs mobilisés.'},
-    {step:'Outlook', ok:!!l.date, title:'Ajouter l’événement au calendrier Outlook', desc:'Télécharger le fichier Outlook / Teams puis l’ajouter au calendrier des personnes concernées.'},
-    {step:'Trajet', ok:!!(l.adresse || l.ville), title:'Préparer le trajet : train, bus, métro', desc:`Prévoir l’itinéraire depuis le campus EFAP ${currentEfapCampus(l)} et réserver les billets nécessaires.`},
-    {step:'QR Code', ok:leads.length>0, title:'Préparer le QR Code + tester le QR Code', desc:'Générer le QR code, le télécharger, le scanner avec un téléphone et vérifier que le formulaire s’ouvre correctement.'},
-    {step:'Sacs forums', ok:false, title:'Préparer les sacs forums + remise des sacs forums', desc:'Préparer les supports, goodies, flyers et sacs forums puis confirmer leur remise aux personnes qui partent sur le forum.'},
-    {step:'Reporting', ok:report.global>0 || report.candidat>0 || report.admis>0 || report.inscrit>0, title:'Compléter le reporting', desc:'Saisir prospects rencontrés, candidats, admis, inscrits et notes qualitatives après le forum.'}
-  ];
-}
-function renderTerrainPage(){
-  const events = activeValidatedForums();
-  const list = document.getElementById('terrain-forum-list');
-  const count = document.getElementById('terrain-count');
-  if(count) count.textContent = `${events.length} forum(s)`;
-  if(list){
-    list.innerHTML = events.length ? events.map((l, idx) => {
-      const id = canonicalEventId(l) || l.id;
-      const tasks = preparationTasksForEvent(l);
-      const done = tasks.filter(t => t.ok).length;
-      const pctDone = Math.round((done / tasks.length) * 100);
-      return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${id}" onclick="selectTerrainEvent('${id}')"><div class="terrain-item-title">${escapeHtml(l.nom)}</div><div class="terrain-item-meta">${fmtDate(l.date)} · ${escapeHtml(l.ville||'')} · ${done}/${tasks.length} prêt</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
-    }).join('') : `<div class="crm-empty">Aucun forum à préparer : les forums terminés sont archivés et les autres ne sont pas encore validés.</div>`;
-  }
-  if(events.length) selectTerrainEvent(canonicalEventId(events[0]) || events[0].id, false);
-  else {
-    const detail = document.getElementById('terrain-detail');
-    if(detail) detail.innerHTML = '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>';
-  }
-}
-function selectTerrainEvent(eventId, markActive=true){
-  const l = findCalendarEventById(eventId);
-  const detail = document.getElementById('terrain-detail');
-  if(!l || !detail) return;
-  if(markActive){
-    document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active'));
-    const active = document.getElementById('terrain-item-' + eventId);
-    if(active) active.classList.add('active');
-  }
-  const tasks = preparationTasksForEvent(l);
-  const done = tasks.filter(t=>t.ok).length;
-  const selectedCount = document.getElementById('terrain-selected-count');
-  if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions prêtes`;
-  const id = canonicalEventId(l) || l.id;
-  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche terrain', `printForumFieldSheet('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>${kitForumHtml(l)}`;
-}
-function renderPerformancePage(){
+function EDH_BASE_renderPerformancePage(){
   const events = activeValidatedForums();
   const rows = [];
   const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
@@ -6715,7 +6716,7 @@ function openLeadHashIfNeeded(){
   showPublicLeadForm(eventToken, season);
   return true;
 }
-async function submitPublicLead(){
+async function EDH_BASE_submitPublicLead(){
   const eventToken = CURRENT_PUBLIC_LEAD_EVENT_ID;
   const ev = await loadPublicLeadEventContext(eventToken, S.season || DEFAULT_SEASON);
   const firstName=(document.getElementById('public-lead-firstname')?.value||'').trim();
@@ -7189,7 +7190,7 @@ function renderReportingAllTable(validatedEvents){
   }
 }
 
-function renderReportingPage(){
+function EDH_BASE_renderReportingPage(){
   const validated = getValidatedEventsForReporting();
   const visibleSchools = schoolsVisibleForCurrentUser();
   renderReportingAllTable(validated);
@@ -8262,10 +8263,8 @@ function syncReportingFromLeads(){
     rec.autres = Math.max(Number(rec.autres||0), counts.autres);
   });
 }
-const EDH_V38_renderReportingPage = renderReportingPage;
-function renderReportingPage(){ syncReportingFromLeads(); EDH_V38_renderReportingPage(); }
-const EDH_V38_renderPerformancePage = renderPerformancePage;
-function renderPerformancePage(){ syncReportingFromLeads(); EDH_V38_renderPerformancePage(); }
+function renderReportingPage(){ syncReportingFromLeads(); EDH_BASE_renderReportingPage(); }
+function renderPerformancePage(){ syncReportingFromLeads(); EDH_BASE_renderPerformancePage(); }
 function leadEventName(lead){
   const ev = findCalendarEventById(lead.eventId) || {};
   return ev.nom || lead.eventName || lead.lycee || '—';
@@ -8341,28 +8340,24 @@ function rowsForLeadsExport(rows){
 }
 function downloadLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(getVisibleLeads())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
 function downloadFilteredLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(filteredAllLeadsRows())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads filtrés'); XLSX.writeFile(wb,`EDH_leads_filtres_${S.season||DEFAULT_SEASON}.xlsx`); }
-const EDH_V38_saveLeadFromForm = saveLeadFromForm;
 async function saveLeadFromForm(){
-  await EDH_V38_saveLeadFromForm();
+  await EDH_BASE_saveLeadFromForm();
   syncReportingFromLeads();
   try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
 }
-const EDH_V38_refreshLeadsFromSupabase = refreshLeadsFromSupabase;
 async function refreshLeadsFromSupabase(){
-  await EDH_V38_refreshLeadsFromSupabase();
+  await EDH_BASE_refreshLeadsFromSupabase();
   syncReportingFromLeads();
   try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
 }
-const EDH_V38_submitPublicLead = submitPublicLead;
 async function submitPublicLead(){
-  await EDH_V38_submitPublicLead();
+  await EDH_BASE_submitPublicLead();
   syncReportingFromLeads();
 }
 function replaceTemplateVariables(text, event){
   const values = {lycee:event.nom||'votre établissement', date:event.date?fmtDate(event.date):'[date à préciser]', ecoles:eventSchoolsList(event), contact:mailContactName(event), ville:event.ville||''};
   return String(text||'').replace(/\{\{\s*(lycee|date|ecoles|contact|ville)\s*\}\}/gi, (_,k)=>values[k.toLowerCase()]||'');
 }
-const EDH_V38_emailTemplates = emailTemplates;
 function emailTemplates(event, type){
   loadV39LocalState();
   if(String(type||'').startsWith('custom:')){
@@ -8370,7 +8365,7 @@ function emailTemplates(event, type){
     const tpl = (CUSTOM_EMAIL_TEMPLATES || []).find(t=>String(t.id)===String(id));
     if(tpl) return {subject:replaceTemplateVariables(tpl.subject,event), body:replaceTemplateVariables(tpl.body,event)};
   }
-  return EDH_V38_emailTemplates(event,type);
+  return EDH_BASE_emailTemplates(event,type);
 }
 function renderEmailTemplateSelect(){
   loadV39LocalState();
@@ -8382,7 +8377,6 @@ function renderEmailTemplateSelect(){
   sel.innerHTML = base.map(([v,l])=>`<option value="${v}">${l}</option>`).join('') + (CUSTOM_EMAIL_TEMPLATES.length ? '<optgroup label="Templates personnalisés">' + CUSTOM_EMAIL_TEMPLATES.map(t=>`<option value="custom:${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('') + '</optgroup>' : '');
   if([...sel.options].some(o=>o.value===current)) sel.value=current;
 }
-const EDH_V38_openMailModal = openMailModal;
 function openMailModal(eventId, type='prospection'){
   MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
   renderEmailTemplateSelect();
@@ -10754,6 +10748,534 @@ window.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('DOMContentLoaded', () => {
     ensureSyncBar(); installModalA11y(); installPublicLeadValidation(); ensureCommandPalette(); installThemeToggle(); installFilterChips(); renderListingFilterChips();
     try { decorateReportingUi(); decorateConversionUi(); } catch(_) {}
+  });
+})();
+
+
+
+/* ══════════════════════════════════════
+   V54 — Stabilisation finale demandée dans modifications-a-faire.md
+   - Anti double-clic / loading centralisé
+   - Race-condition guards Supabase
+   - Soft delete leads compatible deleted_at + fallback delete/tombstones
+   - Empty states, chips de filtres, validation QR publique, command palette clavier
+   - Dark mode finalisé + prefers-color-scheme
+══════════════════════════════════════ */
+(function(){
+  const V54 = 'V54-2026-07-08-stability-ux-supabase';
+  window.EDH_APP_VERSION = V54;
+  window.__EDH_V54_INSTALLED__ = true;
+  console.info('EDH app version:', V54);
+
+  const actionLocks = window.__EDH_ACTION_LOCKS__ || (window.__EDH_ACTION_LOCKS__ = new Map());
+  let refreshInFlight = null;
+
+  const $ = id => document.getElementById(id);
+  const txt = v => String(v ?? '').trim();
+  const esc = v => typeof escapeHtml === 'function' ? escapeHtml(v) : txt(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const num = v => { const n = Number(String(v ?? '').replace(/\s/g,'').replace(',', '.')); return Number.isFinite(n) ? Math.max(0,n) : 0; };
+  const logWarn = (label, err) => { try { console.warn('[EDH V54]', label, err); } catch(_){} };
+  const logError = (label, err) => { try { console.error('[EDH V54]', label, err); } catch(_){} };
+  const toast = (msg, type) => { try { if(typeof showToast === 'function') showToast(msg, type); } catch(_){} };
+
+  function currentButton(){
+    const active = document.activeElement;
+    return active && active.tagName === 'BUTTON' ? active : null;
+  }
+
+  function setButtonLoading(btn, isLoading, label){
+    if(!btn) return;
+    if(isLoading){
+      if(!btn.dataset.edhOriginalText) btn.dataset.edhOriginalText = btn.textContent || '';
+      if(label) btn.textContent = label;
+      btn.classList.add('is-loading');
+      btn.disabled = true;
+      btn.setAttribute('aria-busy','true');
+    } else {
+      btn.classList.remove('is-loading');
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      if(btn.dataset.edhOriginalText !== undefined){
+        btn.textContent = btn.dataset.edhOriginalText;
+        delete btn.dataset.edhOriginalText;
+      }
+    }
+  }
+  window.setButtonLoading = window.setButtonLoading || setButtonLoading;
+
+  async function guardedAction(name, fn, opts={}){
+    if(typeof fn !== 'function') return undefined;
+    const now = Date.now();
+    const lockedUntil = actionLocks.get(name) || 0;
+    if(lockedUntil > now){
+      if(!opts.silentLock) toast('Action déjà en cours, patiente quelques secondes.', 'error');
+      return undefined;
+    }
+    const btn = opts.button === false ? null : (opts.button || currentButton());
+    actionLocks.set(name, now + (opts.lockMs || 2200));
+    if(opts.network !== false) document.body.classList.add('edh-syncing');
+    setButtonLoading(btn, true, opts.loadingText);
+    try {
+      return await fn();
+    } catch(err){
+      logError(name, err);
+      if(opts.toastError !== false) toast(opts.errorMessage || ('Erreur pendant ' + name), 'error');
+      throw err;
+    } finally {
+      const unlockAt = Date.now() + (opts.cooldownMs || 350);
+      actionLocks.set(name, unlockAt);
+      setTimeout(() => {
+        if((actionLocks.get(name) || 0) <= Date.now()) actionLocks.delete(name);
+      }, (opts.cooldownMs || 350) + 30);
+      setButtonLoading(btn, false);
+      if(opts.network !== false) document.body.classList.remove('edh-syncing');
+    }
+  }
+
+  function wrapAction(name, opts={}){
+    const previous = window[name];
+    if(typeof previous !== 'function' || previous.__edhV54Wrapped) return;
+    const wrapped = function(){
+      const args = arguments;
+      return guardedAction(name, () => previous.apply(this, args), opts).then(result => {
+        if(opts.rerender) setTimeout(() => rerenderAfterMutation(opts.rerender === true ? null : opts.rerender), 0);
+        return result;
+      });
+    };
+    wrapped.__edhV54Wrapped = true;
+    window[name] = wrapped;
+  }
+
+  function safeCall(name){ try { if(typeof window[name] === 'function') return window[name](); } catch(err){ logWarn(name, err); } }
+  function rerenderAfterMutation(scope){
+    try { if(typeof window.syncReportingFromLeads === 'function') window.syncReportingFromLeads(); } catch(err){ logWarn('syncReportingFromLeads after mutation', err); }
+    const calls = scope || ['renderDashboardV2','renderLeadsPage','renderAllLeadsPage','renderReportingPage','renderPerformancePage','renderRegistrationsPage','renderStudentsPage','renderResourcesPage'];
+    (Array.isArray(calls) ? calls : [calls]).forEach(safeCall);
+    setTimeout(enhanceUiAfterRender, 0);
+  }
+  window.edhRerenderAfterMutation = rerenderAfterMutation;
+
+  // Race-condition guard Supabase : pas de refresh silencieux pendant édition/import/sauvegarde.
+  const previousRefreshFromSupabaseAndRenderV54 = window.refreshFromSupabaseAndRender;
+  if(typeof previousRefreshFromSupabaseAndRenderV54 === 'function' && !previousRefreshFromSupabaseAndRenderV54.__edhV54Wrapped){
+    window.refreshFromSupabaseAndRender = async function(silent=true, reason='manual', seasonOverride=null){
+      const active = document.activeElement;
+      const editingReporting = active && active.classList && active.classList.contains('report-input');
+      const protectedUntil = Math.max(Number(window.__EDH_REPORTING_DIRTY_UNTIL || 0), Number(window.__EDH_IMPORTING_REPORTING_UNTIL || 0));
+      const saving = Array.from(actionLocks.values()).some(until => until > Date.now());
+      if(silent && (editingReporting || saving || Date.now() < protectedUntil)){
+        try { if(typeof setSupabaseStatus === 'function') setSupabaseStatus('ok', 'Supabase : synchronisation différée pendant saisie/sauvegarde'); } catch(_){}
+        return false;
+      }
+      if(refreshInFlight && silent) return refreshInFlight;
+      const work = (async () => {
+        document.body.classList.add('edh-syncing');
+        try { return await previousRefreshFromSupabaseAndRenderV54.apply(this, arguments); }
+        finally { document.body.classList.remove('edh-syncing'); setTimeout(enhanceUiAfterRender, 0); }
+      })();
+      refreshInFlight = work;
+      try { return await work; }
+      finally { if(refreshInFlight === work) refreshInFlight = null; }
+    };
+    window.refreshFromSupabaseAndRender.__edhV54Wrapped = true;
+  }
+
+  // Soft delete compatible avec la migration deleted_at, fallback sur suppression physique si la colonne n'existe pas.
+  const previousMapSupabaseLeadToAppV54 = window.mapSupabaseLeadToApp;
+  if(typeof previousMapSupabaseLeadToAppV54 === 'function' && !previousMapSupabaseLeadToAppV54.__edhV54Wrapped){
+    window.mapSupabaseLeadToApp = function(row){
+      const lead = previousMapSupabaseLeadToAppV54.apply(this, arguments) || {};
+      lead.deletedAt = row?.deleted_at || row?.deletedAt || null;
+      return lead;
+    };
+    window.mapSupabaseLeadToApp.__edhV54Wrapped = true;
+  }
+
+  const previousDeleteLeadDirectV54 = window.deleteLeadDirectFromSupabase;
+  if(typeof previousDeleteLeadDirectV54 === 'function' && !previousDeleteLeadDirectV54.__edhV54Wrapped){
+    window.deleteLeadDirectFromSupabase = async function(lead){
+      if(!supabaseClient || !lead) return previousDeleteLeadDirectV54.apply(this, arguments);
+      const patch = { deleted_at:new Date().toISOString(), updated_at:new Date().toISOString() };
+      try {
+        let response = null;
+        if(lead.supabase_id) response = await supabaseClient.from('leads').update(patch).eq('id', lead.supabase_id);
+        else if(lead.id) response = await supabaseClient.from('leads').update(patch).eq('app_id', lead.id);
+        if(response && !response.error) return { ok:true, softDeleted:true };
+        const msg = response?.error ? (typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(response.error) : String(response.error.message || response.error)) : '';
+        if(msg && /deleted_at|could not find|does not exist|schema/i.test(msg)){
+          logWarn('Colonne deleted_at absente, fallback delete physique leads', msg);
+        } else if(response?.error){
+          logWarn('Soft delete lead refusé, fallback delete physique', response.error);
+        }
+      } catch(err){ logWarn('Soft delete lead impossible, fallback delete physique', err); }
+      return previousDeleteLeadDirectV54.apply(this, arguments);
+    };
+    window.deleteLeadDirectFromSupabase.__edhV54Wrapped = true;
+  }
+
+  const previousLoadFromSupabaseV54 = window.loadFromSupabase;
+  if(typeof previousLoadFromSupabaseV54 === 'function' && !previousLoadFromSupabaseV54.__edhV54Wrapped){
+    window.loadFromSupabase = async function(){
+      document.body.classList.add('edh-syncing');
+      try {
+        const result = await previousLoadFromSupabaseV54.apply(this, arguments);
+        if(Array.isArray(LEADS)) LEADS = LEADS.filter(l => !l.deletedAt);
+        window.LEADS = LEADS;
+        return result;
+      } finally { document.body.classList.remove('edh-syncing'); setTimeout(enhanceUiAfterRender, 0); }
+    };
+    window.loadFromSupabase.__edhV54Wrapped = true;
+  }
+
+  const previousRefreshLeadsFromSupabaseV54 = window.refreshLeadsFromSupabase;
+  if(typeof previousRefreshLeadsFromSupabaseV54 === 'function'){
+    window.refreshLeadsFromSupabase = async function(){
+      return guardedAction('refreshLeadsFromSupabase', async () => {
+        if(!supabaseClient) return previousRefreshLeadsFromSupabaseV54.apply(this, arguments);
+        try {
+          const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).is('deleted_at', null).order('created_at', {ascending:false});
+          if(error) throw error;
+          const remote = Array.isArray(data) ? data.map(mapSupabaseLeadToApp).filter(l => !l.deletedAt) : [];
+          LEADS = typeof dedupeLeadsList === 'function' ? dedupeLeadsList(remote) : remote;
+          window.LEADS = LEADS;
+          try { if(typeof syncReportingFromLeads === 'function') syncReportingFromLeads(); } catch(_){}
+          try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_){}
+          rerenderAfterMutation(['renderLeadsPage','renderAllLeadsPage','renderReportingPage','renderPerformancePage','renderDashboardV2']);
+          toast(`${LEADS.length} lead(s) chargé(s) depuis Supabase`, 'success');
+          return true;
+        } catch(err){
+          const msg = typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(err) : String(err?.message || err || '');
+          if(/deleted_at|could not find|does not exist|schema/i.test(msg)){
+            logWarn('Refresh leads sans filtre deleted_at : colonne absente', msg);
+            return previousRefreshLeadsFromSupabaseV54.apply(this, arguments);
+          }
+          throw err;
+        }
+      }, {loadingText:'Rechargement…'});
+    };
+  }
+
+  // Protections double-clic / loading sur les actions réseau ou mutantes principales.
+  [
+    ['saveForm', {loadingText:'Enregistrement…', rerender:true}],
+    ['saveStudent', {loadingText:'Enregistrement…', rerender:['renderStudentsPage','renderSchoolStudents','renderSchoolTable','renderSchoolReporting']}],
+    ['saveUser', {loadingText:'Enregistrement…', rerender:['renderUsersPage','renderSchoolUsers']}],
+    ['saveRegistration', {loadingText:'Enregistrement…', rerender:['renderRegistrationsPage','renderInscriptionPage','renderCalList','renderCalGrid','renderSchoolTable']}],
+    ['saveLeadFromForm', {loadingText:'Ajout…', rerender:['renderLeadsPage','renderAllLeadsPage','renderReportingPage','renderPerformancePage','renderDashboardV2']}],
+    ['submitPublicLead', {loadingText:'Envoi…', rerender:['renderLeadsPage','renderAllLeadsPage','renderReportingPage','renderPerformancePage']}],
+    ['importReportingFromFile', {loadingText:'Import…', lockMs:5000, rerender:['renderReportingPage','renderPerformancePage','renderDashboardV2','renderAllLeadsPage']}],
+    ['importStudentsFromFile', {loadingText:'Import…', lockMs:4000, rerender:['renderStudentsPage']}],
+    ['importUsersFromFile', {loadingText:'Import…', lockMs:4000, rerender:['renderUsersPage']}],
+    ['uploadResourceFile', {loadingText:'Upload…', lockMs:4000, rerender:['renderResourcesPage']}],
+    ['deleteLead', {loadingText:'Suppression…', rerender:['renderLeadsPage','renderAllLeadsPage','renderReportingPage','renderPerformancePage','renderDashboardV2']}],
+    ['deleteEvent', {loadingText:'Suppression…', rerender:true}],
+    ['deleteLycee', {loadingText:'Suppression…', rerender:true}],
+    ['deleteStudent', {loadingText:'Suppression…', rerender:['renderStudentsPage','renderSchoolStudents','renderSchoolTable','renderSchoolReporting']}],
+    ['deleteUser', {loadingText:'Suppression…', rerender:['renderUsersPage','renderSchoolUsers']}],
+    ['changeSeason', {loadingText:'Chargement…', lockMs:4000, rerender:true}]
+  ].forEach(([name, opts]) => wrapAction(name, opts));
+
+  // Transition douce de page sans changer la logique showPage existante.
+  const previousShowPageV54 = window.showPage;
+  if(typeof previousShowPageV54 === 'function' && !previousShowPageV54.__edhV54Wrapped){
+    window.showPage = function(){
+      document.body.classList.add('edh-page-transitioning');
+      const result = previousShowPageV54.apply(this, arguments);
+      setTimeout(() => { document.body.classList.remove('edh-page-transitioning'); enhanceUiAfterRender(); }, 170);
+      return result;
+    };
+    window.showPage.__edhV54Wrapped = true;
+  }
+
+  // Debounce sur recherches/filtres très fréquents.
+  function debounce(fn, delay=160){ let t; return function(){ const args=arguments; clearTimeout(t); t=setTimeout(()=>fn.apply(this,args), delay); }; }
+  if(typeof window.onSearch === 'function' && !window.onSearch.__edhV54Debounced){
+    const raw = window.onSearch;
+    window.onSearch = debounce(function(){ return raw.apply(this, arguments); }, 160);
+    window.onSearch.__edhV54Debounced = true;
+  }
+
+  function emptyHtml(icon, title, text, actionHtml=''){
+    return `<div class="empty-state"><div class="empty-state-icon">${esc(icon || '·')}</div><div class="empty-state-title">${esc(title)}</div><div class="empty-state-text">${esc(text)}</div>${actionHtml ? `<div style="margin-top:6px">${actionHtml}</div>` : ''}</div>`;
+  }
+  function applyEmptyState(containerId, selector, icon, title, text){
+    const el = $(containerId); if(!el) return;
+    const hasContent = selector ? el.querySelector(selector) : txt(el.textContent);
+    const onlyEmpty = el.querySelector('.empty-state,.crm-empty');
+    if(hasContent || onlyEmpty) return;
+    const html = emptyHtml(icon, title, text);
+    if(el.tagName === 'TBODY'){
+      const colCount = el.closest('table')?.querySelectorAll('thead th').length || 1;
+      el.innerHTML = `<tr><td colspan="${colCount}">${html}</td></tr>`;
+    } else {
+      el.innerHTML = html;
+    }
+  }
+  function enhanceEmptyStates(){
+    applyEmptyState('listing-tbody','tr','⌕','Aucun lycée trouvé','Aucun établissement ne correspond aux filtres actifs.');
+    applyEmptyState('leads-tbody','tr','◎','Aucun lead','Les leads collectés via QR code ou ajoutés manuellement apparaîtront ici.');
+    applyEmptyState('all-leads-tbody','tr','◎','Aucun lead filtré','Modifie les filtres ou recharge Supabase pour afficher les contacts.');
+    applyEmptyState('reporting-all-body','tr','↗','Aucun reporting','Les forums validés alimentent automatiquement ce tableau par école.');
+    applyEmptyState('performance-tbody','tr','▥','Aucune conversion','Complète le reporting pour obtenir les indicateurs de conversion.');
+    applyEmptyState('students-list','.student-card','◉','Aucun ambassadeur','Ajoute ou importe les étudiants ambassadeurs pour les mobiliser sur les forums.');
+    applyEmptyState('users-tbody','tr','♙','Aucun utilisateur','Les comptes collaborateurs et administrateurs apparaîtront ici.');
+    applyEmptyState('terrain-forum-list','.terrain-item','▣','Aucun forum à préparer','Les forums validés non archivés apparaîtront dans cette liste.');
+    applyEmptyState('resources-list','.resource-card, table, .resource-empty','▤','Aucune ressource','Ajoute des plaquettes, présentations et kits forum depuis un compte admin global.');
+  }
+
+  function conversionQuality(rate){
+    if(rate >= 10) return ['Très bon','conversion-high'];
+    if(rate >= 4) return ['Correct','conversion-mid'];
+    return ['À surveiller','conversion-low'];
+  }
+  function decorateConversionBars(){
+    document.querySelectorAll('#performance-tbody tr').forEach(tr => {
+      const cells = Array.from(tr.children);
+      const prospects = num(cells[3]?.textContent);
+      const inscrits = num(cells[6]?.textContent);
+      const conversionCell = cells[7];
+      const lectureCell = cells[8];
+      if(!conversionCell || conversionCell.querySelector('.conversion-meter')) return;
+      const rate = prospects ? Math.round((inscrits / prospects) * 100) : 0;
+      const [label, cls] = conversionQuality(rate);
+      conversionCell.innerHTML = `<span class="conversion-stack"><span class="conversion-pill ${cls}">${rate}%</span><span class="conversion-meter ${cls}" aria-hidden="true"><span style="width:${Math.min(100, rate * 6)}%"></span></span></span>`;
+      if(lectureCell && !lectureCell.querySelector('.conversion-pill')) lectureCell.innerHTML = `<span class="conversion-pill ${cls}">${label}</span> ${esc(lectureCell.textContent || '')}`;
+    });
+    document.querySelectorAll('#reporting-all-body tr').forEach(tr => {
+      const cells = Array.from(tr.children);
+      const prospects = num(cells[4]?.textContent);
+      const inscrits = num(cells[12]?.textContent);
+      if(!prospects || !cells[12] || cells[12].querySelector('.conversion-meter')) return;
+      const rate = Math.round((inscrits / prospects) * 100);
+      const [label, cls] = conversionQuality(rate);
+      cells[12].innerHTML = `<span class="conversion-stack">${esc(inscrits)} <span class="conversion-pill ${cls}" title="${label}">${rate}%</span><span class="conversion-meter ${cls}" aria-hidden="true"><span style="width:${Math.min(100, rate * 6)}%"></span></span></span>`;
+    });
+  }
+
+  function leadHeatFromRow(tr){
+    const text = txt(tr.textContent).toLowerCase();
+    if(text.includes('candidat') || text.includes('admis') || text.includes('inscrit')) return ['Chaud','lead-heat-hot'];
+    if(text.includes('à relancer') || text.includes('relance')) return ['À relancer','lead-heat-follow'];
+    if(text.includes('à qualifier') || text.includes('qualifier')) return ['À qualifier','lead-heat-qualify'];
+    return ['Nouveau','lead-heat-new'];
+  }
+  function decorateLeadHeat(){
+    ['leads-tbody','all-leads-tbody'].forEach(id => {
+      const body = $(id); if(!body) return;
+      body.querySelectorAll('tr').forEach(tr => {
+        if(tr.querySelector('.lead-heat-pill')) return;
+        const cells = Array.from(tr.children);
+        const statusCell = id === 'leads-tbody' ? cells[9] : cells[8];
+        if(!statusCell) return;
+        const [label, cls] = leadHeatFromRow(tr);
+        statusCell.insertAdjacentHTML('beforeend', ` <span class="lead-heat-pill ${cls}">${label}</span>`);
+      });
+    });
+  }
+
+  function ensureChipsContainers(){
+    const allCard = document.querySelector('#page-leadsall .card');
+    if(allCard && !$('all-leads-filter-chips')) allCard.insertAdjacentHTML('beforebegin','<div class="active-filter-chips" id="all-leads-filter-chips"></div>');
+    const reportingCard = document.querySelector('#page-reporting .card:nth-of-type(2)');
+    if(reportingCard && !$('reporting-filter-chips')) reportingCard.insertAdjacentHTML('beforebegin','<div class="active-filter-chips" id="reporting-filter-chips"></div>');
+  }
+  function chip(label, value, resetId){
+    return `<span class="filter-chip">${esc(label)} : ${esc(value)} <button type="button" data-reset="${esc(resetId)}" aria-label="Retirer le filtre ${esc(label)}">×</button></span>`;
+  }
+  function renderAllLeadsChips(){
+    const box = $('all-leads-filter-chips'); if(!box) return;
+    const ids = [
+      ['all-leads-date-from','Après'], ['all-leads-date-to','Avant'], ['all-leads-event-filter','Forum'], ['all-leads-level-filter','Niveau'], ['all-leads-school-filter','École']
+    ];
+    box.innerHTML = ids.map(([id,label]) => { const el=$(id); return el && el.value ? chip(label, el.options ? (el.options[el.selectedIndex]?.text || el.value) : el.value, id) : ''; }).join('');
+    box.querySelectorAll('button[data-reset]').forEach(btn => btn.onclick = () => { const el=$(btn.dataset.reset); if(el) el.value=''; safeCall('renderAllLeadsPage'); renderAllLeadsChips(); });
+  }
+  function renderReportingChips(){
+    const box = $('reporting-filter-chips'); if(!box) return;
+    const el = $('reporting-school-filter');
+    box.innerHTML = el && el.value ? chip('École', el.value, 'reporting-school-filter') : '';
+    box.querySelectorAll('button[data-reset]').forEach(btn => btn.onclick = () => { const e=$(btn.dataset.reset); if(e) e.value=''; safeCall('renderReportingPage'); renderReportingChips(); });
+  }
+
+  const renderNames = ['renderLeadsPage','renderAllLeadsPage','renderReportingPage','renderPerformancePage','renderStudentsPage','renderUsersPage','renderResourcesPage','renderTerrainPage','renderCurrentPage','refreshCurrentPage'];
+  renderNames.forEach(name => {
+    const previous = window[name];
+    if(typeof previous !== 'function' || previous.__edhV54UiWrapped) return;
+    const wrapped = function(){
+      const result = previous.apply(this, arguments);
+      setTimeout(enhanceUiAfterRender, 0);
+      return result;
+    };
+    wrapped.__edhV54UiWrapped = true;
+    window[name] = wrapped;
+  });
+
+  function enhanceUiAfterRender(){
+    ensureChipsContainers();
+    enhanceEmptyStates();
+    renderAllLeadsChips();
+    renderReportingChips();
+    decorateLeadHeat();
+    decorateConversionBars();
+    updatePublicSubmitState();
+    installA11yEnhancements();
+  }
+  window.edhEnhanceUiAfterRender = enhanceUiAfterRender;
+
+  // Formulaire public QR : validation en temps réel + bouton désactivé tant que requis invalide.
+  const publicRules = {
+    'public-lead-firstname': v => !!v,
+    'public-lead-lastname': v => !!v,
+    'public-lead-email': v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+    'public-lead-phone': v => !v || /^[+\d][\d\s().-]{7,}$/.test(v),
+    'public-lead-school': v => !!v,
+    'public-lead-level': v => !!v,
+    'public-lead-program': v => !!v,
+    'public-lead-notes': v => !!v
+  };
+  function setFieldError(el, msg){
+    const field = el?.closest?.('.form-field'); if(!field) return;
+    let err = field.querySelector('.field-error');
+    if(!err){ err = document.createElement('div'); err.className='field-error'; field.appendChild(err); }
+    field.classList.toggle('invalid', Boolean(msg));
+    err.textContent = msg || '';
+  }
+  function validatePublicField(id, soft=false){
+    const el = $(id); if(!el) return true;
+    const value = txt(el.value);
+    const ok = publicRules[id] ? publicRules[id](value) : true;
+    const labels = {
+      'public-lead-firstname':'Prénom obligatoire.', 'public-lead-lastname':'Nom obligatoire.', 'public-lead-email':'Email invalide.', 'public-lead-phone':'Téléphone invalide.', 'public-lead-school':'École obligatoire.', 'public-lead-level':'Niveau obligatoire.', 'public-lead-program':'Cursus obligatoire.', 'public-lead-notes':'Précision obligatoire.'
+    };
+    if(!soft || el.dataset.touched === '1') setFieldError(el, ok ? '' : labels[id]);
+    return ok;
+  }
+  function updatePublicSubmitState(){
+    const btn = $('public-lead-submit-btn'); if(!btn) return;
+    const ok = Object.keys(publicRules).every(id => validatePublicField(id, true));
+    btn.disabled = !ok;
+    btn.setAttribute('aria-disabled', String(!ok));
+    if(!btn.dataset.readyText) btn.dataset.readyText = btn.textContent || 'Valider le formulaire';
+    btn.title = ok ? '' : 'Complète les champs obligatoires pour envoyer le formulaire';
+  }
+  function installPublicValidationV54(){
+    Object.keys(publicRules).forEach(id => {
+      const el = $(id); if(!el || el.__edhV54PublicValidation) return;
+      el.__edhV54PublicValidation = true;
+      const handler = () => { el.dataset.touched = '1'; validatePublicField(id); updatePublicSubmitState(); };
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+      el.addEventListener('blur', handler);
+    });
+    updatePublicSubmitState();
+  }
+  const previousSubmitPublicLeadV54 = window.submitPublicLead;
+  if(typeof previousSubmitPublicLeadV54 === 'function'){
+    window.submitPublicLead = function(){
+      installPublicValidationV54();
+      let ok = true;
+      Object.keys(publicRules).forEach(id => { const el=$(id); if(el) el.dataset.touched='1'; if(!validatePublicField(id)) ok=false; });
+      updatePublicSubmitState();
+      if(!ok) return toast('Corrige les champs du formulaire avant de valider.', 'error');
+      return previousSubmitPublicLeadV54.apply(this, arguments);
+    };
+  }
+
+  // Command palette : navigation clavier ↑ ↓ Entrée + état aria-selected.
+  let commandIndex = 0;
+  function updateCommandActive(){
+    const items = Array.from(document.querySelectorAll('#edh-command-results .command-item'));
+    items.forEach((it, i) => it.setAttribute('aria-selected', String(i === commandIndex)));
+    if(items[commandIndex]) items[commandIndex].scrollIntoView({block:'nearest'});
+  }
+  document.addEventListener('keydown', e => {
+    const input = $('edh-command-input');
+    if(!input || document.activeElement !== input) return;
+    const items = Array.from(document.querySelectorAll('#edh-command-results .command-item'));
+    if(!items.length) return;
+    if(e.key === 'ArrowDown'){ e.preventDefault(); commandIndex = Math.min(items.length - 1, commandIndex + 1); updateCommandActive(); }
+    if(e.key === 'ArrowUp'){ e.preventDefault(); commandIndex = Math.max(0, commandIndex - 1); updateCommandActive(); }
+    if(e.key === 'Enter'){ e.preventDefault(); items[commandIndex]?.click(); }
+  }, true);
+  const commandObserver = new MutationObserver(() => { commandIndex = 0; updateCommandActive(); });
+  function installCommandObserver(){ const box = $('edh-command-results'); if(box && !box.__edhV54Observed){ commandObserver.observe(box, {childList:true}); box.__edhV54Observed = true; } }
+
+  // Dark mode : default sur prefers-color-scheme, persistance, toggle plus explicite.
+  function installThemeV54(){
+    try {
+      const saved = localStorage.getItem('edh_theme_v54') || localStorage.getItem('edh_theme_v53');
+      const preferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const theme = saved || preferred;
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      const btn = $('edh-theme-toggle');
+      if(btn){
+        btn.textContent = theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre';
+        btn.onclick = () => {
+          const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          document.body.setAttribute('data-theme', next);
+          localStorage.setItem('edh_theme_v54', next);
+          btn.textContent = next === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre';
+        };
+      }
+    } catch(err){ logWarn('theme install', err); }
+  }
+
+  function installA11yEnhancements(){
+    document.querySelectorAll('.modal-overlay, .login-overlay, .public-lead-overlay, .confirm-overlay, .command-overlay').forEach((modal, idx) => {
+      modal.setAttribute('role', modal.getAttribute('role') || 'dialog');
+      modal.setAttribute('aria-modal', modal.getAttribute('aria-modal') || 'true');
+      if(!modal.getAttribute('aria-label') && !modal.getAttribute('aria-labelledby')) modal.setAttribute('aria-label', 'Fenêtre ' + (idx + 1));
+    });
+    document.querySelectorAll('button').forEach(btn => {
+      const txtContent = txt(btn.textContent);
+      if(!txtContent && !btn.getAttribute('aria-label')) btn.setAttribute('aria-label','Bouton');
+      if(txtContent && !btn.getAttribute('aria-label')) btn.setAttribute('aria-label', txtContent);
+    });
+    document.querySelectorAll('table tbody tr').forEach(tr => {
+      const headers = Array.from(tr.closest('table')?.querySelectorAll('thead th') || []).map(th => txt(th.textContent));
+      Array.from(tr.children).forEach((td, i) => { if(headers[i] && !td.getAttribute('data-label')) td.setAttribute('data-label', headers[i]); });
+    });
+  }
+
+  // Modales : Escape ferme la modale ouverte et restitue le focus au dernier déclencheur quand possible.
+  let lastModalTrigger = null;
+  document.addEventListener('click', e => { const btn = e.target.closest('button,[role="button"],a'); if(btn) lastModalTrigger = btn; }, true);
+  document.addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    const openModal = document.querySelector('.modal-overlay.open, .login-overlay.open, .public-lead-overlay.open, .confirm-overlay.open, .command-overlay.open');
+    if(!openModal) return;
+    if(openModal.id === 'public-lead-overlay') return;
+    e.preventDefault();
+    openModal.classList.remove('open');
+    try { lastModalTrigger?.focus?.(); } catch(_){}
+  }, true);
+
+  // Imports/exports : noms de fichiers cohérents avec saison lorsque possible.
+  const previousDownloadReportingExcelV54 = window.downloadReportingExcel;
+  if(typeof previousDownloadReportingExcelV54 === 'function'){
+    window.downloadReportingExcel = function(){
+      try {
+        const rows = typeof reportingRowsForExport === 'function' ? reportingRowsForExport().map(row => ({...row})) : [];
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Reporting');
+        XLSX.writeFile(wb, `EDH_reporting_forums_${S.season || DEFAULT_SEASON}.xlsx`);
+      } catch(err){
+        logWarn('downloadReportingExcel V54 fallback', err);
+        return previousDownloadReportingExcelV54.apply(this, arguments);
+      }
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    installThemeV54();
+    installPublicValidationV54();
+    installCommandObserver();
+    enhanceUiAfterRender();
+    document.addEventListener('input', e => { if(e.target && e.target.closest('#public-lead-overlay')) updatePublicSubmitState(); }, true);
+    document.addEventListener('change', e => { if(e.target && e.target.closest('#public-lead-overlay')) updatePublicSubmitState(); if(e.target && e.target.id && e.target.id.startsWith('all-leads-')) setTimeout(renderAllLeadsChips, 0); if(e.target && e.target.id === 'reporting-school-filter') setTimeout(renderReportingChips, 0); }, true);
   });
 })();
 
