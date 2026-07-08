@@ -1292,6 +1292,11 @@ body.edh-page-transitioning .page.active{ opacity:.45; transform:translateY(4px)
   .lead-heat-pill{ margin-left:0; margin-top:4px; }
 }
 
+
+/* ── V55 BILAN & CONVERSION ── */
+.conversion-mini { width:84px; height:5px; background:var(--bg2); border-radius:999px; overflow:hidden; margin-top:5px; }
+.conversion-mini span { display:block; height:100%; background:currentColor; border-radius:999px; }
+
 </style>
 </head>
 <body>
@@ -2893,7 +2898,7 @@ body.edh-page-transitioning .page.active{ opacity:.45; transform:translateY(4px)
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V54-2026-07-08-stability-ux-supabase";
+const APP_PATCH_VERSION = "V55-2026-07-08-performance-reporting-source";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -3034,7 +3039,7 @@ function getSupabaseErrorMessage(err){
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V54-2026-07-08-stability-ux-supabase';
+window.EDH_APP_VERSION = 'V55-2026-07-08-performance-reporting-source';
 console.info('EDH app version:', window.EDH_APP_VERSION);
 
 function minimalUserForStorage(u){
@@ -11280,5 +11285,160 @@ window.addEventListener('DOMContentLoaded', () => {
 })();
 
 </script>
+
+<script>
+/* ══════════════════════════════════════
+   V55 — Correctif Bilan & conversion
+   Objectif : le Bilan doit s'appuyer sur les mêmes forums/reportings que l'onglet Reporting,
+   y compris les forums terminés/archivés. activeValidatedForums() reste utile pour le terrain,
+   mais il ne doit pas piloter l'historique annuel de conversion.
+══════════════════════════════════════ */
+(function(){
+  'use strict';
+  const V55 = 'V55-2026-07-08-performance-reporting-source';
+  window.EDH_APP_VERSION = V55;
+  console.info('EDH patch', V55);
+
+  function html(v){
+    try { return typeof escapeHtml === 'function' ? escapeHtml(v == null ? '' : String(v)) : String(v == null ? '' : v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+    catch(_){ return ''; }
+  }
+  function n(v){ const x = Number(v || 0); return Number.isFinite(x) ? x : 0; }
+  function jsArgV55(v){ return String(v == null ? '' : v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[\r\n]+/g,' '); }
+  function pctV55(a,b){ const dd = n(b); return dd ? Math.round((n(a)/dd)*100) + '%' : '—'; }
+  function scoreRecord(rec){ return ['global','nombreProspect','seconde','premiere','terminale','autres','prospect','candidat','admis','inscrit'].reduce((sum,k)=>sum+n(rec && rec[k]),0); }
+  function reportIdsForEventV55(ev){
+    const ids = [];
+    const push = v => { if(v != null && String(v).trim() && !ids.includes(String(v).trim())) ids.push(String(v).trim()); };
+    try { push(typeof canonicalEventId === 'function' ? canonicalEventId(ev) : ''); } catch(_){ }
+    push(ev && ev.id);
+    push(ev && ev.app_id);
+    push(ev && ev.id_forum);
+    push(ev && ev.eventId);
+    try { push(typeof eventNaturalKey === 'function' ? eventNaturalKey(ev) : ''); } catch(_){ }
+    return ids;
+  }
+  function reportForEventSchoolV55(ev, school){
+    const merged = {global:0, nombreProspect:0, seconde:0, premiere:0, terminale:0, autres:0, prospect:0, candidat:0, admis:0, inscrit:0};
+    let found = false;
+    reportIdsForEventV55(ev).forEach(id => {
+      try {
+        const key = typeof getReportKey === 'function' ? getReportKey(id, school) : `${id}__${school}`;
+        const rec = REPORTING_DATA && REPORTING_DATA[key];
+        if(rec){
+          found = true;
+          Object.keys(merged).forEach(k => merged[k] = Math.max(n(merged[k]), n(rec[k])));
+        }
+      } catch(_){ }
+    });
+    if(!found){
+      try {
+        const id = reportIdsForEventV55(ev)[0] || (ev && ev.id);
+        if(typeof getReportRecord === 'function') return getReportRecord(id, school);
+      } catch(_){ }
+    }
+    merged.global = Math.max(n(merged.global), n(merged.nombreProspect), n(merged.prospect));
+    return merged;
+  }
+  function eventSchoolsV55(ev){
+    let schools = [];
+    try { if(typeof eventSchoolsFor === 'function') schools = eventSchoolsFor(ev) || []; } catch(_){ }
+    if(!schools.length){ try { if(typeof getSchoolsArray === 'function') schools = getSchoolsArray(ev && ev.ecoles) || []; } catch(_){ } }
+    if(!schools.length){ try { if(typeof schoolsVisibleForCurrentUser === 'function') schools = schoolsVisibleForCurrentUser() || []; } catch(_){ } }
+    const visible = (() => { try { return typeof schoolsVisibleForCurrentUser === 'function' ? schoolsVisibleForCurrentUser() : []; } catch(_){ return []; } })();
+    if(visible.length) schools = schools.filter(s => visible.includes(s));
+    return [...new Set(schools.filter(Boolean))];
+  }
+  function eventsForPerformanceV55(){
+    let events = [];
+    try {
+      if(typeof getValidatedEventsForReporting === 'function') events = getValidatedEventsForReporting() || [];
+      else if(Array.isArray(LYCEES)) events = LYCEES.filter(l => typeof isValidatedEvent === 'function' ? isValidatedEvent(l) : true);
+    } catch(err){ console.warn('eventsForPerformance V55', err); }
+    try { events = events.filter(ev => typeof canSeeRecord !== 'function' || canSeeRecord(ev)); } catch(_){ }
+    try { events = events.filter(ev => typeof isDeletedEvent !== 'function' || !isDeletedEvent(ev)); } catch(_){ }
+    const seen = new Set();
+    return events.filter(ev => {
+      const key = reportIdsForEventV55(ev)[0] || `${(ev && ev.nom) || ''}-${(ev && ev.date) || ''}-${(ev && ev.ville) || ''}`;
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a,b) => new Date(a.date || 0) - new Date(b.date || 0));
+  }
+  function summaryForPerformanceV55(ev){
+    const totals = {global:0, prospect:0, candidat:0, admis:0, inscrit:0, seconde:0, premiere:0, terminale:0, autres:0};
+    eventSchoolsV55(ev).forEach(school => {
+      const rec = reportForEventSchoolV55(ev, school);
+      totals.global += n(rec.global || rec.nombreProspect);
+      totals.prospect += n(rec.prospect);
+      totals.candidat += n(rec.candidat);
+      totals.admis += n(rec.admis);
+      totals.inscrit += n(rec.inscrit);
+      totals.seconde += n(rec.seconde);
+      totals.premiere += n(rec.premiere);
+      totals.terminale += n(rec.terminale);
+      totals.autres += n(rec.autres);
+    });
+    totals.global = Math.max(totals.global, totals.prospect, n(ev && ev.prospect_global));
+    return totals;
+  }
+  function conversionBadgeV55(rateText){
+    const raw = String(rateText || '').match(/(\d+(?:[,.]\d+)?)/);
+    if(!raw) return `<span class="conversion-pill conversion-low">—</span>`;
+    const rate = Number(raw[1].replace(',', '.'));
+    const cls = rate >= 8 ? 'conversion-high' : rate >= 3 ? 'conversion-mid' : 'conversion-low';
+    return `<span class="conversion-pill ${cls}">${html(rateText)}</span>`;
+  }
+  function conversionBarV55(inscrits, prospects){
+    const rate = n(prospects) ? Math.min(100, Math.round((n(inscrits)/n(prospects))*100)) : 0;
+    return `<div class="conversion-mini"><span style="width:${rate}%"></span></div>`;
+  }
+  window.renderPerformancePage = function(){
+    try { if(typeof window.syncReportingFromLeads === 'function') window.syncReportingFromLeads(); } catch(err){ console.warn('sync before performance V55', err); }
+    const events = eventsForPerformanceV55();
+    const rows = events.map(ev => {
+      const report = summaryForPerformanceV55(ev);
+      const leads = (() => { try { return typeof eventLeads === 'function' ? eventLeads(ev).length : 0; } catch(_){ return 0; } })();
+      const prospects = Math.max(n(report.global), n(report.prospect), leads, n(ev && ev.prospect_global));
+      const rate = pctV55(report.inscrit, prospects);
+      const reading = !prospects ? 'Reporting à compléter' : n(report.inscrit) > 0 ? 'Forum générateur d’inscrits' : n(report.candidat) > 0 ? 'Forum à suivre en admissions' : 'Prospects à qualifier';
+      return {ev, report, prospects, rate, reading, schools:eventSchoolsV55(ev)};
+    });
+    const totals = rows.reduce((acc,r) => {
+      acc.forums += 1;
+      acc.prospects += n(r.prospects);
+      acc.candidats += n(r.report.candidat);
+      acc.admis += n(r.report.admis);
+      acc.inscrits += n(r.report.inscrit);
+      return acc;
+    }, {forums:0, prospects:0, candidats:0, admis:0, inscrits:0});
+    const set = (id,v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+    set('perf-forums', totals.forums);
+    set('perf-prospects', totals.prospects);
+    set('perf-candidats', totals.candidats);
+    set('perf-admis', totals.admis);
+    set('perf-inscrits', totals.inscrits);
+    set('perf-taux', pctV55(totals.inscrits, totals.prospects));
+    set('perf-count', `${rows.length} lycée(s)`);
+    const body = document.getElementById('performance-tbody');
+    if(body){
+      body.innerHTML = rows.length ? rows.map(r => {
+        const id = reportIdsForEventV55(r.ev)[0] || (r.ev && r.ev.id) || '';
+        const dateText = (() => { try { return typeof fmtDate === 'function' ? fmtDate(r.ev && r.ev.date) : html(r.ev && r.ev.date); } catch(_){ return html(r.ev && r.ev.date); } })();
+        const schoolHtml = (() => { try { return typeof schoolTags === 'function' ? schoolTags(r.schools.join(', ')) : html(r.schools.join(', ')); } catch(_){ return html(r.schools.join(', ')); } })();
+        const onclick = id ? ` onclick="openDetail('${html(jsArgV55(id))}')" style="cursor:pointer"` : '';
+        return `<tr${onclick}><td><strong>${html(r.ev && r.ev.nom || '—')}</strong><br><span style="color:var(--text3);font-size:11px">${html(r.ev && r.ev.ville || '')}</span></td><td>${dateText}</td><td>${schoolHtml}</td><td>${r.prospects}</td><td>${n(r.report.candidat)}</td><td>${n(r.report.admis)}</td><td>${n(r.report.inscrit)}</td><td>${conversionBadgeV55(r.rate)}${conversionBarV55(r.report.inscrit, r.prospects)}</td><td>${html(r.reading)}</td></tr>`;
+      }).join('') : `<tr><td colspan="9"><div class="empty-state"><p>Aucun forum validé à analyser pour la saison active.</p></div></td></tr>`;
+      try {
+        const headers = Array.from(body.closest('table')?.querySelectorAll('thead th') || []).map(th => th.textContent.trim());
+        body.querySelectorAll('tr').forEach(tr => Array.from(tr.children).forEach((td,i) => { if(headers[i]) td.setAttribute('data-label', headers[i]); }));
+      } catch(_){ }
+    }
+    try { if(typeof window.edhEnhanceUiAfterRender === 'function') setTimeout(window.edhEnhanceUiAfterRender, 0); } catch(_){ }
+  };
+  window.renderPerformancePage.__edhV55ReportingSource = true;
+})();
+</script>
+
 </body>
 </html>
