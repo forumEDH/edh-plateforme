@@ -10,11 +10,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=yes">
 <link rel="manifest" href="manifest.webmanifest">
+
+<meta name="description" content="Plateforme interne EDH pour piloter les forums lycées, les leads QR et le reporting de conversion.">
+<meta property="og:title" content="EDH — Forums Lycées">
+<meta property="og:description" content="Pilotage des forums lycées, ambassadeurs, leads et reporting opérationnel.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='800' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232563eb'/%3E%3Ctext x='90' y='108' text-anchor='middle' font-family='Arial,sans-serif' font-size='52' font-weight='900' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
 <title>EDH — Forums Lycées 2025·2026</title>
-<meta name="description" content="Plateforme interne EDH pour gérer les forums lycées, les leads, les ambassadeurs et le reporting opérationnel.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial' font-size='20' font-weight='700' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
@@ -1176,56 +1182,77 @@ body.public-lead-mode {
 }
 
 
-/* ── V53 POLISH / ACCESSIBILITÉ / DARK MODE ── */
-.sync-topline { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 3px; z-index: 1200; pointer-events: none; opacity: 0; overflow: hidden; background: rgba(37,99,235,.08); transition: opacity .18s ease; }
-.sync-topline::after { content:''; position:absolute; top:0; bottom:0; width:36%; left:-36%; background: var(--primary); animation: edh-sync-slide 1.05s linear infinite; }
-body.edh-syncing .sync-topline { opacity: 1; }
-@keyframes edh-sync-slide { to { left:100%; } }
-.skeleton { position:relative; overflow:hidden; background:var(--bg2); border-radius:10px; min-height:18px; }
-.skeleton::after { content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation:edh-skeleton 1.35s infinite; }
-@keyframes edh-skeleton { 100% { transform:translateX(100%); } }
-.btn.is-loading { opacity:.72; pointer-events:none; }
-.btn.is-loading::before { content:''; width:13px; height:13px; border-radius:999px; border:2px solid currentColor; border-right-color:transparent; animation:edh-spin .7s linear infinite; }
-@keyframes edh-spin { to { transform:rotate(360deg); } }
-.page { opacity:0; transform:translateY(6px); transition:opacity .16s ease, transform .16s ease; }
-.page.active { opacity:1; transform:translateY(0); }
-.field-error { display:none; margin-top:5px; color:var(--red); font-size:11px; line-height:1.35; }
-.form-field.invalid .field-error { display:block; }
-.form-field.invalid .form-input, .form-field.invalid .form-select, .form-field.invalid .form-textarea { border-color:var(--red); box-shadow:0 0 0 3px rgba(220,38,38,.08); }
-.report-save-status { display:inline-flex; align-items:center; gap:5px; margin-left:6px; color:var(--green); font-size:10px; font-weight:800; opacity:0; transition:opacity .18s ease; }
-.report-save-status.show { opacity:1; }
-.school-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid var(--border); background:var(--bg); color:var(--text2); }
-.school-badge-dot { width:7px; height:7px; border-radius:999px; background:currentColor; }
-.conversion-pill { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid transparent; white-space:nowrap; }
-.conversion-low { background:var(--red-bg); color:var(--red); border-color:var(--red-border); }
-.conversion-mid { background:var(--yellow-bg); color:var(--yellow); border-color:var(--yellow-border); }
-.conversion-high { background:var(--green-bg); color:var(--green); border-color:var(--green-border); }
-.active-filter-chips { display:flex; gap:6px; flex-wrap:wrap; margin:0 0 12px; }
-.filter-chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:white; color:var(--text2); border-radius:999px; padding:5px 9px; font-size:11px; font-weight:700; }
-.filter-chip button { border:none; background:transparent; color:inherit; cursor:pointer; font-weight:900; }
-.command-overlay { position:fixed; inset:0; z-index:2500; display:none; align-items:flex-start; justify-content:center; background:rgba(15,20,40,.35); padding:9vh 18px 18px; backdrop-filter:blur(4px); }
-.command-overlay.open { display:flex; }
-.command-panel { width:min(680px,100%); background:white; border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-lg); overflow:hidden; }
-.command-input { width:100%; border:none; border-bottom:1px solid var(--border); padding:17px 18px; font-size:16px; font-family:'DM Sans',sans-serif; outline:none; }
-.command-results { max-height:420px; overflow:auto; padding:8px; }
-.command-item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 12px; border-radius:11px; cursor:pointer; color:var(--text2); }
-.command-item:hover, .command-item.active { background:var(--primary-light); color:var(--primary); }
-.command-item strong { color:var(--text); }
-.confirm-overlay { position:fixed; inset:0; z-index:2600; display:none; align-items:center; justify-content:center; background:rgba(15,20,40,.42); padding:18px; backdrop-filter:blur(3px); }
-.confirm-overlay.open { display:flex; }
-.confirm-panel { width:min(430px,100%); background:white; border-radius:16px; border:1px solid var(--border); box-shadow:var(--shadow-lg); padding:20px; }
-.confirm-title { font-size:16px; font-weight:850; color:var(--text); margin-bottom:6px; }
-.confirm-text { color:var(--text2); font-size:13px; line-height:1.55; margin-bottom:16px; }
-.confirm-actions { display:flex; justify-content:flex-end; gap:8px; }
-[data-theme="dark"] { --white:#0f172a; --bg:#0f172a; --bg2:#1e293b; --surface:#111827; --border:#243247; --border2:#334155; --text:#f8fafc; --text2:#cbd5e1; --text3:#94a3b8; --primary-light:#1e3a8a; --gray-bg:#1f2937; --green-bg:#052e16; --yellow-bg:#422006; --red-bg:#450a0a; --orange-bg:#431407; }
-[data-theme="dark"] body, body[data-theme="dark"] { background:#0f172a; }
-[data-theme="dark"] .card, [data-theme="dark"] .modal, [data-theme="dark"] .sidebar, [data-theme="dark"] .topbar, [data-theme="dark"] .command-panel, [data-theme="dark"] .confirm-panel, [data-theme="dark"] .login-card { background:var(--surface); }
-[data-theme="dark"] .form-input, [data-theme="dark"] .form-select, [data-theme="dark"] .form-textarea, [data-theme="dark"] .filter-select, [data-theme="dark"] .check-dropdown-btn, [data-theme="dark"] .multi-filter-btn { background:#0b1220; color:var(--text); }
-@media (max-width:768px){ .sync-topline{ left:0; top:calc(58px + env(safe-area-inset-top)); } .confirm-actions{ display:grid; grid-template-columns:1fr; } }
+/* ══════════════════════════════════════
+   V53 — UI/UX sécurité : skeleton, loading, confirmations, badges, accessibilité
+══════════════════════════════════════ */
+@keyframes edh-shimmer { 0% { background-position: -420px 0; } 100% { background-position: 420px 0; } }
+@keyframes edh-fade-slide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes edh-spin { to { transform: rotate(360deg); } }
+@keyframes edh-pulse-dot { 0%,100% { opacity:.38; transform:scale(.92); } 50% { opacity:1; transform:scale(1.08); } }
+.page.active { animation: edh-fade-slide .18s ease both; }
+body.edh-global-sync-active::before {
+  content:''; position:fixed; top:0; left:0; right:0; height:3px; z-index:4000;
+  background:linear-gradient(90deg, transparent, var(--primary), transparent);
+  background-size:220% 100%; animation:edh-shimmer 1.1s linear infinite;
+}
+.skeleton-line, .skeleton-cell, .skeleton-card {
+  border-radius:8px; min-height:14px;
+  background:linear-gradient(90deg, var(--bg2) 0%, #f8fafc 45%, var(--bg2) 90%);
+  background-size:420px 100%; animation:edh-shimmer 1.15s linear infinite;
+}
+.skeleton-table { padding:14px; display:flex; flex-direction:column; gap:10px; }
+.skeleton-row { display:grid; grid-template-columns:1.2fr .8fr .65fr .7fr .8fr .75fr; gap:12px; align-items:center; }
+.skeleton-row .skeleton-cell { height:18px; }
+.btn.is-loading { opacity:.68; pointer-events:none; cursor:wait; position:relative; }
+.btn.is-loading::before {
+  content:''; width:13px; height:13px; border:2px solid currentColor; border-right-color:transparent;
+  border-radius:999px; display:inline-block; animation:edh-spin .65s linear infinite; margin-right:2px;
+}
+.report-save-wrap { display:inline-flex; align-items:center; gap:5px; }
+.report-save-check { color:var(--green); font-size:12px; font-weight:900; opacity:0; transform:translateY(2px); transition:all .18s ease; white-space:nowrap; }
+.report-save-check.show { opacity:1; transform:translateY(0); }
+.edh-confirm-copy { color:var(--text2); font-size:13px; line-height:1.6; }
+.filter-chip-row { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
+.filter-chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:white; color:var(--text2); border-radius:999px; padding:6px 9px; font-size:12px; font-weight:700; box-shadow:var(--shadow-sm); }
+.filter-chip button { border:0; background:var(--bg); color:var(--text3); border-radius:999px; width:18px; height:18px; cursor:pointer; line-height:18px; font-size:13px; display:inline-flex; align-items:center; justify-content:center; }
+.filter-chip button:hover { color:var(--red); background:var(--red-bg); }
+.school-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; border:1px solid transparent; font-size:10.5px; font-weight:900; letter-spacing:.25px; white-space:nowrap; }
+.school-badge-dot { width:6px; height:6px; border-radius:999px; background:currentColor; }
+.conversion-mini { display:flex; align-items:center; gap:6px; min-width:86px; margin-top:5px; }
+.conversion-mini-track { height:5px; flex:1; min-width:42px; border-radius:999px; overflow:hidden; background:var(--bg2); }
+.conversion-mini-fill { height:100%; border-radius:999px; width:0%; background:var(--red); transition:width .25s ease; }
+.conversion-mini-fill.mid { background:var(--orange); }
+.conversion-mini-fill.high { background:var(--green); }
+.conversion-mini-label { font-size:10px; color:var(--text3); font-weight:800; }
+.field-error-msg { color:var(--red); font-size:11px; font-weight:700; margin-top:4px; display:none; }
+.form-field.has-error .form-input, .form-field.has-error .form-select, .form-field.has-error .form-textarea { border-color:var(--red); box-shadow:0 0 0 3px rgba(220,38,38,.08); }
+.form-field.has-error .field-error-msg { display:block; }
+.network-retry-box { margin:12px 0; border:1px solid var(--red-border); background:var(--red-bg); color:var(--red); border-radius:12px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; font-weight:700; }
+.sync-dot.animated { animation:edh-pulse-dot 1s ease-in-out infinite; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --white:#0f172a; --bg:#0b1020; --bg2:#111827; --surface:#151c2e; --border:#293244; --border2:#354155;
+    --text:#f8fafc; --text2:#cbd5e1; --text3:#8da0ba; --primary-light:rgba(37,99,235,.18);
+    --green-bg:rgba(22,163,74,.12); --green-border:rgba(34,197,94,.28);
+    --yellow-bg:rgba(202,138,4,.13); --yellow-border:rgba(253,230,138,.22);
+    --red-bg:rgba(220,38,38,.13); --red-border:rgba(254,202,202,.22);
+    --orange-bg:rgba(234,88,12,.13); --orange-border:rgba(254,215,170,.22);
+    --gray-bg:rgba(148,163,184,.12); --gray-border:rgba(148,163,184,.22);
+    --efap-bg:rgba(243,244,246,.12); --icart-bg:rgba(249,115,22,.14); --cread-bg:rgba(37,99,235,.14); --brassart-bg:rgba(236,72,153,.14);
+  }
+  body { background:linear-gradient(180deg,#0b1020,#111827); }
+  .card, .kpi-card, .school-card, .event-card, .student-card, .modal, .login-card, .public-lead-card, .filter-chip, .sync-status { background:var(--surface); }
+  .topbar, .sidebar, .mobile-shell-header, .mobile-bottom-nav, .modal-footer { background:rgba(21,28,46,.96); }
+  .form-input, .form-select, .form-textarea, .filter-select, .check-dropdown-btn, .multi-filter-btn { background:#101827; color:var(--text); }
+  tr:hover td, .table-scroll table tbody tr:hover td { background:rgba(37,99,235,.10); }
+  .skeleton-line, .skeleton-cell, .skeleton-card { background:linear-gradient(90deg,#172033 0%,#24304a 45%,#172033 90%); background-size:420px 100%; }
+}
 
 </style>
 </head>
 <body>
+<div id="edh-global-syncbar" aria-hidden="true"></div>
+
 
 <!-- ═══ V45 MOBILE SHELL / iPHONE ═══ -->
 <div class="mobile-backdrop" onclick="document.body.classList.remove('mobile-sidebar-open')"></div>
@@ -2820,11 +2847,33 @@ body.edh-syncing .sync-topline { opacity: 1; }
   </div>
 </div>
 
+
+
+<!-- ═══ V53 MODALE CONFIRMATION STYLEE ═══ -->
+<div class="modal-overlay" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title" onclick="closeModalIf(event,'modal-confirm')">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="confirm-title">Confirmer l’action</div>
+        <div class="modal-subtitle" id="confirm-subtitle">Cette action peut être irréversible.</div>
+      </div>
+      <button class="modal-close" type="button" aria-label="Fermer" onclick="resolveConfirmModal(false)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="edh-confirm-copy" id="confirm-message">Voulez-vous continuer ?</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" type="button" id="confirm-cancel-btn" onclick="resolveConfirmModal(false)">Annuler</button>
+      <button class="btn btn-danger" type="button" id="confirm-ok-btn" onclick="resolveConfirmModal(true)">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V53-2026-07-08-supabase-source-of-truth";
+const APP_PATCH_VERSION = "V52-2026-07-08-reporting-import-manuel-stable";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -3057,33 +3106,12 @@ function getMissingSupabaseColumn(err){
   const m = msg.match(/could not find the "([^"]+)" column/i) || msg.match(/column "([^"]+)".*does not exist/i);
   return m ? m[1] : '';
 }
-function rememberMissingSupabaseColumn(column){
-  if(!column) return;
-  try {
-    window.__EDH_MISSING_SUPABASE_COLUMNS__ = window.__EDH_MISSING_SUPABASE_COLUMNS__ || new Set();
-    window.__EDH_MISSING_SUPABASE_COLUMNS__.add(column);
-    console.warn('Schéma Supabase à compléter — colonne manquante détectée :', column, 'Colonnes cumulées :', Array.from(window.__EDH_MISSING_SUPABASE_COLUMNS__));
-    const admin = typeof currentUser === 'function' ? currentUser() : null;
-    const role = typeof normalizeRoleValue === 'function' ? normalizeRoleValue(admin?.role) : admin?.role;
-    if((role === 'admin_global' || role === 'admin_campus') && typeof showToast === 'function'){
-      clearTimeout(window.__EDH_MISSING_COLUMN_TOAST_TIMER__);
-      window.__EDH_MISSING_COLUMN_TOAST_TIMER__ = setTimeout(() => {
-        showToast('Schéma Supabase incomplet : colonne manquante ' + column + '. Voir console.', 'error');
-      }, 250);
-    }
-  } catch(_) {}
-}
 function removeMissingColumnAndRetryPayload(payload, err){
   const missing = getMissingSupabaseColumn(err);
   if(!missing || !(missing in payload)) return null;
   const cleaned = { ...payload };
   delete cleaned[missing];
-  rememberMissingSupabaseColumn(missing);
-  const remainingUsefulKeys = Object.keys(cleaned).filter(k => !['updated_at','created_at'].includes(k));
-  if(remainingUsefulKeys.length < 2){
-    console.error('Payload Supabase trop réduit après suppression de colonnes manquantes. Sauvegarde stoppée.', { missing, cleaned });
-    return null;
-  }
+  console.warn(`Colonne Supabase absente ignorée pour cette sauvegarde : ${missing}`);
   return cleaned;
 }
 
@@ -3569,19 +3597,27 @@ async function saveStudentDirectToSupabase(student){
       const { data: existing, error: findError } = await supabaseClient.from('etudiants').select('id').eq('app_id', payload.app_id).limit(1);
       if(!findError && existing && existing.length) existingId = existing[0].id;
     }
+    const missingColumns = [];
     for(let attempt=0; attempt<10; attempt++){
       const response = existingId
         ? await supabaseClient.from('etudiants').update(payload).eq('id', existingId)
         : await supabaseClient.from('etudiants').insert([payload]).select('id').single();
       if(!response.error){
         student.supabase_id = existingId || response.data?.id || null;
-        return { ok:true, id:student.supabase_id };
+        if(missingColumns.length) console.warn('Supabase étudiants : colonnes manquantes ignorées pendant la sauvegarde', [...new Set(missingColumns)]);
+        return { ok:true, id:student.supabase_id, missingColumns };
       }
       const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
-      if(cleaned){ payload = cleaned; continue; }
+      if(cleaned){
+        const missing = getMissingSupabaseColumn(response.error);
+        if(missing) missingColumns.push(missing);
+        payload = cleaned;
+        continue;
+      }
       throw response.error;
     }
-    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet étudiant' };
+    if(missingColumns.length) console.warn('Supabase étudiants : sauvegarde abandonnée après colonnes manquantes', [...new Set(missingColumns)]);
+    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet étudiant', missingColumns };
   } catch(err){
     console.error('Erreur sauvegarde étudiant Supabase:', err);
     return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
@@ -3974,6 +4010,7 @@ async function saveEventDirectToSupabase(localEvent){
       if(!response.error){
         if(!existingId) localEvent.supabase_event_id = response.data?.id || null;
         else localEvent.supabase_event_id = existingId;
+        if(missingColumns.length) console.warn('Supabase événements : colonnes manquantes ignorées pendant la sauvegarde', [...new Set(missingColumns)]);
         return { ok:true, id: localEvent.supabase_event_id, missingColumns };
       }
       const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
@@ -3985,7 +4022,8 @@ async function saveEventDirectToSupabase(localEvent){
       }
       throw response.error;
     }
-    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet événement' };
+    if(missingColumns.length) console.warn('Supabase événements : sauvegarde abandonnée après colonnes manquantes', [...new Set(missingColumns)]);
+    return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet événement', missingColumns };
   } catch(err){
     console.error('Erreur sauvegarde événement Supabase:', err);
     return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
@@ -4490,6 +4528,7 @@ function dedupeLeadsList(list){
   });
   return Array.from(map.values());
 }
+function getVisibleLeads(){ const ids=new Set(getVisibleLycees().flatMap(l=>eventIdCandidates(l))); return dedupeLeadsList((Array.isArray(LEADS)?LEADS:[]).filter(l=>!l.eventId||ids.has(String(l.eventId))||canSeeRecord(l))); }
 
 function normalizeSchoolName(value){
   const raw = (value || '').toString().trim();
@@ -5618,6 +5657,7 @@ function renderDashboardV2(){
 function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
 function qrImageUrl(url){ return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(url)}`; }
 function leadEventToken(eventObj){ return eventObj?.supabase_event_id || canonicalEventId(eventObj) || eventObj?.id || ''; }
+function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
 function populateLeadEvents(){
   const sel = document.getElementById('lead-event-select'); if(!sel) return;
   const current = sel.value;
@@ -5777,7 +5817,15 @@ function renderLeadsKpis(rows){
     <div class="kpi-card"><div class="kpi-label">Emails uniques</div><div class="kpi-value">${uniqueEmails}</div><div class="kpi-meta">Déduplication indicative</div></div>
     <div class="kpi-card"><div class="kpi-label">École dominante</div><div class="kpi-value" style="font-size:22px">${escapeHtml(topSchool ? topSchool[0] : '—')}</div><div class="kpi-meta">${topSchool ? topSchool[1]+' lead(s)' : 'À venir'}</div></div>`;
 }
-async function EDH_BASE_saveLeadFromForm(){
+function renderLeadsPage(){
+  populateLeadEvents(); renderQrPreview(); prefillLeadEvent(); updateLeadProgramOptions('lead');
+  const body = document.getElementById('leads-tbody'); const count = document.getElementById('leads-count');
+  const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  renderLeadsKpis(rows);
+  if(count) count.textContent = `${rows.length} lead(s)`;
+  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const eventName=ev.nom||l.eventName||l.lycee||'—'; const ville=ev.ville||l.ville||''; const status=leadTreatmentStatus(l); return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(eventName)}</td><td>${escapeHtml((l.lycee||ev.nom||'—'))}${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(((l.firstName||'')+' '+(l.lastName||'')).trim())}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${status.html}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openLeadDetail('${l.id}')">Fiche</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="12"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
+}
+async function saveLeadFromForm(){
   const eventId = document.getElementById('lead-event-select')?.value || '';
   const ev = findCalendarEventById(eventId) || {};
   const firstName = (document.getElementById('lead-firstname')?.value||'').trim();
@@ -5804,7 +5852,8 @@ async function deleteLead(id){
 function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun lien à copier','error'); navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
 function downloadQrCode(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun QR code à télécharger','error'); const ev=findCalendarEventById(document.getElementById('lead-event-select')?.value)||{}; const a=document.createElement('a'); a.href=qrImageUrl(url); a.download=`QR_leads_${(ev.nom||'forum').replace(/[^a-z0-9]+/gi,'_')}.png`; a.target='_blank'; a.click(); }
 function openLeadPublicForm(){ const url=document.getElementById('lead-qr-url')?.value||''; if(url) window.open(url,'_blank'); }
-async function EDH_BASE_refreshLeadsFromSupabase(){
+function downloadLeadsExcel(){ const rows=getVisibleLeads().map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const origine=ev.nom||l.eventName||l.lycee||'—'; return {Origine:origine, Date:l.createdAt, Saison:l.season||S.season, Evenement:origine, Ville:ev.ville||l.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Ecole_interessee:l.school, Cursus_souhaite:l.program||l.cursus, Niveau_etude:l.level, Notes:l.notes, Source:l.source}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
+async function refreshLeadsFromSupabase(){
   if(!supabaseClient) return showToast('Supabase indisponible : impossible de recharger les leads', 'error');
   const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
   if(error) return showToast('Erreur chargement leads Supabase : ' + getSupabaseErrorMessage(error), 'error');
@@ -5815,7 +5864,7 @@ async function EDH_BASE_refreshLeadsFromSupabase(){
 function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!lead) return; const ev=findCalendarEventById(lead.eventId)||{}; window.location.href=`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Suite à notre échange - Groupe EDH')}&body=${encodeURIComponent(`Bonjour ${lead.firstName},\n\nMerci pour ton échange avec nous lors de l'événement ${ev.nom||lead.eventName||''}.\n\nNous restons disponibles si tu souhaites recevoir plus d'informations sur ${lead.school||'nos écoles'}${lead.program ? ' - '+lead.program : ''}.\n\nBien cordialement,\nGroupe EDH`)}`; }
 function mailRecipient(event){ return event.mail_organisateur || event.mail_ecole || ''; }
 function mailContactName(event){ return event.organisateur || 'Madame, Monsieur'; }
-function EDH_BASE_emailTemplates(event, type){
+function emailTemplates(event, type){
   const nom = event.nom || 'votre établissement'; const date = event.date ? fmtDate(event.date) : '[date à préciser]'; const ecoles = eventSchoolsList(event);
   const templates = {
     prospection:{subject:`Intervention orientation - ${ecoles}`, body:`Bonjour ${mailContactName(event)},\n\nJe me permets de vous contacter dans le cadre des actions d'orientation menées par le groupe EDH (${ecoles}).\n\nNous souhaiterions proposer une intervention auprès des élèves de ${nom} afin de leur présenter nos formations et de les accompagner dans leur réflexion d'orientation.\n\nSeriez-vous disponible pour échanger à ce sujet ?\n\nJe reste à votre disposition et vous remercie par avance pour votre retour.\n\nBien cordialement,`},
@@ -5826,6 +5875,14 @@ function EDH_BASE_emailTemplates(event, type){
     merci:{subject:`Remerciements - ${nom}`, body:`Bonjour ${mailContactName(event)},\n\nNous vous remercions pour votre accueil lors de notre intervention au sein de ${nom}.\n\nCe fut un réel plaisir d'échanger avec vos élèves et de contribuer à leur réflexion d'orientation.\n\nNous restons à votre disposition pour toute future collaboration.\n\nBien cordialement,`}
   };
   return templates[type] || templates.prospection;
+}
+function openMailModal(eventId, type='prospection'){
+  MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
+  document.getElementById('email-template-type').value=type;
+  document.getElementById('email-to').value=mailRecipient(ev);
+  document.getElementById('email-modal-title').textContent='Préparer un mail automatique';
+  document.getElementById('email-modal-subtitle').textContent=`${ev.nom||''} · ${ev.ville||''}`;
+  renderEmailPreview(); document.getElementById('modal-email').classList.add('open');
 }
 function renderEmailPreview(){ const ev=findCalendarEventById(MAIL_CONTEXT_ID)||{}; const type=document.getElementById('email-template-type')?.value||'prospection'; const tpl=emailTemplates(ev,type); document.getElementById('email-subject').value=tpl.subject; document.getElementById('email-preview').textContent=tpl.body; }
 function copyEmailPreview(){ const text=document.getElementById('email-preview')?.textContent||''; navigator.clipboard?.writeText(text); showToast('Mail copié'); }
@@ -6143,6 +6200,7 @@ function forumFieldSheetHtml(eventObj){
   return `<!doctype html><html><head><meta charset="utf-8"><title>Fiche terrain - ${escapeHtml(eventObj.nom||'Forum')}</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#111827}h1{font-size:24px;margin-bottom:4px}.muted{color:#6b7280}.box{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin:14px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.check div{margin:7px 0} @media print{button{display:none}}
 
 
+
 </style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
 }
 function printForumFieldSheet(eventId){
@@ -6291,7 +6349,56 @@ function renderActionsStructurePage(){
   }
 }
 
-function EDH_BASE_renderPerformancePage(){
+function preparationTasksForEvent(l){
+  const leads = eventLeads(l);
+  const report = reportSummaryForEvent(l);
+  return [
+    {step:'Ambassadeurs', ok:forumHasAssignedStudents(l), title:'Trouver des ambassadeurs + attribuer les étudiants à l’événement', desc:'Identifier les étudiants disponibles, les inscrire à l’événement et confirmer qui représente chaque école sur place.'},
+    {step:'Teams', ok:false, title:'Créer conversation Teams avec les ambassadeurs', desc:'Créer une conversation Teams dédiée au forum avec les étudiants et collaborateurs mobilisés.'},
+    {step:'Outlook', ok:!!l.date, title:'Ajouter l’événement au calendrier Outlook', desc:'Télécharger le fichier Outlook / Teams puis l’ajouter au calendrier des personnes concernées.'},
+    {step:'Trajet', ok:!!(l.adresse || l.ville), title:'Préparer le trajet : train, bus, métro', desc:`Prévoir l’itinéraire depuis le campus EFAP ${currentEfapCampus(l)} et réserver les billets nécessaires.`},
+    {step:'QR Code', ok:leads.length>0, title:'Préparer le QR Code + tester le QR Code', desc:'Générer le QR code, le télécharger, le scanner avec un téléphone et vérifier que le formulaire s’ouvre correctement.'},
+    {step:'Sacs forums', ok:false, title:'Préparer les sacs forums + remise des sacs forums', desc:'Préparer les supports, goodies, flyers et sacs forums puis confirmer leur remise aux personnes qui partent sur le forum.'},
+    {step:'Reporting', ok:report.global>0 || report.candidat>0 || report.admis>0 || report.inscrit>0, title:'Compléter le reporting', desc:'Saisir prospects rencontrés, candidats, admis, inscrits et notes qualitatives après le forum.'}
+  ];
+}
+function renderTerrainPage(){
+  const events = activeValidatedForums();
+  const list = document.getElementById('terrain-forum-list');
+  const count = document.getElementById('terrain-count');
+  if(count) count.textContent = `${events.length} forum(s)`;
+  if(list){
+    list.innerHTML = events.length ? events.map((l, idx) => {
+      const id = canonicalEventId(l) || l.id;
+      const tasks = preparationTasksForEvent(l);
+      const done = tasks.filter(t => t.ok).length;
+      const pctDone = Math.round((done / tasks.length) * 100);
+      return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${id}" onclick="selectTerrainEvent('${id}')"><div class="terrain-item-title">${escapeHtml(l.nom)}</div><div class="terrain-item-meta">${fmtDate(l.date)} · ${escapeHtml(l.ville||'')} · ${done}/${tasks.length} prêt</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
+    }).join('') : `<div class="crm-empty">Aucun forum à préparer : les forums terminés sont archivés et les autres ne sont pas encore validés.</div>`;
+  }
+  if(events.length) selectTerrainEvent(canonicalEventId(events[0]) || events[0].id, false);
+  else {
+    const detail = document.getElementById('terrain-detail');
+    if(detail) detail.innerHTML = '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>';
+  }
+}
+function selectTerrainEvent(eventId, markActive=true){
+  const l = findCalendarEventById(eventId);
+  const detail = document.getElementById('terrain-detail');
+  if(!l || !detail) return;
+  if(markActive){
+    document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active'));
+    const active = document.getElementById('terrain-item-' + eventId);
+    if(active) active.classList.add('active');
+  }
+  const tasks = preparationTasksForEvent(l);
+  const done = tasks.filter(t=>t.ok).length;
+  const selectedCount = document.getElementById('terrain-selected-count');
+  if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions prêtes`;
+  const id = canonicalEventId(l) || l.id;
+  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche terrain', `printForumFieldSheet('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>${kitForumHtml(l)}`;
+}
+function renderPerformancePage(){
   const events = activeValidatedForums();
   const rows = [];
   const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
@@ -6647,7 +6754,7 @@ function openLeadHashIfNeeded(){
   showPublicLeadForm(eventToken, season);
   return true;
 }
-async function EDH_BASE_submitPublicLead(){
+async function submitPublicLead(){
   const eventToken = CURRENT_PUBLIC_LEAD_EVENT_ID;
   const ev = await loadPublicLeadEventContext(eventToken, S.season || DEFAULT_SEASON);
   const firstName=(document.getElementById('public-lead-firstname')?.value||'').trim();
@@ -7121,7 +7228,7 @@ function renderReportingAllTable(validatedEvents){
   }
 }
 
-function EDH_BASE_renderReportingPage(){
+function renderReportingPage(){
   const validated = getValidatedEventsForReporting();
   const visibleSchools = schoolsVisibleForCurrentUser();
   renderReportingAllTable(validated);
@@ -8194,8 +8301,10 @@ function syncReportingFromLeads(){
     rec.autres = Math.max(Number(rec.autres||0), counts.autres);
   });
 }
-function renderReportingPage(){ syncReportingFromLeads(); EDH_BASE_renderReportingPage(); }
-function renderPerformancePage(){ syncReportingFromLeads(); EDH_BASE_renderPerformancePage(); }
+const EDH_V38_renderReportingPage = renderReportingPage;
+function renderReportingPage(){ syncReportingFromLeads(); EDH_V38_renderReportingPage(); }
+const EDH_V38_renderPerformancePage = renderPerformancePage;
+function renderPerformancePage(){ syncReportingFromLeads(); EDH_V38_renderPerformancePage(); }
 function leadEventName(lead){
   const ev = findCalendarEventById(lead.eventId) || {};
   return ev.nom || lead.eventName || lead.lycee || '—';
@@ -8271,24 +8380,28 @@ function rowsForLeadsExport(rows){
 }
 function downloadLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(getVisibleLeads())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
 function downloadFilteredLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(filteredAllLeadsRows())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads filtrés'); XLSX.writeFile(wb,`EDH_leads_filtres_${S.season||DEFAULT_SEASON}.xlsx`); }
+const EDH_V38_saveLeadFromForm = saveLeadFromForm;
 async function saveLeadFromForm(){
-  await EDH_BASE_saveLeadFromForm();
+  await EDH_V38_saveLeadFromForm();
   syncReportingFromLeads();
   try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
 }
+const EDH_V38_refreshLeadsFromSupabase = refreshLeadsFromSupabase;
 async function refreshLeadsFromSupabase(){
-  await EDH_BASE_refreshLeadsFromSupabase();
+  await EDH_V38_refreshLeadsFromSupabase();
   syncReportingFromLeads();
   try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
 }
+const EDH_V38_submitPublicLead = submitPublicLead;
 async function submitPublicLead(){
-  await EDH_BASE_submitPublicLead();
+  await EDH_V38_submitPublicLead();
   syncReportingFromLeads();
 }
 function replaceTemplateVariables(text, event){
   const values = {lycee:event.nom||'votre établissement', date:event.date?fmtDate(event.date):'[date à préciser]', ecoles:eventSchoolsList(event), contact:mailContactName(event), ville:event.ville||''};
   return String(text||'').replace(/\{\{\s*(lycee|date|ecoles|contact|ville)\s*\}\}/gi, (_,k)=>values[k.toLowerCase()]||'');
 }
+const EDH_V38_emailTemplates = emailTemplates;
 function emailTemplates(event, type){
   loadV39LocalState();
   if(String(type||'').startsWith('custom:')){
@@ -8296,7 +8409,7 @@ function emailTemplates(event, type){
     const tpl = (CUSTOM_EMAIL_TEMPLATES || []).find(t=>String(t.id)===String(id));
     if(tpl) return {subject:replaceTemplateVariables(tpl.subject,event), body:replaceTemplateVariables(tpl.body,event)};
   }
-  return EDH_BASE_emailTemplates(event,type);
+  return EDH_V38_emailTemplates(event,type);
 }
 function renderEmailTemplateSelect(){
   loadV39LocalState();
@@ -8308,6 +8421,7 @@ function renderEmailTemplateSelect(){
   sel.innerHTML = base.map(([v,l])=>`<option value="${v}">${l}</option>`).join('') + (CUSTOM_EMAIL_TEMPLATES.length ? '<optgroup label="Templates personnalisés">' + CUSTOM_EMAIL_TEMPLATES.map(t=>`<option value="custom:${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('') + '</optgroup>' : '');
   if([...sel.options].some(o=>o.value===current)) sel.value=current;
 }
+const EDH_V38_openMailModal = openMailModal;
 function openMailModal(eventId, type='prospection'){
   MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
   renderEmailTemplateSelect();
@@ -9877,10 +9991,11 @@ window.addEventListener('DOMContentLoaded', () => {
     try { return JSON.parse(localStorage.getItem(DELETED_LEADS_STORAGE_KEY) || '[]').filter(Boolean); }
     catch(_) { return []; }
   }
+  // Les tombstones de leads supprimés sont volontairement plafonnés à 1200 entrées
+  // pour éviter une croissance infinie du localStorage. Si le volume de suppressions
+  // augmente fortement, prévoir une vraie table Supabase dédiée aux suppressions.
   function saveDeletedLeadTombstones(list){
-    // Filet de sécurité local : limite portée à 20 000 suppressions pour éviter la réapparition d'anciens leads.
-    // À remplacer idéalement par une colonne Supabase deleted_at si le schéma peut être migré.
-    try { localStorage.setItem(DELETED_LEADS_STORAGE_KEY, JSON.stringify((list || []).slice(-20000))); } catch(_) {}
+    try { localStorage.setItem(DELETED_LEADS_STORAGE_KEY, JSON.stringify((list || []).slice(-1200))); } catch(_) {}
   }
   function leadSignatureV51(lead){
     if(!lead) return '';
@@ -10154,126 +10269,177 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 })();
 
-
-
-
 /* ══════════════════════════════════════
-   V53 — Correctifs consolidés : reporting, Supabase, UX
-   Rôle : couche finale unique pour l'import reporting, la synchronisation leads→reporting,
-   les garde-fous Supabase, les confirmations stylées et les retours visuels utilisateur.
+   V52 — Import reporting historique stable
+   - L'import Excel 2025-2026 devient une source manuelle conservée.
+   - Le rechargement Supabase ne remet plus les chiffres importés à 0.
+   - L'import tente aussi de pousser reporting_json + agrégats dans Supabase.
+   - Les prochaines saisons peuvent continuer à se remplir automatiquement via les leads QR.
 ══════════════════════════════════════ */
 (function(){
-  const V53 = 'V53-2026-07-08-supabase-source-of-truth';
-  window.EDH_APP_VERSION = V53;
-  console.info('EDH app version:', V53);
+  const V52 = 'V52-2026-07-08-reporting-import-manuel-stable';
+  window.EDH_APP_VERSION = V52;
+  console.info('EDH app version:', V52);
 
-  const REPORTING_FIELDS = ['global','nombreProspect','seconde','premiere','terminale','autres','prospect','candidat','admis','inscrit'];
-  const KNOWN_SCHOOLS = ['EFAP','ICART','CREAD','BRASSART','EFJ','MOPA','ESEC','Ecole Bleue','3W','IFA Paris','À préciser'];
+  const MANUAL_REPORTING_STORAGE_KEY = 'edh_manual_reporting_v52';
 
-  function txt(v){ return String(v ?? '').trim(); }
-  function norm(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
-  function esc(v){ return typeof escapeHtml === 'function' ? escapeHtml(v) : txt(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function num(v){
+  function safeTxt(v){ return String(v ?? '').trim(); }
+  function normTxt(v){
+    return safeTxt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  }
+  function n(v){
     if(v === null || v === undefined || v === '') return 0;
-    const n = Number(String(v).replace(/\s/g,'').replace(',', '.'));
-    return Number.isFinite(n) ? Math.max(0, n) : 0;
+    const raw = String(v).replace(/\s/g,'').replace(',', '.');
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
   }
-  function normalizeSchoolLabel(v){
-    const raw = txt(v);
-    if(!raw) return '';
-    if(typeof normalizeSchoolName === 'function'){
-      const n = normalizeSchoolName(raw);
-      if(n) return n;
-    }
-    const simple = norm(raw);
-    const match = KNOWN_SCHOOLS.find(s => norm(s) === simple || simple.includes(norm(s)) || norm(s).includes(simple));
-    return match || raw.toUpperCase();
-  }
-  function eventCanonicalId(ev){
-    try { return (typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.id || ev?.supabase_event_id || ''; }
-    catch(_) { return ev?.id || ev?.supabase_event_id || ''; }
-  }
-  function eventSchoolsFor(ev){
-    try { const arr = typeof getSchoolsArray === 'function' ? getSchoolsArray(ev?.ecoles || ev?.school || '') : []; return arr.length ? arr : ['EFAP','ICART','CREAD','BRASSART']; }
-    catch(_) { return ['EFAP','ICART','CREAD','BRASSART']; }
-  }
-  function schoolBelongsToEvent(ev, school){
-    try { return typeof schoolMatches === 'function' ? schoolMatches(ev?.ecoles, school) : eventSchoolsFor(ev).includes(school); }
-    catch(_) { return eventSchoolsFor(ev).includes(school); }
-  }
-  function excelIso(v){
+  function excelDateToIso(v){
     if(!v && v !== 0) return '';
     if(v instanceof Date && !isNaN(v.getTime())) return v.toISOString().slice(0,10);
-    const s = txt(v);
+    const s = safeTxt(v);
     if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
     const fr = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
-    if(fr){ const y = fr[3].length === 2 ? '20' + fr[3] : fr[3]; return `${y}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}`; }
+    if(fr){
+      const yyyy = fr[3].length === 2 ? '20' + fr[3] : fr[3];
+      return `${yyyy}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}`;
+    }
     const serial = Number(v);
     if(Number.isFinite(serial) && serial > 20000 && serial < 70000){
       const d = new Date(Date.UTC(1899, 11, 30 + Math.floor(serial)));
       return d.toISOString().slice(0,10);
     }
-    try { if(typeof cleanDateForSupabase === 'function') return cleanDateForSupabase(v) || ''; } catch(_) {}
+    try {
+      if(typeof cleanDateForSupabase === 'function') return cleanDateForSupabase(v) || '';
+    } catch(_) {}
     return '';
   }
-  function findColumn(headers, aliases){
-    const indexed = (headers || []).map(h => ({ raw:h, n:norm(h) }));
-    for(const alias of aliases){ const a = norm(alias); const exact = indexed.find(x => x.n === a); if(exact) return exact.raw; }
-    for(const alias of aliases){ const a = norm(alias); const partial = indexed.find(x => x.n.includes(a) || a.includes(x.n)); if(partial) return partial.raw; }
+  function findColV52(headers, aliases){
+    const scored = (headers || []).map(h => ({ raw:h, norm:normTxt(h) }));
+    for(const alias of aliases){
+      const a = normTxt(alias);
+      const exact = scored.find(x => x.norm === a);
+      if(exact) return exact.raw;
+    }
+    for(const alias of aliases){
+      const a = normTxt(alias);
+      const partial = scored.find(x => x.norm.includes(a) || a.includes(x.norm));
+      if(partial) return partial.raw;
+    }
     return '';
   }
-  function findImportEvent(row, cols){
+  function getManualStore(){
+    try {
+      const obj = JSON.parse(localStorage.getItem(MANUAL_REPORTING_STORAGE_KEY) || '{}');
+      return obj && typeof obj === 'object' ? obj : {};
+    } catch(_) { return {}; }
+  }
+  function setManualStore(obj){
+    try { localStorage.setItem(MANUAL_REPORTING_STORAGE_KEY, JSON.stringify(obj || {})); } catch(err){ console.warn('Sauvegarde reporting manuel impossible', err); }
+  }
+  function seasonKey(){ return S?.season || '2025-2026'; }
+  function manualBucket(){
+    const store = getManualStore();
+    const season = seasonKey();
+    if(!store[season]) store[season] = {};
+    return { store, season, bucket: store[season] };
+  }
+  function recHasNumbers(rec){
+    return ['global','seconde','premiere','terminale','autres','prospect','candidat','admis','inscrit'].some(k => Number(rec?.[k] || 0) > 0);
+  }
+  function mergeManualReportingV52(){
+    try {
+      const bucket = getManualStore()[seasonKey()] || {};
+      Object.entries(bucket).forEach(([key, rec]) => {
+        if(!rec || typeof rec !== 'object') return;
+        const current = (REPORTING_DATA && REPORTING_DATA[key]) || {};
+        REPORTING_DATA[key] = { ...current, ...rec, source:'manual_import' };
+      });
+    } catch(err){ console.warn('Merge reporting manuel V52', err); }
+  }
+  window.mergeManualReportingV52 = mergeManualReportingV52;
+
+  function saveManualRecord(key, rec){
+    if(!key || !rec) return;
+    const {store, season, bucket} = manualBucket();
+    bucket[key] = { ...rec, source:'manual_import', updatedAt:new Date().toISOString() };
+    store[season] = bucket;
+    setManualStore(store);
+  }
+
+  function eventSchools(ev){
+    try {
+      const arr = typeof getSchoolsArray === 'function' ? getSchoolsArray(ev?.ecoles) : [];
+      return arr.length ? arr : ['EFAP','ICART','CREAD','BRASSART'];
+    } catch(_) { return ['EFAP','ICART','CREAD','BRASSART']; }
+  }
+  function eventId(ev){
+    try { return (typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.id || ev?.supabase_event_id || ''; }
+    catch(_) { return ev?.id || ev?.supabase_event_id || ''; }
+  }
+  function schoolOk(ev, school){
+    try { return typeof schoolMatches === 'function' ? schoolMatches(ev?.ecoles, school) : eventSchools(ev).includes(school); }
+    catch(_) { return eventSchools(ev).includes(school); }
+  }
+  function findEventForImport(row, cols){
     const rawName = row[cols.event] || row[cols.name] || '';
     const rawCity = row[cols.city] || '';
     const rawDate = row[cols.date] || '';
-    const school = normalizeSchoolLabel(row[cols.school] || '');
-    const nameN = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(rawName) : norm(rawName);
-    const cityN = norm(rawCity);
-    const iso = excelIso(rawDate);
+    const school = normalizeSchoolName(row[cols.school] || '') || safeTxt(row[cols.school] || '').toUpperCase();
+    const nameN = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(rawName) : normTxt(rawName);
+    const cityN = normTxt(rawCity);
+    const iso = excelDateToIso(rawDate);
     const events = (typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : (Array.isArray(LYCEES) ? LYCEES : [])) || [];
     let matches = events.filter(ev => {
-      const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || ev?.lycee || '') : norm(ev?.nom || ev?.lycee || '');
-      return evName && evName === nameN && (!school || schoolBelongsToEvent(ev, school));
+      const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || ev?.lycee || '') : normTxt(ev?.nom || ev?.lycee || '');
+      return evName && evName === nameN && (!school || schoolOk(ev, school));
     });
-    if(cityN){ const cityMatches = matches.filter(ev => norm(ev?.ville || '') === cityN); if(cityMatches.length) matches = cityMatches; }
-    if(iso){ const dateMatches = matches.filter(ev => excelIso(ev?.date) === iso); if(dateMatches.length) matches = dateMatches; }
+    if(cityN){
+      const cityMatches = matches.filter(ev => normTxt(ev?.ville || '') === cityN);
+      if(cityMatches.length) matches = cityMatches;
+    }
+    if(iso){
+      const dateMatches = matches.filter(ev => excelDateToIso(ev?.date) === iso);
+      if(dateMatches.length) matches = dateMatches;
+    }
     return matches[0] || null;
   }
-  function ensureSyncBar(){
-    if(document.querySelector('.sync-topline')) return;
-    const bar = document.createElement('div');
-    bar.className = 'sync-topline';
-    bar.setAttribute('aria-hidden','true');
-    document.body.appendChild(bar);
-  }
-  function setSyncing(on){ ensureSyncBar(); document.body.classList.toggle('edh-syncing', Boolean(on)); }
-  async function withButtonLoading(btn, work){
-    if(!btn || typeof work !== 'function') return work?.();
-    const oldText = btn.textContent;
-    btn.classList.add('is-loading');
-    btn.disabled = true;
-    try { return await work(); }
-    finally { btn.classList.remove('is-loading'); btn.disabled = false; btn.textContent = oldText; }
+
+  async function persistImportedReportingToSupabase(eventsMap){
+    if(!eventsMap || !eventsMap.size) return {ok:0, failed:0};
+    let ok = 0, failed = 0;
+    for(const ev of eventsMap.values()){
+      try {
+        if(typeof saveEventExtrasToSupabase === 'function'){
+          const res = await saveEventExtrasToSupabase(ev);
+          if(res?.ok || res?.skipped) ok++; else failed++;
+        } else if(typeof saveEventDirectToSupabase === 'function'){
+          const res = await saveEventDirectToSupabase(ev);
+          if(res?.ok || res?.skipped) ok++; else failed++;
+        }
+      } catch(err){ failed++; console.warn('Import reporting : sauvegarde Supabase événement impossible', ev?.nom, err); }
+    }
+    return {ok, failed};
   }
 
-  // Import Excel reporting : persiste chaque événement touché dans Supabase via reporting_json.
+  const previousHandleReportingFile = window.handleReportingFile;
   window.handleReportingFile = function(event){
     const file = event.target?.files?.[0];
     if(!file) return;
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellDates:false });
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:false});
         const sheet = wb.Sheets['Import reporting'] || wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval:'' });
+        const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
         IMPORT_REPORTING_ROWS = rows;
         IMPORT_REPORTING_HEADERS = rows.length ? Object.keys(rows[0]) : [];
         const box = document.getElementById('import-reporting-box');
-        if(box) box.innerHTML = `<strong>${rows.length} ligne(s) détectée(s)</strong><br>Vérification des colonnes et sauvegarde Supabase au moment de l'import.`;
+        if(box) box.innerHTML = `<strong>${rows.length} ligne(s) détectée(s)</strong><br>Mode V52 : import historique manuel, sauvegarde locale protégée + tentative d'enregistrement Supabase.`;
       } catch(err){
-        console.error('Lecture Excel reporting impossible', err);
+        console.warn('Lecture reporting V52 impossible, fallback ancienne lecture', err);
+        if(typeof previousHandleReportingFile === 'function') return previousHandleReportingFile(event);
         const box = document.getElementById('import-reporting-box');
-        if(box) box.innerHTML = '<span style="color:var(--red)">Impossible de lire ce fichier Excel.</span>';
+        if(box) box.innerHTML = '<span style="color:var(--red)">Impossible de lire ce fichier.</span>';
       }
     };
     reader.readAsArrayBuffer(file);
@@ -10281,406 +10447,628 @@ window.addEventListener('DOMContentLoaded', () => {
 
   window.importReportingFromFile = async function(){
     if(!Array.isArray(IMPORT_REPORTING_ROWS) || !IMPORT_REPORTING_ROWS.length) return showToast('Aucun reporting à importer','error');
-    const trigger = document.activeElement;
-    return withButtonLoading(trigger?.tagName === 'BUTTON' ? trigger : null, async () => {
-      window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 180000;
-      window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 180000;
-      setSyncing(true);
+    window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 120000;
+    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 120000;
 
-      const h = IMPORT_REPORTING_HEADERS || [];
-      const cols = {
-        school: findColumn(h, ['École','Ecole','School']),
-        event: findColumn(h, ['Nom du lycée','Nom du lycee','Lycée','Lycee','Établissement','Etablissement','Evènement','Evenement','Forum']),
-        city: findColumn(h, ['Ville']),
-        date: findColumn(h, ['Date']),
-        statut: findColumn(h, ['Statuts','Statut']),
-        global: findColumn(h, ['Global','Prospects rencontrés','Prospects rencontres','Contacts rencontrés','Contacts rencontres']),
-        seconde: findColumn(h, ['2nd','2nde','Seconde']),
-        premiere: findColumn(h, ['1ere','1ère','Première','Premiere']),
-        terminale: findColumn(h, ['Term','Terminale']),
-        autres: findColumn(h, ['Autres (Collège, Bac, BAC+1, Bac+2)','Autres','College','Bac','Bac+1','Bac+2']),
-        prospect: findColumn(h, ['Prospect','Prospects']),
-        candidat: findColumn(h, ['Candidat','Candidats']),
-        admis: findColumn(h, ['Admis']),
-        inscrit: findColumn(h, ['Inscrit','Inscrits'])
+    const h = IMPORT_REPORTING_HEADERS || [];
+    const cols = {
+      school: findColV52(h, ['École','Ecole','School']),
+      event: findColV52(h, ['Nom du lycée','Nom du lycee','Lycée','Lycee','Établissement','Etablissement','Evènement','Evenement']),
+      city: findColV52(h, ['Ville']),
+      date: findColV52(h, ['Date']),
+      statut: findColV52(h, ['Statuts','Statut']),
+      global: findColV52(h, ['Global','Prospects rencontrés','Prospects rencontres']),
+      seconde: findColV52(h, ['2nd','Seconde','2nde']),
+      premiere: findColV52(h, ['1ere','1ère','Première','Premiere']),
+      terminale: findColV52(h, ['Term','Terminale']),
+      autres: findColV52(h, ['Autres (Collège, Bac, BAC+1, Bac+2)','Autres','College','Bac+1','Bac+2']),
+      prospect: findColV52(h, ['Prospect']),
+      candidat: findColV52(h, ['Candidat']),
+      admis: findColV52(h, ['Admis']),
+      inscrit: findColV52(h, ['Inscrit'])
+    };
+    if(!cols.school || !cols.event) return showToast('Colonnes École et Nom du lycée introuvables dans le fichier','error');
+
+    let imported = 0, unmatched = 0;
+    const touchedEvents = new Map();
+    const unmatchedRows = [];
+
+    IMPORT_REPORTING_ROWS.forEach((row, idx) => {
+      const school = normalizeSchoolName(row[cols.school] || '') || safeTxt(row[cols.school] || '').toUpperCase();
+      const event = findEventForImport(row, cols);
+      if(!school || !event){
+        unmatched++;
+        if(unmatchedRows.length < 12) unmatchedRows.push(`${idx + 2}. ${safeTxt(row[cols.event]) || 'Lycée vide'}${row[cols.city] ? ' · ' + row[cols.city] : ''}${school ? ' · ' + school : ''}`);
+        return;
+      }
+      const key = getReportKey(eventId(event), school);
+      const rec = getReportRecord(eventId(event), school);
+      const importedRec = {
+        ...rec,
+        statut: cols.statut ? (safeTxt(row[cols.statut]) || rec.statut || 'Prospect') : (rec.statut || 'Prospect'),
+        nombreProspect: n(row[cols.global]),
+        global: n(row[cols.global]),
+        seconde: n(row[cols.seconde]),
+        premiere: n(row[cols.premiere]),
+        terminale: n(row[cols.terminale]),
+        autres: n(row[cols.autres]),
+        prospect: n(row[cols.prospect]),
+        candidat: n(row[cols.candidat]),
+        admis: n(row[cols.admis]),
+        inscrit: n(row[cols.inscrit]),
+        source:'manual_import',
+        importedAt:new Date().toISOString()
       };
-      const missingRequired = [];
-      if(!cols.school) missingRequired.push('École');
-      if(!cols.event) missingRequired.push('Nom du lycée / Forum');
-      if(missingRequired.length){
-        setSyncing(false);
-        window.__EDH_IMPORTING_REPORTING_UNTIL = 0;
-        return showToast('Colonnes obligatoires manquantes : ' + missingRequired.join(', '), 'error');
-      }
-
-      let imported = 0;
-      const ignored = [];
-      const touchedEvents = new Map();
-      for(const [i,row] of IMPORT_REPORTING_ROWS.entries()){
-        const school = normalizeSchoolLabel(row[cols.school] || '');
-        const ev = findImportEvent(row, cols);
-        const lineLabel = `${i + 2}. ${txt(row[cols.event]) || 'Lycée vide'}${row[cols.city] ? ' · ' + txt(row[cols.city]) : ''}${school ? ' · ' + school : ''}`;
-        if(!school || !KNOWN_SCHOOLS.map(norm).includes(norm(school))){ ignored.push(`${lineLabel} — école non reconnue`); continue; }
-        if(!ev){ ignored.push(`${lineLabel} — forum validé introuvable`); continue; }
-        const id = eventCanonicalId(ev);
-        if(!id){ ignored.push(`${lineLabel} — identifiant événement introuvable`); continue; }
-        const key = typeof getReportKey === 'function' ? getReportKey(id, school) : `${id}__${school}`;
-        const rec = typeof getReportRecord === 'function' ? getReportRecord(id, school) : (REPORTING_DATA[key] || {});
-        const next = { ...rec };
-        if(cols.statut) next.statut = txt(row[cols.statut]) || next.statut || 'Prospect';
-        next.global = num(row[cols.global]);
-        next.nombreProspect = next.global;
-        next.seconde = num(row[cols.seconde]);
-        next.premiere = num(row[cols.premiere]);
-        next.terminale = num(row[cols.terminale]);
-        next.autres = num(row[cols.autres]);
-        next.prospect = num(row[cols.prospect]);
-        next.candidat = num(row[cols.candidat]);
-        next.admis = num(row[cols.admis]);
-        next.inscrit = num(row[cols.inscrit]);
-        next.source = 'manual_import';
-        next.updatedAt = new Date().toISOString();
-        const levels = next.seconde + next.premiere + next.terminale + next.autres;
-        if(next.global < levels) next.global = levels;
-        if(next.nombreProspect < next.global) next.nombreProspect = next.global;
-        if(next.prospect < next.global) next.prospect = next.global;
-        REPORTING_DATA[key] = next;
-        touchedEvents.set(id, ev);
-        imported++;
-      }
-
-      try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
-      try { renderReportingPage(); renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); if(typeof renderDashboardV2 === 'function') renderDashboardV2(); } catch(_) {}
-
-      let saved = 0, failed = 0;
-      const errors = [];
-      for(const ev of touchedEvents.values()){
-        try {
-          const res = typeof saveEventExtrasToSupabase === 'function' ? await saveEventExtrasToSupabase(ev) : { ok:false, message:'saveEventExtrasToSupabase absent' };
-          if(res?.ok || res?.skipped){ saved++; }
-          else { failed++; errors.push(`${ev?.nom || 'Événement'} : ${res?.message || 'échec inconnu'}`); }
-        } catch(err){ failed++; errors.push(`${ev?.nom || 'Événement'} : ${typeof getSupabaseErrorMessage === 'function' ? getSupabaseErrorMessage(err) : (err?.message || err)}`); }
-      }
-
-      const box = document.getElementById('import-reporting-box');
-      if(box){
-        const ignoredHtml = ignored.length ? `<br><br><span style="color:var(--orange)">${ignored.length} ligne(s) ignorée(s)</span><br><small>${ignored.slice(0,16).map(esc).join('<br>')}${ignored.length>16?'<br>…':''}</small>` : '';
-        const errorHtml = errors.length ? `<br><br><span style="color:var(--red)">Sauvegardes Supabase à vérifier</span><br><small>${errors.slice(0,8).map(esc).join('<br>')}${errors.length>8?'<br>…':''}</small>` : '';
-        box.innerHTML = `<strong>${imported} ligne(s) importée(s) en mémoire</strong><br>${saved} événement(s) sauvegardé(s) sur Supabase · ${failed} échec(s)${ignoredHtml}${errorHtml}`;
-      }
-
-      window.__EDH_IMPORTING_REPORTING_UNTIL = failed ? Date.now() + 60000 : Date.now() + 8000;
-      window.__EDH_REPORTING_DIRTY_UNTIL = failed ? Date.now() + 60000 : Date.now() + 8000;
-      setSyncing(false);
-      try { renderReportingPage(); renderPerformancePage(); if(typeof renderAllLeadsPage === 'function') renderAllLeadsPage(); } catch(_) {}
-      closeModal('modal-import-reporting');
-      const msg = `${imported} ligne(s) importée(s) · ${saved} événement(s) sauvegardé(s) Supabase` + (ignored.length ? ` · ${ignored.length} ignorée(s)` : '') + (failed ? ` · ${failed} échec(s)` : '');
-      showToast(msg, failed ? 'error' : 'success');
+      const levelsTotal = importedRec.seconde + importedRec.premiere + importedRec.terminale + importedRec.autres;
+      if(importedRec.global < levelsTotal) importedRec.global = levelsTotal;
+      if(importedRec.prospect < importedRec.global) importedRec.prospect = importedRec.global;
+      REPORTING_DATA[key] = importedRec;
+      saveManualRecord(key, importedRec);
+      touchedEvents.set(eventId(event), event);
+      imported++;
     });
+
+    mergeManualReportingV52();
+    try { saveLocalData(); } catch(_) {}
+    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+
+    const box = document.getElementById('import-reporting-box');
+    if(box){
+      box.innerHTML = `<strong>${imported} ligne(s) importée(s)</strong>${unmatched ? `<br><span style="color:var(--orange)">${unmatched} ligne(s) non associée(s) à un forum validé.</span>` : ''}${unmatchedRows.length ? `<br><br><small>${unmatchedRows.map(x=>x.replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))).join('<br>')}</small>` : ''}<br><br>Sauvegarde Supabase en cours si la table événements contient reporting_json.`;
+    }
+
+    let syncResult = {ok:0, failed:0};
+    try { syncResult = await persistImportedReportingToSupabase(touchedEvents); } catch(err){ console.warn(err); }
+    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 8000;
+    try { if(typeof refreshFromSupabaseAndRender === 'function') await refreshFromSupabaseAndRender(true, 'after-reporting-import'); } catch(_) {}
+    mergeManualReportingV52();
+    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+
+    closeModal('modal-import-reporting');
+    const msg = `${imported} ligne(s) importée(s)` + (unmatched ? ` · ${unmatched} non associée(s)` : '') + (syncResult.failed ? ` · ${syncResult.failed} sauvegarde(s) Supabase à vérifier` : '');
+    showToast(msg, syncResult.failed ? 'error' : 'success');
   };
 
-  // Synchronisation leads → reporting : ne baisse jamais une valeur manuelle/importée.
-  window.syncReportingFromLeads = function(){
-    try {
-      const events = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : [];
-      const allLeads = Array.isArray(window.LEADS) ? window.LEADS : (Array.isArray(LEADS) ? LEADS : []);
-      events.forEach(ev => eventSchoolsFor(ev).forEach(school => {
-        const matching = allLeads.filter(l => {
-          const s = normalizeSchoolLabel(l.school || l.ecole || '');
-          if(s !== school) return false;
-          const evId = norm(eventCanonicalId(ev));
-          const leadEvId = norm(l.eventId || l.event_app_id || l.event_id || '');
-          const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || '') : norm(ev?.nom || '');
-          const leadName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(l.eventName || l.lycee || '') : norm(l.eventName || l.lycee || '');
-          return Boolean((evId && leadEvId && evId === leadEvId) || (evName && leadName && evName === leadName));
-        });
-        if(!matching.length) return;
-        const rec = typeof getReportRecord === 'function' ? getReportRecord(eventCanonicalId(ev), school) : null;
-        if(!rec) return;
-        const levels = { seconde:0, premiere:0, terminale:0, autres:0 };
-        matching.forEach(l => {
-          const lv = norm(l.level || l.niveau_etude || l.niveau || '');
-          if(lv.includes('2nde') || lv.includes('seconde')) levels.seconde++;
-          else if(lv.includes('1ere') || lv.includes('premiere') || lv.includes('prem')) levels.premiere++;
-          else if(lv.includes('term')) levels.terminale++;
-          else levels.autres++;
-        });
-        rec.global = Math.max(num(rec.global), matching.length);
-        rec.nombreProspect = Math.max(num(rec.nombreProspect), matching.length);
-        rec.prospect = Math.max(num(rec.prospect), matching.length);
-        rec.seconde = Math.max(num(rec.seconde), levels.seconde);
-        rec.premiere = Math.max(num(rec.premiere), levels.premiere);
-        rec.terminale = Math.max(num(rec.terminale), levels.terminale);
-        rec.autres = Math.max(num(rec.autres), levels.autres);
-      }));
-    } catch(err){ console.warn('syncReportingFromLeads V53', err); }
-  };
-  window.syncReportingFromLeadsV51 = window.syncReportingFromLeads;
-  window.syncReportingFromLeadsV46 = window.syncReportingFromLeads;
-  window.syncReportingFromLeadsV44 = window.syncReportingFromLeads;
-  window.syncReportingFromLeadsV41 = window.syncReportingFromLeads;
+  const previousLoadFromSupabaseV52 = window.loadFromSupabase;
+  if(typeof previousLoadFromSupabaseV52 === 'function'){
+    window.loadFromSupabase = async function(){
+      const res = await previousLoadFromSupabaseV52.apply(this, arguments);
+      mergeManualReportingV52();
+      return res;
+    };
+  }
 
-  const previousRefreshFromSupabaseAndRender = window.refreshFromSupabaseAndRender;
-  if(typeof previousRefreshFromSupabaseAndRender === 'function'){
+  const previousRefreshV52 = window.refreshFromSupabaseAndRender;
+  if(typeof previousRefreshV52 === 'function'){
     window.refreshFromSupabaseAndRender = async function(silent=true, reason='manual', seasonOverride=null){
-      const active = document.activeElement;
-      const editingReporting = active && active.classList && active.classList.contains('report-input');
-      const protectedUntil = Math.max(Number(window.__EDH_REPORTING_DIRTY_UNTIL || 0), Number(window.__EDH_IMPORTING_REPORTING_UNTIL || 0));
-      if(silent && (editingReporting || Date.now() < protectedUntil)){
-        try { if(typeof setSupabaseStatus === 'function') setSupabaseStatus('ok', 'Supabase : synchronisation différée pendant édition/import reporting'); } catch(_) {}
+      const importing = Date.now() < Number(window.__EDH_IMPORTING_REPORTING_UNTIL || 0);
+      if(silent && importing){
+        try { if(typeof setSupabaseStatus === 'function') setSupabaseStatus('ok', 'Supabase : sync reportée pendant import reporting'); } catch(_) {}
+        mergeManualReportingV52();
+        try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
         return false;
       }
-      setSyncing(true);
-      try { return await previousRefreshFromSupabaseAndRender.apply(this, arguments); }
-      finally { setSyncing(false); }
+      const res = await previousRefreshV52.apply(this, arguments);
+      mergeManualReportingV52();
+      return res;
     };
   }
 
-  const previousRenderReportingPage = window.renderReportingPage;
-  if(typeof previousRenderReportingPage === 'function'){
+  const previousRenderReportingV52 = window.renderReportingPage;
+  if(typeof previousRenderReportingV52 === 'function'){
     window.renderReportingPage = function(){
-      try { window.syncReportingFromLeads(); } catch(_) {}
-      const res = previousRenderReportingPage.apply(this, arguments);
-      try { decorateReportingUi(); } catch(_) {}
-      return res;
+      mergeManualReportingV52();
+      return previousRenderReportingV52.apply(this, arguments);
     };
   }
-  const previousRenderPerformancePage = window.renderPerformancePage;
-  if(typeof previousRenderPerformancePage === 'function'){
+  const previousRenderPerformanceV52 = window.renderPerformancePage;
+  if(typeof previousRenderPerformanceV52 === 'function'){
     window.renderPerformancePage = function(){
-      try { window.syncReportingFromLeads(); } catch(_) {}
-      const res = previousRenderPerformancePage.apply(this, arguments);
-      try { decorateConversionUi(); } catch(_) {}
-      return res;
+      mergeManualReportingV52();
+      return previousRenderPerformanceV52.apply(this, arguments);
     };
   }
 
-  const previousUpdateReportField = window.updateReportField;
-  window.updateReportField = function(eventId, school, field, value){
-    window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 22000;
-    const result = typeof previousUpdateReportField === 'function' ? previousUpdateReportField.apply(this, arguments) : undefined;
-    try { showReportSavedIndicator(eventId, school, field); } catch(_) {}
-    return result;
+  const previousUpdateReportFieldV52 = window.updateReportField;
+  if(typeof previousUpdateReportFieldV52 === 'function'){
+    window.updateReportField = function(eventId, school, field, value){
+      const result = previousUpdateReportFieldV52.apply(this, arguments);
+      try {
+        const rec = getReportRecord(eventId, school);
+        if(recHasNumbers(rec) || rec?.source === 'manual_import') saveManualRecord(getReportKey(eventId, school), rec);
+      } catch(_) {}
+      return result;
+    };
+  }
+
+  window.clearManualReportingImportV52 = function(){
+    const store = getManualStore();
+    delete store[seasonKey()];
+    setManualStore(store);
+    showToast('Import manuel reporting supprimé pour la saison active. Recharge Supabase pour revenir aux données partagées.', 'success');
   };
 
-  function showReportSavedIndicator(eventId, school, field){
-    const key = `report-save-${String(eventId).replace(/[^a-zA-Z0-9_-]/g,'_')}-${String(school).replace(/[^a-zA-Z0-9_-]/g,'_')}-${String(field).replace(/[^a-zA-Z0-9_-]/g,'_')}`;
-    let el = document.getElementById(key);
-    if(!el){
-      const active = document.activeElement;
-      if(active && active.classList && active.classList.contains('report-input')){
-        el = document.createElement('span');
-        el.id = key;
-        el.className = 'report-save-status';
-        el.textContent = 'Enregistré';
-        active.insertAdjacentElement('afterend', el);
+  try { mergeManualReportingV52(); } catch(_) {}
+})();
+
+
+/* ══════════════════════════════════════
+   V53 — Couche finale sûre
+   Cette couche remplace les anciennes redéfinitions actives sans supprimer les blocs historiques V38/V41/V44/V46/V51/V52.
+   Objectif : conserver le fichier unique, limiter le risque de régression, et s'assurer que les fonctions réellement exécutées sont celles ci-dessous.
+══════════════════════════════════════ */
+(function(){
+  const V53 = 'V53-2026-07-08-reporting-import-supabase-ui';
+  window.EDH_APP_VERSION = V53;
+  console.info('EDH app version:', V53);
+
+  const escapeV53 = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const txtV53 = (v) => String(v ?? '').trim();
+  const normV53 = (v) => txtV53(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const numberV53 = (v) => {
+    if(v === null || v === undefined || v === '') return 0;
+    const n = Number(String(v).replace(/\s/g,'').replace(',', '.'));
+    return Number.isFinite(n) ? Math.max(0, n) : 0;
+  };
+  const formatNumberV53 = (v) => Number(v || 0).toLocaleString('fr-FR');
+
+  window.formatNumberFR = formatNumberV53;
+
+  function setGlobalSyncActive(active){
+    try { document.body?.classList.toggle('edh-global-sync-active', Boolean(active)); } catch(_) {}
+    try { document.querySelectorAll('.sync-dot').forEach(dot => dot.classList.toggle('animated', Boolean(active))); } catch(_) {}
+  }
+  window.setGlobalSyncActive = setGlobalSyncActive;
+
+  function setButtonLoading(btn, active){
+    if(!btn || !btn.classList || !btn.classList.contains('btn')) return;
+    btn.classList.toggle('is-loading', Boolean(active));
+    if(active){ btn.dataset.edhWasDisabled = btn.disabled ? '1' : '0'; btn.disabled = true; }
+    else { btn.disabled = btn.dataset.edhWasDisabled === '1'; delete btn.dataset.edhWasDisabled; }
+  }
+  function currentActionButton(){
+    const active = document.activeElement;
+    return active && active.classList && active.classList.contains('btn') ? active : null;
+  }
+  function wrapAsyncWithLoading(name){
+    const previous = window[name];
+    if(typeof previous !== 'function' || previous.__edhV53LoadingWrapped) return;
+    const wrapped = async function(){
+      const btn = currentActionButton();
+      setButtonLoading(btn, true);
+      try { return await previous.apply(this, arguments); }
+      finally { setButtonLoading(btn, false); }
+    };
+    wrapped.__edhV53LoadingWrapped = true;
+    window[name] = wrapped;
+  }
+
+  function showSkeleton(tbodyId, cols=6, rows=6){
+    const body = document.getElementById(tbodyId);
+    if(!body || body.children.length) return;
+    body.innerHTML = `<tr><td colspan="${cols}"><div class="skeleton-table">${Array.from({length:rows}).map(()=>`<div class="skeleton-row">${Array.from({length:Math.min(cols,6)}).map(()=>'<div class="skeleton-cell"></div>').join('')}</div>`).join('')}</div></td></tr>`;
+  }
+  function showInitialSkeletons(){
+    showSkeleton('listing-tbody', 10, 7);
+    showSkeleton('leads-tbody', 12, 6);
+    showSkeleton('all-leads-tbody', 11, 6);
+    showSkeleton('reporting-all-body', 13, 7);
+  }
+  document.addEventListener('DOMContentLoaded', showInitialSkeletons, {once:true});
+
+  const previousLoadV53 = window.loadFromSupabase;
+  if(typeof previousLoadV53 === 'function'){
+    window.loadFromSupabase = async function(){
+      setGlobalSyncActive(true);
+      try { return await previousLoadV53.apply(this, arguments); }
+      finally { setGlobalSyncActive(false); }
+    };
+  }
+  const previousRefreshV53 = window.refreshFromSupabaseAndRender;
+  if(typeof previousRefreshV53 === 'function'){
+    window.refreshFromSupabaseAndRender = async function(){
+      setGlobalSyncActive(true);
+      try { return await previousRefreshV53.apply(this, arguments); }
+      finally { setGlobalSyncActive(false); }
+    };
+  }
+
+  function findImportCol(headers, aliases){
+    const rows = (headers || []).map(h => ({raw:h, norm:normV53(h)}));
+    for(const alias of aliases){ const a = normV53(alias); const exact = rows.find(x => x.norm === a); if(exact) return exact.raw; }
+    for(const alias of aliases){ const a = normV53(alias); const partial = rows.find(x => x.norm.includes(a) || a.includes(x.norm)); if(partial) return partial.raw; }
+    return '';
+  }
+  function excelDateIsoV53(v){
+    if(!v && v !== 0) return '';
+    if(v instanceof Date && !isNaN(v.getTime())) return v.toISOString().slice(0,10);
+    const s = txtV53(v);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const fr = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+    if(fr){ const yyyy = fr[3].length === 2 ? '20' + fr[3] : fr[3]; return `${yyyy}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}`; }
+    const serial = Number(v);
+    if(Number.isFinite(serial) && serial > 20000 && serial < 70000){
+      const d = new Date(Date.UTC(1899, 11, 30 + Math.floor(serial)));
+      return d.toISOString().slice(0,10);
+    }
+    try { return typeof cleanDateForSupabase === 'function' ? (cleanDateForSupabase(v) || '') : ''; } catch(_) { return ''; }
+  }
+  function eventIdForImportV53(ev){
+    try { return (typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.id || ev?.supabase_event_id || ev?.app_id || ''; }
+    catch(_) { return ev?.id || ev?.supabase_event_id || ev?.app_id || ''; }
+  }
+  function schoolMatchesV53(ev, school){
+    try { return typeof schoolMatches === 'function' ? schoolMatches(ev?.ecoles, school) : true; } catch(_) { return true; }
+  }
+  function findEventForImportV53(row, cols){
+    const rawName = row[cols.event] || '';
+    const rawCity = row[cols.city] || '';
+    const rawDate = row[cols.date] || '';
+    const school = (typeof normalizeSchoolName === 'function' ? normalizeSchoolName(row[cols.school] || '') : '') || txtV53(row[cols.school] || '').toUpperCase();
+    const nameNorm = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(rawName) : normV53(rawName);
+    const cityNorm = normV53(rawCity);
+    const iso = excelDateIsoV53(rawDate);
+    const events = (typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : (Array.isArray(LYCEES) ? LYCEES : [])) || [];
+    let matches = events.filter(ev => {
+      const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || ev?.lycee || '') : normV53(ev?.nom || ev?.lycee || '');
+      return evName && evName === nameNorm && (!school || schoolMatchesV53(ev, school));
+    });
+    if(cityNorm){ const byCity = matches.filter(ev => normV53(ev?.ville || '') === cityNorm); if(byCity.length) matches = byCity; }
+    if(iso){ const byDate = matches.filter(ev => excelDateIsoV53(ev?.date) === iso); if(byDate.length) matches = byDate; }
+    return matches[0] || null;
+  }
+
+  // Fonction finale active : import Excel reporting + écriture réelle dans Supabase via reporting_json de chaque événement.
+  window.importReportingFromFile = async function(){
+    if(!Array.isArray(IMPORT_REPORTING_ROWS) || !IMPORT_REPORTING_ROWS.length) return showToast('Aucun reporting à importer','error');
+    const h = IMPORT_REPORTING_HEADERS || [];
+    const cols = {
+      event: findImportCol(h, ['évènement','evenement','nom du lycée','nom du lycee','lycée','lycee','établissement','etablissement']),
+      school: findImportCol(h, ['école','ecole','school']),
+      city: findImportCol(h, ['ville']),
+      date: findImportCol(h, ['date'])
+    };
+    const mapping = {
+      nombreProspect: findImportCol(h, ['nombre de prospect','nombre prospects','prospects rencontrés','prospects rencontres','global']),
+      statut: findImportCol(h, ['statuts','statut']),
+      global: findImportCol(h, ['global','prospects rencontrés','prospects rencontres']),
+      seconde: findImportCol(h, ['2nd','2nde','seconde']),
+      premiere: findImportCol(h, ['1ere','1ère','premiere','première']),
+      terminale: findImportCol(h, ['term','terminale']),
+      autres: findImportCol(h, ['autres','autres college bac bac 1 bac 2']),
+      prospect: findImportCol(h, ['prospect']),
+      candidat: findImportCol(h, ['candidat']),
+      admis: findImportCol(h, ['admis']),
+      inscrit: findImportCol(h, ['inscrit'])
+    };
+    if(!cols.event || !cols.school) return showToast('Colonnes École et Nom du lycée introuvables dans le fichier', 'error');
+
+    let imported = 0, saved = 0, failed = 0, unmatched = 0;
+    const touchedEvents = new Map();
+    const unmatchedRows = [];
+
+    IMPORT_REPORTING_ROWS.forEach((row, index) => {
+      const school = (typeof normalizeSchoolName === 'function' ? normalizeSchoolName(row[cols.school] || '') : '') || txtV53(row[cols.school] || '').toUpperCase();
+      const ev = findEventForImportV53(row, cols);
+      if(!school || !ev){
+        unmatched++;
+        if(unmatchedRows.length < 8) unmatchedRows.push(`${index + 2}. ${txtV53(row[cols.event]) || 'Lycée vide'}${row[cols.city] ? ' · ' + row[cols.city] : ''}${school ? ' · ' + school : ''}`);
+        return;
+      }
+      const id = eventIdForImportV53(ev);
+      const rec = getReportRecord(id, school);
+      Object.entries(mapping).forEach(([field, col]) => {
+        if(!col) return;
+        if(field === 'statut') rec[field] = txtV53(row[col]) || rec[field] || 'Prospect';
+        else rec[field] = numberV53(row[col]);
+      });
+      const levelsTotal = Number(rec.seconde||0) + Number(rec.premiere||0) + Number(rec.terminale||0) + Number(rec.autres||0);
+      if(Number(rec.global || 0) < levelsTotal) rec.global = levelsTotal;
+      if(Number(rec.prospect || 0) < Number(rec.global || 0)) rec.prospect = Number(rec.global || 0);
+      rec.source = 'manual_import_supabase';
+      rec.importedAt = new Date().toISOString();
+      imported++;
+      touchedEvents.set(id, ev);
+    });
+
+    window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 30000;
+    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 30000;
+    try { saveLocalData(); } catch(_) {}
+    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+
+    setGlobalSyncActive(true);
+    for(const ev of touchedEvents.values()){
+      try {
+        const res = typeof saveEventExtrasToSupabase === 'function' ? await saveEventExtrasToSupabase(ev) : {ok:false, skipped:true};
+        if(res?.ok) saved++; else failed++;
+      } catch(err){
+        failed++;
+        console.error('Erreur sauvegarde reporting importé pour', ev?.nom, err);
       }
     }
-    if(el){ el.classList.add('show'); clearTimeout(el.__timer); el.__timer = setTimeout(() => el.classList.remove('show'), 1400); }
-  }
-  function decorateReportingUi(){
-    document.querySelectorAll('#reporting-all-body tr').forEach(tr => {
-      const cells = Array.from(tr.children);
-      if(!cells.length) return;
-      const schoolCell = cells[0];
-      const school = txt(schoolCell.textContent);
-      if(school && !schoolCell.querySelector('.school-badge')) schoolCell.innerHTML = schoolBadgeHtml(school);
-      const prospects = num(cells[4]?.textContent);
-      const inscrits = num(cells[12]?.textContent);
-      if(prospects && cells[12] && !cells[12].querySelector('.conversion-pill')){
-        const rate = Math.round((inscrits / prospects) * 100);
-        const cls = rate >= 8 ? 'conversion-high' : rate >= 3 ? 'conversion-mid' : 'conversion-low';
-        cells[12].innerHTML = `${esc(cells[12].textContent)} <span class="conversion-pill ${cls}">${rate}%</span>`;
+    setGlobalSyncActive(false);
+    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 8000;
+
+    closeModal('modal-import-reporting');
+    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+    const details = unmatchedRows.length ? `\nNon associés :\n${unmatchedRows.join('\n')}` : '';
+    if(failed > 0){
+      console.warn(`Import reporting : ${unmatched} ligne(s) non associée(s).` + details);
+      showToast(`${imported} ligne(s) importée(s), ${saved} événement(s) sauvegardé(s), ${failed} échec(s) Supabase${unmatched ? `, ${unmatched} non associée(s)` : ''}.`, 'error');
+    } else {
+      showToast(`${imported} ligne(s) importée(s) et sauvegardées sur Supabase (${saved} événement(s))${unmatched ? ` · ${unmatched} non associée(s)` : ''}.`, 'success');
+    }
+  };
+
+  window.renderSchoolBadge = function(school){
+    const s = txtV53(school);
+    const color = (typeof SCHOOL_COLOR !== 'undefined' && SCHOOL_COLOR[s]) || '#4b5563';
+    const bg = (typeof SCHOOL_BG !== 'undefined' && SCHOOL_BG[s]) || '#f3f4f6';
+    return `<span class="school-badge" style="background:${bg};color:${color};border-color:${color}22"><span class="school-badge-dot"></span>${escapeV53(s)}</span>`;
+  };
+  window.schoolTag = window.renderSchoolBadge;
+  window.schoolTags = function(ecoles){
+    let schools = [];
+    try { schools = typeof getSchoolsArray === 'function' ? getSchoolsArray(ecoles) : String(ecoles || '').split(/[,;/|]+/).map(x=>x.trim()).filter(Boolean); } catch(_) {}
+    return schools.map(s => window.renderSchoolBadge(s)).join('');
+  };
+
+  function enhanceReportingConversionBars(){
+    const body = document.getElementById('reporting-all-body');
+    if(!body) return;
+    Array.from(body.querySelectorAll('tr')).forEach(tr => {
+      const cells = tr.children;
+      if(cells.length < 13 || tr.dataset.conversionEnhanced === '1') return;
+      const getNum = (idx) => {
+        const input = cells[idx]?.querySelector('input');
+        return Number(input ? input.value : cells[idx]?.textContent || 0) || 0;
+      };
+      const global = getNum(4), candidat = getNum(10), admis = getNum(11), inscrit = getNum(12);
+      const base = Math.max(global, candidat, 1);
+      const rate = Math.round((inscrit / base) * 100);
+      const admitRate = Math.round((admis / Math.max(candidat, 1)) * 100);
+      const cls = rate >= 8 || admitRate >= 70 ? 'high' : rate >= 3 || admitRate >= 35 ? 'mid' : '';
+      const target = cells[12];
+      if(target && !target.querySelector('.conversion-mini')){
+        target.insertAdjacentHTML('beforeend', `<div class="conversion-mini" title="Conversion inscrit / prospects"><div class="conversion-mini-track"><span class="conversion-mini-fill ${cls}" style="width:${Math.min(rate,100)}%"></span></div><span class="conversion-mini-label">${rate}%</span></div>`);
+        tr.dataset.conversionEnhanced = '1';
       }
     });
   }
-  function decorateConversionUi(){
-    document.querySelectorAll('#performance-tbody tr').forEach(tr => {
-      const cells = Array.from(tr.children);
-      const c = cells[7];
-      if(!c || c.querySelector('.conversion-pill')) return;
-      const m = txt(c.textContent).match(/(\d+(?:[,.]\d+)?)/);
-      if(!m) return;
-      const rate = Number(m[1].replace(',', '.'));
-      const cls = rate >= 8 ? 'conversion-high' : rate >= 3 ? 'conversion-mid' : 'conversion-low';
-      c.innerHTML = `<span class="conversion-pill ${cls}">${esc(c.textContent)}</span>`;
+
+  function formatVisibleNumbers(){
+    document.querySelectorAll('.kpi-value').forEach(el => {
+      const raw = (el.textContent || '').trim();
+      if(/^\d{4,}$/.test(raw.replace(/\s/g,''))) el.textContent = Number(raw.replace(/\s/g,'')).toLocaleString('fr-FR');
     });
-  }
-  function schoolBadgeHtml(school){
-    const color = (window.SCHOOL_COLOR && window.SCHOOL_COLOR[school]) || (typeof SCHOOL_COLOR !== 'undefined' && SCHOOL_COLOR[school]) || '#64748b';
-    return `<span class="school-badge" style="color:${esc(color)}"><span class="school-badge-dot"></span>${esc(school)}</span>`;
   }
 
-  // Confirmation stylée réutilisable. Remplace au moins la suppression de lead.
-  function ensureConfirmModal(){
-    if(document.getElementById('edh-confirm-overlay')) return;
-    const html = `<div class="confirm-overlay" id="edh-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="edh-confirm-title"><div class="confirm-panel"><div class="confirm-title" id="edh-confirm-title">Confirmer l'action</div><div class="confirm-text" id="edh-confirm-text"></div><div class="confirm-actions"><button class="btn btn-outline" id="edh-confirm-cancel" type="button">Annuler</button><button class="btn btn-danger" id="edh-confirm-ok" type="button">Confirmer</button></div></div></div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
+  function ensureAfter(selector, id){
+    let el = document.getElementById(id);
+    if(el) return el;
+    const anchor = document.querySelector(selector);
+    if(!anchor) return null;
+    el = document.createElement('div');
+    el.id = id;
+    el.className = 'filter-chip-row';
+    anchor.insertAdjacentElement('afterend', el);
+    return el;
   }
-  window.edhConfirm = function(message, title='Confirmation'){
-    ensureConfirmModal();
+  function arrV53(v){ return Array.isArray(v) ? v : (v ? [v] : []); }
+  function renderListingFilterChips(){
+    const row = ensureAfter('#page-listing .page-header', 'listing-filter-chips');
+    if(!row) return;
+    const chips = [];
+    if(txtV53(S.search)) chips.push(['search', `Recherche : ${S.search}`]);
+    arrV53(S.statut).forEach(v => chips.push(['statut:'+v, `Statut : ${v}`]));
+    arrV53(S.dept).forEach(v => chips.push(['dept:'+v, `Département : ${v}`]));
+    if(txtV53(S.type)) chips.push(['type', `Type : ${S.type}`]);
+    if(txtV53(S.school)) chips.push(['school', `École : ${S.school}`]);
+    row.innerHTML = chips.map(([key,label]) => `<span class="filter-chip">${escapeV53(label)} <button type="button" aria-label="Retirer le filtre" onclick="removeListingFilterV53(${escapeV53(JSON.stringify(key))})">×</button></span>`).join('');
+    row.style.display = chips.length ? 'flex' : 'none';
+  }
+  window.removeListingFilterV53 = function(key){
+    if(key === 'search'){ S.search = ''; const el = document.getElementById('global-search'); if(el) el.value = ''; }
+    else if(key.startsWith('statut:')){ S.statut = arrV53(S.statut).filter(v => v !== key.slice(7)); try { setMultiChecks('filter-statut', S.statut); updateMultiFilterLabel('filter-statut'); } catch(_) {} }
+    else if(key.startsWith('dept:')){ S.dept = arrV53(S.dept).filter(v => v !== key.slice(5)); try { setMultiChecks('filter-dept', S.dept); updateMultiFilterLabel('filter-dept'); } catch(_) {} }
+    else if(key === 'type'){ S.type = ''; const el = document.getElementById('filter-type'); if(el) el.value = ''; }
+    else if(key === 'school'){ S.school = ''; }
+    S.page = 1; try { renderListing(); } catch(_) { refreshCurrentPage(); }
+  };
+  function renderAllLeadFilterChips(){
+    const anchor = document.querySelector('#page-leadsall .lead-filter-box');
+    if(!anchor) return;
+    let row = document.getElementById('all-leads-filter-chips');
+    if(!row){ row = document.createElement('div'); row.id = 'all-leads-filter-chips'; row.className = 'filter-chip-row'; anchor.insertAdjacentElement('afterend', row); }
+    const field = id => document.getElementById(id)?.value || '';
+    const chips = [];
+    if(field('all-leads-date-from')) chips.push(['all-leads-date-from', `Après : ${field('all-leads-date-from')}`]);
+    if(field('all-leads-date-to')) chips.push(['all-leads-date-to', `Avant : ${field('all-leads-date-to')}`]);
+    if(field('all-leads-event-filter')) chips.push(['all-leads-event-filter', `Forum filtré`]);
+    if(field('all-leads-level-filter')) chips.push(['all-leads-level-filter', `Niveau : ${field('all-leads-level-filter')}`]);
+    if(field('all-leads-school-filter')) chips.push(['all-leads-school-filter', `École : ${field('all-leads-school-filter')}`]);
+    row.innerHTML = chips.map(([id,label]) => `<span class="filter-chip">${escapeV53(label)} <button type="button" aria-label="Retirer le filtre" onclick="removeAllLeadsFilterV53(${escapeV53(JSON.stringify(id))})">×</button></span>`).join('');
+    row.style.display = chips.length ? 'flex' : 'none';
+  }
+  window.removeAllLeadsFilterV53 = function(id){ const el=document.getElementById(id); if(el) el.value=''; try { renderAllLeadsPage(); } catch(_) {} };
+
+  const previousRenderListingV53 = window.renderListing;
+  if(typeof previousRenderListingV53 === 'function'){
+    window.renderListing = function(){ const r = previousRenderListingV53.apply(this, arguments); renderListingFilterChips(); formatVisibleNumbers(); return r; };
+  }
+  const previousRenderAllLeadsV53 = window.renderAllLeadsPage;
+  if(typeof previousRenderAllLeadsV53 === 'function'){
+    window.renderAllLeadsPage = function(){ const r = previousRenderAllLeadsV53.apply(this, arguments); renderAllLeadFilterChips(); formatVisibleNumbers(); return r; };
+  }
+  const previousRenderReportingV53 = window.renderReportingPage;
+  if(typeof previousRenderReportingV53 === 'function'){
+    window.renderReportingPage = function(){ const r = previousRenderReportingV53.apply(this, arguments); enhanceReportingConversionBars(); formatVisibleNumbers(); return r; };
+  }
+  const previousRenderPerformanceV53 = window.renderPerformancePage;
+  if(typeof previousRenderPerformanceV53 === 'function'){
+    window.renderPerformancePage = function(){ const r = previousRenderPerformanceV53.apply(this, arguments); formatVisibleNumbers(); return r; };
+  }
+
+  window.resolveConfirmModal = function(result){
+    const modal = document.getElementById('modal-confirm');
+    const resolver = window.__EDH_CONFIRM_RESOLVER;
+    window.__EDH_CONFIRM_RESOLVER = null;
+    if(modal) modal.classList.remove('open');
+    if(typeof resolver === 'function') resolver(Boolean(result));
+  };
+  window.openConfirmModal = function({title='Confirmer l’action', subtitle='Cette action peut être irréversible.', message='Voulez-vous continuer ?', confirmText='Confirmer', danger=true}={}){
     return new Promise(resolve => {
-      const overlay = document.getElementById('edh-confirm-overlay');
-      const titleEl = document.getElementById('edh-confirm-title');
-      const textEl = document.getElementById('edh-confirm-text');
-      const cancel = document.getElementById('edh-confirm-cancel');
-      const ok = document.getElementById('edh-confirm-ok');
-      const lastFocus = document.activeElement;
-      titleEl.textContent = title;
-      textEl.textContent = message;
-      overlay.classList.add('open');
-      const done = val => { overlay.classList.remove('open'); cleanup(); try { lastFocus?.focus?.(); } catch(_){} resolve(val); };
-      const onKey = e => { if(e.key === 'Escape') done(false); trapFocus(e, overlay); };
-      const cleanup = () => { cancel.onclick = ok.onclick = null; document.removeEventListener('keydown', onKey, true); };
-      cancel.onclick = () => done(false);
-      ok.onclick = () => done(true);
-      document.addEventListener('keydown', onKey, true);
-      setTimeout(() => ok.focus(), 0);
+      window.__EDH_CONFIRM_RESOLVER = resolve;
+      const modal = document.getElementById('modal-confirm');
+      if(document.getElementById('confirm-title')) document.getElementById('confirm-title').textContent = title;
+      if(document.getElementById('confirm-subtitle')) document.getElementById('confirm-subtitle').textContent = subtitle;
+      if(document.getElementById('confirm-message')) document.getElementById('confirm-message').textContent = message;
+      const ok = document.getElementById('confirm-ok-btn');
+      if(ok){ ok.textContent = confirmText; ok.className = danger ? 'btn btn-danger' : 'btn btn-primary'; }
+      if(modal){ modal.classList.add('open'); setTimeout(()=>document.getElementById('confirm-cancel-btn')?.focus(), 0); }
+      else resolve(window.confirm(message));
     });
   };
-  const previousDeleteLead = window.deleteLead;
-  if(typeof previousDeleteLead === 'function'){
+
+  const previousDeleteLeadV53 = window.deleteLead;
+  if(typeof previousDeleteLeadV53 === 'function'){
     window.deleteLead = async function(id){
-      const ok = await window.edhConfirm('Supprimer définitivement ce lead de la plateforme ?', 'Supprimer le lead');
+      const ok = await window.openConfirmModal({
+        title:'Supprimer ce lead ?',
+        subtitle:'Suppression définitive du contact',
+        message:'Le lead sera supprimé de la plateforme et marqué comme supprimé pour éviter qu’il réapparaisse depuis le cache local.',
+        confirmText:'Supprimer le lead',
+        danger:true
+      });
       if(!ok) return;
-      // L'ancienne fonction contenait un confirm() natif : on le neutralise ici pour éviter une double confirmation.
       const nativeConfirm = window.confirm;
       window.confirm = () => true;
-      try { return await previousDeleteLead.apply(this, arguments); }
+      try { return await previousDeleteLeadV53.apply(this, arguments); }
       finally { window.confirm = nativeConfirm; }
     };
   }
 
-  function trapFocus(e, root){
-    if(e.key !== 'Tab') return;
-    const focusables = Array.from(root.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
-    if(!focusables.length) return;
-    const first = focusables[0], last = focusables[focusables.length - 1];
-    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
-    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  function showReportingSavedCheck(input){
+    if(!input || !input.classList) return;
+    let wrap = input.closest('.report-save-wrap');
+    if(!wrap){
+      wrap = document.createElement('span');
+      wrap.className = 'report-save-wrap';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+    }
+    let check = wrap.querySelector('.report-save-check');
+    if(!check){ check = document.createElement('span'); check.className = 'report-save-check'; check.textContent = '✓ Enregistré'; wrap.appendChild(check); }
+    check.classList.add('show');
+    clearTimeout(check.__edhTimer);
+    check.__edhTimer = setTimeout(()=>check.classList.remove('show'), 1000);
   }
-  function installModalA11y(){
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-      modal.setAttribute('role','dialog');
-      modal.setAttribute('aria-modal','true');
-      const close = modal.querySelector('.modal-close');
-      if(close && !close.getAttribute('aria-label')) close.setAttribute('aria-label','Fermer la fenêtre');
-    });
-    document.addEventListener('keydown', e => {
-      const open = document.querySelector('.modal-overlay.open');
-      if(open) trapFocus(e, open);
-    }, true);
-    document.querySelectorAll('button:not([aria-label])').forEach(btn => {
-      const t = txt(btn.textContent);
-      if(t) btn.setAttribute('aria-label', t);
-    });
+  const previousUpdateReportFieldV53 = window.updateReportField;
+  if(typeof previousUpdateReportFieldV53 === 'function'){
+    window.updateReportField = function(){
+      const input = document.activeElement && document.activeElement.classList?.contains('report-input') ? document.activeElement : null;
+      const r = previousUpdateReportFieldV53.apply(this, arguments);
+      setTimeout(()=>showReportingSavedCheck(input), 650);
+      return r;
+    };
   }
 
-  // Validation temps réel du formulaire public leads.
+  function addFieldError(field, message){
+    const formField = field?.closest('.form-field');
+    if(!formField) return;
+    let msg = formField.querySelector('.field-error-msg');
+    if(!msg){ msg = document.createElement('div'); msg.className = 'field-error-msg'; formField.appendChild(msg); }
+    msg.textContent = message || '';
+    formField.classList.toggle('has-error', Boolean(message));
+  }
+  function validatePublicLeadField(field){
+    if(!field) return true;
+    const value = txtV53(field.value);
+    if(field.id === 'public-lead-email'){
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)){ addFieldError(field, 'Adresse email invalide.'); return false; }
+    }
+    if(field.id === 'public-lead-phone'){
+      const digits = value.replace(/\D/g,'');
+      if(digits.length < 9){ addFieldError(field, 'Numéro de téléphone trop court.'); return false; }
+      if(!/^[+\d\s().-]+$/.test(value)){ addFieldError(field, 'Numéro de téléphone invalide.'); return false; }
+    }
+    addFieldError(field, '');
+    return true;
+  }
   function installPublicLeadValidation(){
-    const rules = {
-      'public-lead-email': v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : 'Email invalide.',
-      'public-lead-phone': v => !v || /^[+\d][\d\s().-]{7,}$/.test(v) ? '' : 'Téléphone invalide.',
-      'public-lead-firstname': v => v ? '' : 'Prénom obligatoire.',
-      'public-lead-lastname': v => v ? '' : 'Nom obligatoire.',
-      'public-lead-school': v => v ? '' : 'École obligatoire.',
-      'public-lead-level': v => v ? '' : 'Niveau obligatoire.',
-      'public-lead-program': v => v ? '' : 'Cursus obligatoire.'
-    };
-    Object.entries(rules).forEach(([id, validate]) => {
-      const el = document.getElementById(id);
-      if(!el || el.__edhValidationInstalled) return;
-      el.__edhValidationInstalled = true;
-      const field = el.closest('.form-field');
-      let err = field?.querySelector('.field-error');
-      if(field && !err){ err = document.createElement('div'); err.className = 'field-error'; field.appendChild(err); }
-      const run = () => {
-        const msg = validate(txt(el.value));
-        if(field) field.classList.toggle('invalid', Boolean(msg));
-        if(err) err.textContent = msg;
-        return !msg;
-      };
-      el.addEventListener('blur', run);
-      el.addEventListener('input', () => { if(field?.classList.contains('invalid')) run(); });
+    ['public-lead-email','public-lead-phone'].forEach(id => {
+      const field = document.getElementById(id);
+      if(field && !field.dataset.edhValidation){
+        field.dataset.edhValidation = '1';
+        field.addEventListener('blur', () => validatePublicLeadField(field));
+        field.addEventListener('input', () => { if(field.closest('.form-field')?.classList.contains('has-error')) validatePublicLeadField(field); });
+      }
     });
   }
-  const previousSubmitPublicLead = window.submitPublicLead;
-  if(typeof previousSubmitPublicLead === 'function'){
-    window.submitPublicLead = function(){
+  document.addEventListener('DOMContentLoaded', installPublicLeadValidation);
+  const previousOpenLeadPublicFormV53 = window.openLeadPublicForm;
+  if(typeof previousOpenLeadPublicFormV53 === 'function'){
+    window.openLeadPublicForm = function(){ const r = previousOpenLeadPublicFormV53.apply(this, arguments); setTimeout(installPublicLeadValidation, 0); return r; };
+  }
+  const previousSubmitPublicLeadV53 = window.submitPublicLead;
+  if(typeof previousSubmitPublicLeadV53 === 'function'){
+    window.submitPublicLead = async function(){
       installPublicLeadValidation();
-      let ok = true;
-      document.querySelectorAll('#public-lead-overlay .form-input, #public-lead-overlay .form-select, #public-lead-overlay .form-textarea').forEach(el => { el.dispatchEvent(new Event('blur')); if(el.closest('.form-field')?.classList.contains('invalid')) ok = false; });
-      if(!ok) return showToast('Corrige les champs du formulaire avant de valider.', 'error');
-      return previousSubmitPublicLead.apply(this, arguments);
+      const okEmail = validatePublicLeadField(document.getElementById('public-lead-email'));
+      const okPhone = validatePublicLeadField(document.getElementById('public-lead-phone'));
+      if(!okEmail || !okPhone){ showToast('Merci de corriger les champs indiqués avant validation.', 'error'); return; }
+      return previousSubmitPublicLeadV53.apply(this, arguments);
     };
   }
 
-  // Command palette Cmd/Ctrl+K pour retrouver lycée, forum ou lead.
-  function ensureCommandPalette(){
-    if(document.getElementById('edh-command-overlay')) return;
-    const html = `<div class="command-overlay" id="edh-command-overlay" role="dialog" aria-modal="true" aria-label="Recherche globale"><div class="command-panel"><input class="command-input" id="edh-command-input" placeholder="Rechercher un lycée, un forum ou un lead…"><div class="command-results" id="edh-command-results"></div></div></div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
-    const overlay = document.getElementById('edh-command-overlay');
-    const input = document.getElementById('edh-command-input');
-    input.addEventListener('input', renderCommandResults);
-    input.addEventListener('keydown', e => { if(e.key === 'Escape') closeCommandPalette(); });
-    overlay.addEventListener('click', e => { if(e.target === overlay) closeCommandPalette(); });
+  function installModalAccessibility(){
+    let lastFocused = null;
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      if(!modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
+    });
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(m => {
+        if(m.attributeName !== 'class') return;
+        const modal = m.target;
+        if(modal.classList.contains('open')){
+          lastFocused = document.activeElement;
+          setTimeout(() => modal.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])')?.focus(), 0);
+        } else if(lastFocused && document.contains(lastFocused)){
+          try { lastFocused.focus(); } catch(_) {}
+        }
+      });
+    });
+    document.querySelectorAll('.modal-overlay').forEach(m => observer.observe(m, {attributes:true}));
+    document.addEventListener('keydown', e => {
+      if(e.key !== 'Tab') return;
+      const modal = document.querySelector('.modal-overlay.open');
+      if(!modal) return;
+      const focusables = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
+      if(!focusables.length) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }, true);
   }
-  function openCommandPalette(){ ensureCommandPalette(); const overlay=document.getElementById('edh-command-overlay'); const input=document.getElementById('edh-command-input'); overlay.classList.add('open'); input.value=''; renderCommandResults(); setTimeout(()=>input.focus(),0); }
-  function closeCommandPalette(){ document.getElementById('edh-command-overlay')?.classList.remove('open'); }
-  function renderCommandResults(){
-    const q = norm(document.getElementById('edh-command-input')?.value || '');
-    const results = [];
-    (Array.isArray(LYCEES)?LYCEES:[]).slice(0,2000).forEach(l => { const text = `${l.nom||''} ${l.ville||''} ${l.departement||''}`; if(!q || norm(text).includes(q)) results.push({type:'Lycée', title:l.nom, sub:l.ville || '', action:() => { closeCommandPalette(); showPage('listing'); setTimeout(()=>{ const gs=document.getElementById('global-search'); if(gs){ gs.value=l.nom || ''; onSearch(); } },60); }}); });
-    (typeof allCalendarEvents === 'function' ? allCalendarEvents() : []).forEach(ev => { const text = `${ev.nom||''} ${ev.ville||''} ${ev.date||''}`; if(!q || norm(text).includes(q)) results.push({type:'Forum', title:ev.nom, sub:`${ev.ville||''} · ${typeof fmtDate==='function'?fmtDate(ev.date):ev.date||''}`, action:() => { closeCommandPalette(); showPage('calendrier'); setTimeout(()=>openDetail(eventCanonicalId(ev)),80); }}); });
-    (Array.isArray(LEADS)?LEADS:[]).forEach(l => { const name = `${l.firstName||''} ${l.lastName||''}`.trim(); const text = `${name} ${l.email||''} ${l.phone||''}`; if(q && norm(text).includes(q)) results.push({type:'Lead', title:name || l.email, sub:l.email || l.phone || '', action:() => { closeCommandPalette(); showPage('leadsall'); }}); });
-    const box = document.getElementById('edh-command-results');
-    const visible = results.slice(0,30);
-    box.innerHTML = visible.length ? visible.map((r,i)=>`<div class="command-item" data-i="${i}"><div><strong>${esc(r.title||'—')}</strong><div style="font-size:12px;color:var(--text3);margin-top:2px">${esc(r.sub||'')}</div></div><span class="badge b-blue">${esc(r.type)}</span></div>`).join('') : '<div class="empty-state" style="padding:26px"><p>Aucun résultat</p></div>';
-    Array.from(box.querySelectorAll('.command-item')).forEach(el => { el.onclick = () => visible[Number(el.dataset.i)]?.action?.(); });
-  }
-  document.addEventListener('keydown', e => { if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openCommandPalette(); } });
-
-  function installThemeToggle(){
-    const saved = localStorage.getItem('edh_theme_v53');
-    if(saved) document.documentElement.setAttribute('data-theme', saved);
-    if(document.getElementById('edh-theme-toggle')) return;
-    const container = document.querySelector('.sidebar-footer .role-box');
-    if(!container) return;
-    const btn = document.createElement('button');
-    btn.id = 'edh-theme-toggle';
-    btn.className = 'btn btn-outline';
-    btn.type = 'button';
-    btn.style.cssText = 'width:100%;justify-content:center;margin-top:8px';
-    btn.textContent = 'Basculer thème sombre';
-    btn.onclick = () => { const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('edh_theme_v53', next); };
-    container.appendChild(btn);
-  }
-
-  function installFilterChips(){
-    const listing = document.querySelector('#page-listing .card');
-    if(listing && !document.getElementById('listing-filter-chips')) listing.insertAdjacentHTML('beforebegin','<div class="active-filter-chips" id="listing-filter-chips"></div>');
-    const allLeads = document.querySelector('#page-leadsall .card');
-    if(allLeads && !document.getElementById('all-leads-filter-chips')) allLeads.insertAdjacentHTML('beforebegin','<div class="active-filter-chips" id="all-leads-filter-chips"></div>');
-  }
-  function renderListingFilterChips(){
-    const box = document.getElementById('listing-filter-chips'); if(!box) return;
-    const chips=[];
-    if(S.search) chips.push(['Recherche', S.search, () => { document.getElementById('global-search').value=''; onSearch(); }]);
-    if(S.type) chips.push(['Type', S.type, () => { document.getElementById('filter-type').value=''; applyFilters(); }]);
-    box.innerHTML = chips.map(([k,v],i)=>`<span class="filter-chip">${esc(k)} : ${esc(v)} <button type="button" data-i="${i}">×</button></span>`).join('');
-    box.querySelectorAll('button').forEach(btn => btn.onclick = () => chips[Number(btn.dataset.i)][2]());
-  }
-  const previousApplyFilters = window.applyFilters;
-  if(typeof previousApplyFilters === 'function') window.applyFilters = function(){ const r = previousApplyFilters.apply(this, arguments); setTimeout(renderListingFilterChips,0); return r; };
-  const previousOnSearch = window.onSearch;
-  if(typeof previousOnSearch === 'function') window.onSearch = function(){ const r = previousOnSearch.apply(this, arguments); setTimeout(renderListingFilterChips,0); return r; };
+  document.addEventListener('DOMContentLoaded', installModalAccessibility, {once:true});
 
   document.addEventListener('DOMContentLoaded', () => {
-    ensureSyncBar(); installModalA11y(); installPublicLeadValidation(); ensureCommandPalette(); installThemeToggle(); installFilterChips(); renderListingFilterChips();
-    try { decorateReportingUi(); decorateConversionUi(); } catch(_) {}
+    wrapAsyncWithLoading('saveEventExtrasToSupabase');
+    wrapAsyncWithLoading('saveStudentDirectToSupabase');
+    wrapAsyncWithLoading('saveLeadDirectToSupabase');
+    wrapAsyncWithLoading('deleteLeadDirectFromSupabase');
+    wrapAsyncWithLoading('deleteStudentDirectFromSupabase');
+    wrapAsyncWithLoading('saveEventDirectToSupabase');
+    document.querySelectorAll('button:not([aria-label])').forEach(btn => {
+      const text = (btn.textContent || '').trim();
+      if(text === '✕' || text === '×') btn.setAttribute('aria-label', 'Fermer');
+    });
+    formatVisibleNumbers();
   });
 })();
+
 
 </script>
 </body>
