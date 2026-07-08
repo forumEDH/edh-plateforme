@@ -2774,7 +2774,7 @@ body.public-lead-mode {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V51-2026-07-08-reporting-leads-cleanup";
+const APP_PATCH_VERSION = "V52-2026-07-08-reporting-import-manuel-stable";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -10155,6 +10155,329 @@ window.addEventListener('DOMContentLoaded', () => {
     showToast('Nettoyage leads/reporting terminé.', 'success');
   };
 })();
+
+/* ══════════════════════════════════════
+   V52 — Import reporting historique stable
+   - L'import Excel 2025-2026 devient une source manuelle conservée.
+   - Le rechargement Supabase ne remet plus les chiffres importés à 0.
+   - L'import tente aussi de pousser reporting_json + agrégats dans Supabase.
+   - Les prochaines saisons peuvent continuer à se remplir automatiquement via les leads QR.
+══════════════════════════════════════ */
+(function(){
+  const V52 = 'V52-2026-07-08-reporting-import-manuel-stable';
+  window.EDH_APP_VERSION = V52;
+  console.info('EDH app version:', V52);
+
+  const MANUAL_REPORTING_STORAGE_KEY = 'edh_manual_reporting_v52';
+
+  function safeTxt(v){ return String(v ?? '').trim(); }
+  function normTxt(v){
+    return safeTxt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  }
+  function n(v){
+    if(v === null || v === undefined || v === '') return 0;
+    const raw = String(v).replace(/\s/g,'').replace(',', '.');
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+  }
+  function excelDateToIso(v){
+    if(!v && v !== 0) return '';
+    if(v instanceof Date && !isNaN(v.getTime())) return v.toISOString().slice(0,10);
+    const s = safeTxt(v);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const fr = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+    if(fr){
+      const yyyy = fr[3].length === 2 ? '20' + fr[3] : fr[3];
+      return `${yyyy}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}`;
+    }
+    const serial = Number(v);
+    if(Number.isFinite(serial) && serial > 20000 && serial < 70000){
+      const d = new Date(Date.UTC(1899, 11, 30 + Math.floor(serial)));
+      return d.toISOString().slice(0,10);
+    }
+    try {
+      if(typeof cleanDateForSupabase === 'function') return cleanDateForSupabase(v) || '';
+    } catch(_) {}
+    return '';
+  }
+  function findColV52(headers, aliases){
+    const scored = (headers || []).map(h => ({ raw:h, norm:normTxt(h) }));
+    for(const alias of aliases){
+      const a = normTxt(alias);
+      const exact = scored.find(x => x.norm === a);
+      if(exact) return exact.raw;
+    }
+    for(const alias of aliases){
+      const a = normTxt(alias);
+      const partial = scored.find(x => x.norm.includes(a) || a.includes(x.norm));
+      if(partial) return partial.raw;
+    }
+    return '';
+  }
+  function getManualStore(){
+    try {
+      const obj = JSON.parse(localStorage.getItem(MANUAL_REPORTING_STORAGE_KEY) || '{}');
+      return obj && typeof obj === 'object' ? obj : {};
+    } catch(_) { return {}; }
+  }
+  function setManualStore(obj){
+    try { localStorage.setItem(MANUAL_REPORTING_STORAGE_KEY, JSON.stringify(obj || {})); } catch(err){ console.warn('Sauvegarde reporting manuel impossible', err); }
+  }
+  function seasonKey(){ return S?.season || '2025-2026'; }
+  function manualBucket(){
+    const store = getManualStore();
+    const season = seasonKey();
+    if(!store[season]) store[season] = {};
+    return { store, season, bucket: store[season] };
+  }
+  function recHasNumbers(rec){
+    return ['global','seconde','premiere','terminale','autres','prospect','candidat','admis','inscrit'].some(k => Number(rec?.[k] || 0) > 0);
+  }
+  function mergeManualReportingV52(){
+    try {
+      const bucket = getManualStore()[seasonKey()] || {};
+      Object.entries(bucket).forEach(([key, rec]) => {
+        if(!rec || typeof rec !== 'object') return;
+        const current = (REPORTING_DATA && REPORTING_DATA[key]) || {};
+        REPORTING_DATA[key] = { ...current, ...rec, source:'manual_import' };
+      });
+    } catch(err){ console.warn('Merge reporting manuel V52', err); }
+  }
+  window.mergeManualReportingV52 = mergeManualReportingV52;
+
+  function saveManualRecord(key, rec){
+    if(!key || !rec) return;
+    const {store, season, bucket} = manualBucket();
+    bucket[key] = { ...rec, source:'manual_import', updatedAt:new Date().toISOString() };
+    store[season] = bucket;
+    setManualStore(store);
+  }
+
+  function eventSchools(ev){
+    try {
+      const arr = typeof getSchoolsArray === 'function' ? getSchoolsArray(ev?.ecoles) : [];
+      return arr.length ? arr : ['EFAP','ICART','CREAD','BRASSART'];
+    } catch(_) { return ['EFAP','ICART','CREAD','BRASSART']; }
+  }
+  function eventId(ev){
+    try { return (typeof canonicalEventId === 'function' && canonicalEventId(ev)) || ev?.id || ev?.supabase_event_id || ''; }
+    catch(_) { return ev?.id || ev?.supabase_event_id || ''; }
+  }
+  function schoolOk(ev, school){
+    try { return typeof schoolMatches === 'function' ? schoolMatches(ev?.ecoles, school) : eventSchools(ev).includes(school); }
+    catch(_) { return eventSchools(ev).includes(school); }
+  }
+  function findEventForImport(row, cols){
+    const rawName = row[cols.event] || row[cols.name] || '';
+    const rawCity = row[cols.city] || '';
+    const rawDate = row[cols.date] || '';
+    const school = normalizeSchoolName(row[cols.school] || '') || safeTxt(row[cols.school] || '').toUpperCase();
+    const nameN = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(rawName) : normTxt(rawName);
+    const cityN = normTxt(rawCity);
+    const iso = excelDateToIso(rawDate);
+    const events = (typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : (Array.isArray(LYCEES) ? LYCEES : [])) || [];
+    let matches = events.filter(ev => {
+      const evName = typeof normalizeLyceeName === 'function' ? normalizeLyceeName(ev?.nom || ev?.lycee || '') : normTxt(ev?.nom || ev?.lycee || '');
+      return evName && evName === nameN && (!school || schoolOk(ev, school));
+    });
+    if(cityN){
+      const cityMatches = matches.filter(ev => normTxt(ev?.ville || '') === cityN);
+      if(cityMatches.length) matches = cityMatches;
+    }
+    if(iso){
+      const dateMatches = matches.filter(ev => excelDateToIso(ev?.date) === iso);
+      if(dateMatches.length) matches = dateMatches;
+    }
+    return matches[0] || null;
+  }
+
+  async function persistImportedReportingToSupabase(eventsMap){
+    if(!eventsMap || !eventsMap.size) return {ok:0, failed:0};
+    let ok = 0, failed = 0;
+    for(const ev of eventsMap.values()){
+      try {
+        if(typeof saveEventExtrasToSupabase === 'function'){
+          const res = await saveEventExtrasToSupabase(ev);
+          if(res?.ok || res?.skipped) ok++; else failed++;
+        } else if(typeof saveEventDirectToSupabase === 'function'){
+          const res = await saveEventDirectToSupabase(ev);
+          if(res?.ok || res?.skipped) ok++; else failed++;
+        }
+      } catch(err){ failed++; console.warn('Import reporting : sauvegarde Supabase événement impossible', ev?.nom, err); }
+    }
+    return {ok, failed};
+  }
+
+  const previousHandleReportingFile = window.handleReportingFile;
+  window.handleReportingFile = function(event){
+    const file = event.target?.files?.[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:false});
+        const sheet = wb.Sheets['Import reporting'] || wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+        IMPORT_REPORTING_ROWS = rows;
+        IMPORT_REPORTING_HEADERS = rows.length ? Object.keys(rows[0]) : [];
+        const box = document.getElementById('import-reporting-box');
+        if(box) box.innerHTML = `<strong>${rows.length} ligne(s) détectée(s)</strong><br>Mode V52 : import historique manuel, sauvegarde locale protégée + tentative d'enregistrement Supabase.`;
+      } catch(err){
+        console.warn('Lecture reporting V52 impossible, fallback ancienne lecture', err);
+        if(typeof previousHandleReportingFile === 'function') return previousHandleReportingFile(event);
+        const box = document.getElementById('import-reporting-box');
+        if(box) box.innerHTML = '<span style="color:var(--red)">Impossible de lire ce fichier.</span>';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  window.importReportingFromFile = async function(){
+    if(!Array.isArray(IMPORT_REPORTING_ROWS) || !IMPORT_REPORTING_ROWS.length) return showToast('Aucun reporting à importer','error');
+    window.__EDH_REPORTING_DIRTY_UNTIL = Date.now() + 120000;
+    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 120000;
+
+    const h = IMPORT_REPORTING_HEADERS || [];
+    const cols = {
+      school: findColV52(h, ['École','Ecole','School']),
+      event: findColV52(h, ['Nom du lycée','Nom du lycee','Lycée','Lycee','Établissement','Etablissement','Evènement','Evenement']),
+      city: findColV52(h, ['Ville']),
+      date: findColV52(h, ['Date']),
+      statut: findColV52(h, ['Statuts','Statut']),
+      global: findColV52(h, ['Global','Prospects rencontrés','Prospects rencontres']),
+      seconde: findColV52(h, ['2nd','Seconde','2nde']),
+      premiere: findColV52(h, ['1ere','1ère','Première','Premiere']),
+      terminale: findColV52(h, ['Term','Terminale']),
+      autres: findColV52(h, ['Autres (Collège, Bac, BAC+1, Bac+2)','Autres','College','Bac+1','Bac+2']),
+      prospect: findColV52(h, ['Prospect']),
+      candidat: findColV52(h, ['Candidat']),
+      admis: findColV52(h, ['Admis']),
+      inscrit: findColV52(h, ['Inscrit'])
+    };
+    if(!cols.school || !cols.event) return showToast('Colonnes École et Nom du lycée introuvables dans le fichier','error');
+
+    let imported = 0, unmatched = 0;
+    const touchedEvents = new Map();
+    const unmatchedRows = [];
+
+    IMPORT_REPORTING_ROWS.forEach((row, idx) => {
+      const school = normalizeSchoolName(row[cols.school] || '') || safeTxt(row[cols.school] || '').toUpperCase();
+      const event = findEventForImport(row, cols);
+      if(!school || !event){
+        unmatched++;
+        if(unmatchedRows.length < 12) unmatchedRows.push(`${idx + 2}. ${safeTxt(row[cols.event]) || 'Lycée vide'}${row[cols.city] ? ' · ' + row[cols.city] : ''}${school ? ' · ' + school : ''}`);
+        return;
+      }
+      const key = getReportKey(eventId(event), school);
+      const rec = getReportRecord(eventId(event), school);
+      const importedRec = {
+        ...rec,
+        statut: cols.statut ? (safeTxt(row[cols.statut]) || rec.statut || 'Prospect') : (rec.statut || 'Prospect'),
+        nombreProspect: n(row[cols.global]),
+        global: n(row[cols.global]),
+        seconde: n(row[cols.seconde]),
+        premiere: n(row[cols.premiere]),
+        terminale: n(row[cols.terminale]),
+        autres: n(row[cols.autres]),
+        prospect: n(row[cols.prospect]),
+        candidat: n(row[cols.candidat]),
+        admis: n(row[cols.admis]),
+        inscrit: n(row[cols.inscrit]),
+        source:'manual_import',
+        importedAt:new Date().toISOString()
+      };
+      const levelsTotal = importedRec.seconde + importedRec.premiere + importedRec.terminale + importedRec.autres;
+      if(importedRec.global < levelsTotal) importedRec.global = levelsTotal;
+      if(importedRec.prospect < importedRec.global) importedRec.prospect = importedRec.global;
+      REPORTING_DATA[key] = importedRec;
+      saveManualRecord(key, importedRec);
+      touchedEvents.set(eventId(event), event);
+      imported++;
+    });
+
+    mergeManualReportingV52();
+    try { saveLocalData(); } catch(_) {}
+    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+
+    const box = document.getElementById('import-reporting-box');
+    if(box){
+      box.innerHTML = `<strong>${imported} ligne(s) importée(s)</strong>${unmatched ? `<br><span style="color:var(--orange)">${unmatched} ligne(s) non associée(s) à un forum validé.</span>` : ''}${unmatchedRows.length ? `<br><br><small>${unmatchedRows.map(x=>x.replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))).join('<br>')}</small>` : ''}<br><br>Sauvegarde Supabase en cours si la table événements contient reporting_json.`;
+    }
+
+    let syncResult = {ok:0, failed:0};
+    try { syncResult = await persistImportedReportingToSupabase(touchedEvents); } catch(err){ console.warn(err); }
+    window.__EDH_IMPORTING_REPORTING_UNTIL = Date.now() + 8000;
+    try { if(typeof refreshFromSupabaseAndRender === 'function') await refreshFromSupabaseAndRender(true, 'after-reporting-import'); } catch(_) {}
+    mergeManualReportingV52();
+    try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+
+    closeModal('modal-import-reporting');
+    const msg = `${imported} ligne(s) importée(s)` + (unmatched ? ` · ${unmatched} non associée(s)` : '') + (syncResult.failed ? ` · ${syncResult.failed} sauvegarde(s) Supabase à vérifier` : '');
+    showToast(msg, syncResult.failed ? 'error' : 'success');
+  };
+
+  const previousLoadFromSupabaseV52 = window.loadFromSupabase;
+  if(typeof previousLoadFromSupabaseV52 === 'function'){
+    window.loadFromSupabase = async function(){
+      const res = await previousLoadFromSupabaseV52.apply(this, arguments);
+      mergeManualReportingV52();
+      return res;
+    };
+  }
+
+  const previousRefreshV52 = window.refreshFromSupabaseAndRender;
+  if(typeof previousRefreshV52 === 'function'){
+    window.refreshFromSupabaseAndRender = async function(silent=true, reason='manual', seasonOverride=null){
+      const importing = Date.now() < Number(window.__EDH_IMPORTING_REPORTING_UNTIL || 0);
+      if(silent && importing){
+        try { if(typeof setSupabaseStatus === 'function') setSupabaseStatus('ok', 'Supabase : sync reportée pendant import reporting'); } catch(_) {}
+        mergeManualReportingV52();
+        try { renderReportingPage(); renderPerformancePage(); } catch(_) {}
+        return false;
+      }
+      const res = await previousRefreshV52.apply(this, arguments);
+      mergeManualReportingV52();
+      return res;
+    };
+  }
+
+  const previousRenderReportingV52 = window.renderReportingPage;
+  if(typeof previousRenderReportingV52 === 'function'){
+    window.renderReportingPage = function(){
+      mergeManualReportingV52();
+      return previousRenderReportingV52.apply(this, arguments);
+    };
+  }
+  const previousRenderPerformanceV52 = window.renderPerformancePage;
+  if(typeof previousRenderPerformanceV52 === 'function'){
+    window.renderPerformancePage = function(){
+      mergeManualReportingV52();
+      return previousRenderPerformanceV52.apply(this, arguments);
+    };
+  }
+
+  const previousUpdateReportFieldV52 = window.updateReportField;
+  if(typeof previousUpdateReportFieldV52 === 'function'){
+    window.updateReportField = function(eventId, school, field, value){
+      const result = previousUpdateReportFieldV52.apply(this, arguments);
+      try {
+        const rec = getReportRecord(eventId, school);
+        if(recHasNumbers(rec) || rec?.source === 'manual_import') saveManualRecord(getReportKey(eventId, school), rec);
+      } catch(_) {}
+      return result;
+    };
+  }
+
+  window.clearManualReportingImportV52 = function(){
+    const store = getManualStore();
+    delete store[seasonKey()];
+    setManualStore(store);
+    showToast('Import manuel reporting supprimé pour la saison active. Recharge Supabase pour revenir aux données partagées.', 'success');
+  };
+
+  try { mergeManualReportingV52(); } catch(_) {}
+})();
+
 </script>
 </body>
 </html>
