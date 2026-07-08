@@ -2873,7 +2873,7 @@ body.edh-global-sync-active::before {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V52-2026-07-08-reporting-import-manuel-stable";
+const APP_PATCH_VERSION = "V56-2026-07-08-sync-manual-ambassadeurs-complets";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -2961,7 +2961,7 @@ let SUPABASE_PERIODIC_REFRESH_TIMER = null;
 // lorsque plusieurs onglets ou collaborateurs sont ouverts. Les écritures restent
 // directes vers Supabase lors des vraies actions utilisateur.
 const EDH_SUPABASE_REALTIME_ENABLED = true;
-const EDH_SUPABASE_AUTO_REFRESH_MS = 10000;
+const EDH_SUPABASE_AUTO_REFRESH_MS = 0;
 let SUPABASE_USERS_LAST_LOAD_AT = 0;
 let SUPABASE_USERS_PAGE_REFRESHING = false;
 
@@ -3010,6 +3010,31 @@ function getSupabaseErrorMessage(err){
   if(err.hint) parts.push('Indice : ' + err.hint);
   if(err.code) parts.push('Code : ' + err.code);
   return parts.join(' — ') || JSON.stringify(err);
+}
+
+// V56 — lecture paginée Supabase.
+// Le client Supabase limite les SELECT REST par page : les ambassadeurs doivent donc
+// être lus page par page depuis la table `etudiants`, sinon l'onglet Ambassadeurs
+// n'affiche qu'une fraction de la base. En JS Supabase on utilise `.from('etudiants')`
+// et non `.from('public.etudiants')`.
+async function fetchAllSupabaseRows(tableName, { select='*', pageSize=1000, buildQuery=null } = {}){
+  if(!supabaseClient) return { data:[], error:new Error('Client Supabase non initialisé') };
+  const rows = [];
+  let from = 0;
+  while(true){
+    let query = supabaseClient.from(tableName).select(select).range(from, from + pageSize - 1);
+    if(typeof buildQuery === 'function') query = buildQuery(query) || query;
+    const { data, error } = await query;
+    if(error) return { data:rows, error };
+    const batch = Array.isArray(data) ? data : [];
+    rows.push(...batch);
+    if(batch.length < pageSize) break;
+    from += pageSize;
+    if(from > 50000){
+      return { data:rows, error:new Error(`Lecture ${tableName} interrompue : limite de sécurité atteinte`) };
+    }
+  }
+  return { data:rows, error:null };
 }
 
 
@@ -4272,8 +4297,10 @@ async function loadFromSupabase(options = {}){
       loadedTables.push(`evenements:${remoteEvents.length}`);
     }
 
-    // 3) Étudiants.
-    const studentResponse = await supabaseClient.from('etudiants').select('*');
+    // 3) Étudiants / Ambassadeurs.
+    // V56 : lecture complète par pagination depuis `etudiants`. Sans pagination, Supabase JS
+    // peut renvoyer uniquement la première page, ce qui faisait disparaître une partie des ambassadeurs.
+    const studentResponse = await fetchAllSupabaseRows('etudiants', { pageSize:1000 });
     if(isStaleLoad()) return false;
 
     if(studentResponse.error){
@@ -9856,8 +9883,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if(window.__EDH_V48_SMART_SYNC_INSTALLED__) return;
   window.__EDH_V48_SMART_SYNC_INSTALLED__ = true;
 
-  const SMART_SYNC_MS = 12000;
-  const SMART_SYNC_MIN_GAP_MS = 6500;
+  const SMART_SYNC_MS = 0; // V56 : plus de polling périodique automatique.
+  const SMART_SYNC_MIN_GAP_MS = 60000;
   let smartSyncTimer = null;
   let smartSyncRunning = false;
   let smartSyncLastAt = 0;
@@ -9907,8 +9934,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function startSmartSyncV48(){
     if(smartSyncTimer) clearInterval(smartSyncTimer);
-    smartSyncTimer = setInterval(() => runSmartSyncV48('timer'), SMART_SYNC_MS);
-    setTimeout(() => runSmartSyncV48('startup'), 1800);
+    smartSyncTimer = null;
+    // V56 : on ne synchronise plus toutes les X secondes.
+    // Les refresh restent déclenchés par le chargement initial, le focus/retour en ligne,
+    // le changement d'onglet et les vraies modifications utilisateur.
+    if(SMART_SYNC_MS && SMART_SYNC_MS > 0){
+      smartSyncTimer = setInterval(() => runSmartSyncV48('timer'), SMART_SYNC_MS);
+    }
   }
 
   function installRealtimeHintV48(){
@@ -10658,18 +10690,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const previousLoadV53 = window.loadFromSupabase;
   if(typeof previousLoadV53 === 'function'){
-    window.loadFromSupabase = async function(){
-      setGlobalSyncActive(true);
+    window.loadFromSupabase = async function(options={}){
+      const silent = Boolean(options && options.silent);
+      if(!silent) setGlobalSyncActive(true);
       try { return await previousLoadV53.apply(this, arguments); }
-      finally { setGlobalSyncActive(false); }
+      finally { if(!silent) setGlobalSyncActive(false); }
     };
   }
   const previousRefreshV53 = window.refreshFromSupabaseAndRender;
   if(typeof previousRefreshV53 === 'function'){
-    window.refreshFromSupabaseAndRender = async function(){
-      setGlobalSyncActive(true);
+    window.refreshFromSupabaseAndRender = async function(silent=true){
+      if(!silent) setGlobalSyncActive(true);
       try { return await previousRefreshV53.apply(this, arguments); }
-      finally { setGlobalSyncActive(false); }
+      finally { if(!silent) setGlobalSyncActive(false); }
     };
   }
 
@@ -11069,6 +11102,123 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 })();
 
+
+
+
+/* ══════════════════════════════════════
+   V56 — Synchro allégée + Ambassadeurs complets
+   - plus de polling toutes les 10/12 secondes ;
+   - filtres Ambassadeurs conservés après sync/rendu ;
+   - debug console pour vérifier le nombre d'étudiants chargés depuis `etudiants`.
+══════════════════════════════════════ */
+(function(){
+  if(window.__EDH_V56_SYNC_STUDENTS_FIX__) return;
+  window.__EDH_V56_SYNC_STUDENTS_FIX__ = true;
+  window.EDH_APP_VERSION = 'V56-2026-07-08-sync-manual-ambassadeurs-complets';
+
+  const STUDENT_FILTER_IDS = ['student-lycee-search','student-school-filter','student-origin-filter','student-city-filter','student-sort'];
+  const savedStudentFilters = {};
+
+  function readStudentFilters(){
+    STUDENT_FILTER_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) savedStudentFilters[id] = el.value || '';
+    });
+  }
+  function restoreStudentFilters(){
+    STUDENT_FILTER_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const value = savedStudentFilters[id];
+      if(value === undefined) return;
+      const isSelect = el.tagName === 'SELECT';
+      if(isSelect && value && !Array.from(el.options).some(o => o.value === value)) return;
+      el.value = value;
+    });
+  }
+  window.edhReadStudentFiltersV56 = readStudentFilters;
+  window.edhRestoreStudentFiltersV56 = restoreStudentFilters;
+
+  document.addEventListener('input', e => { if(STUDENT_FILTER_IDS.includes(e.target?.id)) readStudentFilters(); }, true);
+  document.addEventListener('change', e => { if(STUDENT_FILTER_IDS.includes(e.target?.id)) readStudentFilters(); }, true);
+
+  const previousPopulateStaticSelects = window.populateStaticSelects;
+  if(typeof previousPopulateStaticSelects === 'function' && !previousPopulateStaticSelects.__edhV56Wrapped){
+    const wrappedPopulateStaticSelects = function(){
+      readStudentFilters();
+      const result = previousPopulateStaticSelects.apply(this, arguments);
+      restoreStudentFilters();
+      return result;
+    };
+    wrappedPopulateStaticSelects.__edhV56Wrapped = true;
+    window.populateStaticSelects = wrappedPopulateStaticSelects;
+  }
+
+  const previousPopulateStudentDropdownFilters = window.populateStudentDropdownFilters;
+  if(typeof previousPopulateStudentDropdownFilters === 'function' && !previousPopulateStudentDropdownFilters.__edhV56Wrapped){
+    const wrappedStudentDropdownFilters = function(){
+      readStudentFilters();
+      const result = previousPopulateStudentDropdownFilters.apply(this, arguments);
+      restoreStudentFilters();
+      return result;
+    };
+    wrappedStudentDropdownFilters.__edhV56Wrapped = true;
+    window.populateStudentDropdownFilters = wrappedStudentDropdownFilters;
+  }
+
+  const previousRenderStudentsPage = window.renderStudentsPage;
+  if(typeof previousRenderStudentsPage === 'function' && !previousRenderStudentsPage.__edhV56Wrapped){
+    const wrappedRenderStudentsPage = function(){
+      readStudentFilters();
+      const result = previousRenderStudentsPage.apply(this, arguments);
+      restoreStudentFilters();
+      const count = document.getElementById('students-count');
+      if(count && Array.isArray(window.STUDENTS || STUDENTS)){
+        const totalLoaded = (window.STUDENTS || STUDENTS || []).length;
+        const currentText = count.textContent || '';
+        if(totalLoaded && !currentText.includes('chargés')) count.textContent = `${currentText} · ${totalLoaded} chargé(s)`;
+      }
+      return result;
+    };
+    wrappedRenderStudentsPage.__edhV56Wrapped = true;
+    window.renderStudentsPage = wrappedRenderStudentsPage;
+  }
+
+  const previousShowPageV56 = window.showPage;
+  if(typeof previousShowPageV56 === 'function' && !previousShowPageV56.__edhV56SyncWrapped){
+    const wrappedShowPage = function(page){
+      readStudentFilters();
+      const result = previousShowPageV56.apply(this, arguments);
+      // Sync légère au changement d'onglet, sans barre bleue et sans boucle périodique.
+      if(page && typeof window.refreshFromSupabaseAndRender === 'function' && !document.body.classList.contains('public-lead-mode')){
+        clearTimeout(window.__EDH_V56_PAGE_SYNC_TIMER);
+        window.__EDH_V56_PAGE_SYNC_TIMER = setTimeout(() => {
+          window.refreshFromSupabaseAndRender(true, 'tab-change-' + page).catch(err => console.warn('Sync changement onglet V56 impossible', err));
+        }, 250);
+      }
+      setTimeout(() => { restoreStudentFilters(); if(page === 'students' && typeof window.renderStudentsPage === 'function') window.renderStudentsPage(); }, 0);
+      return result;
+    };
+    wrappedShowPage.__edhV56SyncWrapped = true;
+    window.showPage = wrappedShowPage;
+  }
+
+  window.edhDebugAmbassadeursV56 = function(){
+    const all = Array.isArray(window.STUDENTS || STUDENTS) ? (window.STUDENTS || STUDENTS) : [];
+    const visible = typeof getVisibleStudents === 'function' ? getVisibleStudents() : all;
+    const bySchool = all.reduce((acc, s) => {
+      const key = (s.school || s.ecole || 'Non renseigné').toString().trim() || 'Non renseigné';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    const efapLille = all.filter(s => String(s.school || s.ecole || '').toUpperCase().includes('EFAP') && String(s.campus || '').toLowerCase().includes('lille')).length;
+    const visibleEfapLille = visible.filter(s => String(s.school || s.ecole || '').toUpperCase().includes('EFAP') && String(s.campus || '').toLowerCase().includes('lille')).length;
+    const report = { totalChargeDepuisEtudiants: all.length, totalVisibleSelonDroits: visible.length, efapLilleCharge: efapLille, efapLilleVisible: visibleEfapLille, repartitionParEcole: bySchool, filtresAmbassadeurs: {...savedStudentFilters} };
+    console.table(report.repartitionParEcole);
+    console.log('EDH debug ambassadeurs V56', report);
+    return report;
+  };
+})();
 
 </script>
 </body>
