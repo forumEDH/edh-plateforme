@@ -2660,7 +2660,7 @@ body.edh-global-sync-active::before {
           <div class="form-field">
             <label class="form-label">Mot de passe *</label>
             <div style="display:flex;gap:6px">
-              <input class="form-input" id="uf-password" type="text" style="flex:1">
+              <input class="form-input" id="uf-password" type="password" style="flex:1" autocomplete="new-password" placeholder="Nouveau mot de passe ou laisser vide en modification">
               <button type="button" class="btn btn-outline" onclick="generateUserPassword()">Générer</button>
             </div>
           </div>
@@ -2873,7 +2873,7 @@ body.edh-global-sync-active::before {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V56-2026-07-08-sync-manual-ambassadeurs-complets";
+const APP_PATCH_VERSION = "V57-2026-07-08-cleanup-security-version";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -3039,8 +3039,8 @@ async function fetchAllSupabaseRows(tableName, { select='*', pageSize=1000, buil
 
 
 // Version debug / correctif stockage local
-window.EDH_APP_VERSION = 'V50-2026-07-07-sync-auto-leads-fix';
-console.info('EDH app version:', window.EDH_APP_VERSION);
+window.EDH_APP_VERSION = APP_PATCH_VERSION;
+console.info('EDH app version:', APP_PATCH_VERSION);
 
 function minimalUserForStorage(u){
   return {
@@ -3136,7 +3136,9 @@ function removeMissingColumnAndRetryPayload(payload, err){
   if(!missing || !(missing in payload)) return null;
   const cleaned = { ...payload };
   delete cleaned[missing];
-  console.warn(`Colonne Supabase absente ignorée pour cette sauvegarde : ${missing}`);
+  const warning = `Colonne Supabase absente ignorée pour cette sauvegarde : ${missing}`;
+  console.warn(warning);
+  try { showToast(warning, 'error'); } catch(_) {}
   return cleaned;
 }
 
@@ -4555,7 +4557,6 @@ function dedupeLeadsList(list){
   });
   return Array.from(map.values());
 }
-function getVisibleLeads(){ const ids=new Set(getVisibleLycees().flatMap(l=>eventIdCandidates(l))); return dedupeLeadsList((Array.isArray(LEADS)?LEADS:[]).filter(l=>!l.eventId||ids.has(String(l.eventId))||canSeeRecord(l))); }
 
 function normalizeSchoolName(value){
   const raw = (value || '').toString().trim();
@@ -5506,8 +5507,8 @@ function openMapsRoute(eventId){
 }
 function sendUserCredentialsEmail(user){
   const platformLink = window.location.href.split('#')[0];
-  const subject = 'Vos identifiants plateforme EDH Forums Lycées';
-  const body = `Bonjour ${user.firstName},\n\nVotre compte plateforme EDH Forums Lycées a été créé.\n\nLien de la plateforme : ${platformLink}\nIdentifiant : ${user.email}\nMot de passe : ${user.password}\nRôle : ${(user.role||'student')==='collaborateur'?'Collaborateur / Admin':'Étudiant / Visiteur'}\nÉcoles associées : ${user.school || 'Non renseignée'}\n\nÀ bientôt.`;
+  const subject = 'Votre accès plateforme EDH Forums Lycées';
+  const body = `Bonjour ${user.firstName},\n\nVotre compte plateforme EDH Forums Lycées a été créé.\n\nLien de la plateforme : ${platformLink}\nIdentifiant : ${user.email}\n\nPour des raisons de sécurité, le mot de passe n’est pas envoyé par email. Merci de le définir ou de le réinitialiser auprès d’un administrateur.\n\nRôle : ${(user.role||'student')==='collaborateur'?'Collaborateur / Admin':'Étudiant / Visiteur'}\nÉcoles associées : ${user.school || 'Non renseignée'}\n\nÀ bientôt.`;
   return `mailto:${encodeURIComponent(user.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 function openCredentialsEmail(userId){
@@ -5681,7 +5682,6 @@ function renderDashboardV2(){
   const body = document.getElementById('dashboard-score-body');
   if(body) body.innerHTML = top.map(({event,score})=>`<tr onclick="openDetail('${event.id}')"><td><strong>${escapeHtml(event.nom)}</strong></td><td>${escapeHtml(event.ville||'—')}</td><td>${scoreBadge(event)}</td><td>${score.prospects}</td><td>${score.inscrits}</td><td>${score.prospects ? Math.round(score.taux*100)+'%' : '—'}</td><td onclick="event.stopPropagation()"><div class="small-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailModal('${event.id}','prospection')">Mail</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openLeadForEvent('${event.id}')">QR</button></div></td></tr>`).join('') || `<tr><td colspan="7"><div class="empty-state"><p>Aucun score disponible.</p></div></td></tr>`;
 }
-function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
 function qrImageUrl(url){ return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(url)}`; }
 function leadEventToken(eventObj){ return eventObj?.supabase_event_id || canonicalEventId(eventObj) || eventObj?.id || ''; }
 function leadPublicUrl(eventId){ return `${window.location.href.split('#')[0]}#lead=${encodeURIComponent(eventId)}&season=${encodeURIComponent(S.season || DEFAULT_SEASON)}`; }
@@ -5844,14 +5844,6 @@ function renderLeadsKpis(rows){
     <div class="kpi-card"><div class="kpi-label">Emails uniques</div><div class="kpi-value">${uniqueEmails}</div><div class="kpi-meta">Déduplication indicative</div></div>
     <div class="kpi-card"><div class="kpi-label">École dominante</div><div class="kpi-value" style="font-size:22px">${escapeHtml(topSchool ? topSchool[0] : '—')}</div><div class="kpi-meta">${topSchool ? topSchool[1]+' lead(s)' : 'À venir'}</div></div>`;
 }
-function renderLeadsPage(){
-  populateLeadEvents(); renderQrPreview(); prefillLeadEvent(); updateLeadProgramOptions('lead');
-  const body = document.getElementById('leads-tbody'); const count = document.getElementById('leads-count');
-  const rows = [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  renderLeadsKpis(rows);
-  if(count) count.textContent = `${rows.length} lead(s)`;
-  if(body) body.innerHTML = rows.length ? rows.map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const eventName=ev.nom||l.eventName||l.lycee||'—'; const ville=ev.ville||l.ville||''; const status=leadTreatmentStatus(l); return `<tr><td>${fmtDate((l.createdAt||'').slice(0,10))}</td><td>${escapeHtml(eventName)}</td><td>${escapeHtml((l.lycee||ev.nom||'—'))}${ville ? '<br><span style="font-size:11px;color:var(--text3)">'+escapeHtml(ville)+'</span>' : ''}</td><td><strong>${escapeHtml(((l.firstName||'')+' '+(l.lastName||'')).trim())}</strong></td><td>${escapeHtml(l.email||'—')}</td><td>${escapeHtml(l.phone||'—')}</td><td>${escapeHtml(l.school||'—')}</td><td>${escapeHtml(l.program||l.cursus||'—')}</td><td>${escapeHtml(l.level||'—')}</td><td>${status.html}</td><td title="${escapeHtml(l.notes||'')}">${escapeHtml(l.notes||'—')}</td><td><div class="lead-table-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openLeadDetail('${l.id}')">Fiche</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openMailToLead('${l.id}')">Mail</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteLead('${l.id}')">Supprimer</button></div></td></tr>` }).join('') : `<tr><td colspan="12"><div class="empty-state"><p>Aucun lead centralisé pour le moment.</p></div></td></tr>`;
-}
 async function saveLeadFromForm(){
   const eventId = document.getElementById('lead-event-select')?.value || '';
   const ev = findCalendarEventById(eventId) || {};
@@ -5879,7 +5871,6 @@ async function deleteLead(id){
 function copyLeadUrl(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun lien à copier','error'); navigator.clipboard?.writeText(url); showToast('Lien QR copié'); }
 function downloadQrCode(){ const url=document.getElementById('lead-qr-url')?.value||''; if(!url) return showToast('Aucun QR code à télécharger','error'); const ev=findCalendarEventById(document.getElementById('lead-event-select')?.value)||{}; const a=document.createElement('a'); a.href=qrImageUrl(url); a.download=`QR_leads_${(ev.nom||'forum').replace(/[^a-z0-9]+/gi,'_')}.png`; a.target='_blank'; a.click(); }
 function openLeadPublicForm(){ const url=document.getElementById('lead-qr-url')?.value||''; if(url) window.open(url,'_blank'); }
-function downloadLeadsExcel(){ const rows=getVisibleLeads().map(l=>{ const ev=findCalendarEventById(l.eventId)||{}; const origine=ev.nom||l.eventName||l.lycee||'—'; return {Origine:origine, Date:l.createdAt, Saison:l.season||S.season, Evenement:origine, Ville:ev.ville||l.ville, Prenom:l.firstName, Nom:l.lastName, Email:l.email, Telephone:l.phone, Ecole_interessee:l.school, Cursus_souhaite:l.program||l.cursus, Niveau_etude:l.level, Notes:l.notes, Source:l.source}; }); const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
 async function refreshLeadsFromSupabase(){
   if(!supabaseClient) return showToast('Supabase indisponible : impossible de recharger les leads', 'error');
   const { data, error } = await supabaseClient.from('leads').select('*').eq('saison', S.season || DEFAULT_SEASON).order('created_at', {ascending:false});
@@ -6376,55 +6367,6 @@ function renderActionsStructurePage(){
   }
 }
 
-function preparationTasksForEvent(l){
-  const leads = eventLeads(l);
-  const report = reportSummaryForEvent(l);
-  return [
-    {step:'Ambassadeurs', ok:forumHasAssignedStudents(l), title:'Trouver des ambassadeurs + attribuer les étudiants à l’événement', desc:'Identifier les étudiants disponibles, les inscrire à l’événement et confirmer qui représente chaque école sur place.'},
-    {step:'Teams', ok:false, title:'Créer conversation Teams avec les ambassadeurs', desc:'Créer une conversation Teams dédiée au forum avec les étudiants et collaborateurs mobilisés.'},
-    {step:'Outlook', ok:!!l.date, title:'Ajouter l’événement au calendrier Outlook', desc:'Télécharger le fichier Outlook / Teams puis l’ajouter au calendrier des personnes concernées.'},
-    {step:'Trajet', ok:!!(l.adresse || l.ville), title:'Préparer le trajet : train, bus, métro', desc:`Prévoir l’itinéraire depuis le campus EFAP ${currentEfapCampus(l)} et réserver les billets nécessaires.`},
-    {step:'QR Code', ok:leads.length>0, title:'Préparer le QR Code + tester le QR Code', desc:'Générer le QR code, le télécharger, le scanner avec un téléphone et vérifier que le formulaire s’ouvre correctement.'},
-    {step:'Sacs forums', ok:false, title:'Préparer les sacs forums + remise des sacs forums', desc:'Préparer les supports, goodies, flyers et sacs forums puis confirmer leur remise aux personnes qui partent sur le forum.'},
-    {step:'Reporting', ok:report.global>0 || report.candidat>0 || report.admis>0 || report.inscrit>0, title:'Compléter le reporting', desc:'Saisir prospects rencontrés, candidats, admis, inscrits et notes qualitatives après le forum.'}
-  ];
-}
-function renderTerrainPage(){
-  const events = activeValidatedForums();
-  const list = document.getElementById('terrain-forum-list');
-  const count = document.getElementById('terrain-count');
-  if(count) count.textContent = `${events.length} forum(s)`;
-  if(list){
-    list.innerHTML = events.length ? events.map((l, idx) => {
-      const id = canonicalEventId(l) || l.id;
-      const tasks = preparationTasksForEvent(l);
-      const done = tasks.filter(t => t.ok).length;
-      const pctDone = Math.round((done / tasks.length) * 100);
-      return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${id}" onclick="selectTerrainEvent('${id}')"><div class="terrain-item-title">${escapeHtml(l.nom)}</div><div class="terrain-item-meta">${fmtDate(l.date)} · ${escapeHtml(l.ville||'')} · ${done}/${tasks.length} prêt</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
-    }).join('') : `<div class="crm-empty">Aucun forum à préparer : les forums terminés sont archivés et les autres ne sont pas encore validés.</div>`;
-  }
-  if(events.length) selectTerrainEvent(canonicalEventId(events[0]) || events[0].id, false);
-  else {
-    const detail = document.getElementById('terrain-detail');
-    if(detail) detail.innerHTML = '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>';
-  }
-}
-function selectTerrainEvent(eventId, markActive=true){
-  const l = findCalendarEventById(eventId);
-  const detail = document.getElementById('terrain-detail');
-  if(!l || !detail) return;
-  if(markActive){
-    document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active'));
-    const active = document.getElementById('terrain-item-' + eventId);
-    if(active) active.classList.add('active');
-  }
-  const tasks = preparationTasksForEvent(l);
-  const done = tasks.filter(t=>t.ok).length;
-  const selectedCount = document.getElementById('terrain-selected-count');
-  if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions prêtes`;
-  const id = canonicalEventId(l) || l.id;
-  detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div><div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche terrain', `printForumFieldSheet('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div></div><div class="todo-checklist">${tasks.map(t => `<div class="todo-row"><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'OK':'À faire'}</span></div><div><div class="todo-row-title">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div><div class="todo-row-desc">${escapeHtml(t.desc)}</div></div></div>`).join('')}</div>${kitForumHtml(l)}`;
-}
 function renderPerformancePage(){
   const events = activeValidatedForums();
   const rows = [];
@@ -7050,13 +6992,14 @@ function openUserModal(id=''){
     document.getElementById('uf-firstname').value = u.firstName || '';
     document.getElementById('uf-lastname').value = u.lastName || '';
     document.getElementById('uf-email').value = u.email || '';
-    document.getElementById('uf-password').value = u.password || '';
+    document.getElementById('uf-password').value = '';
+    document.getElementById('uf-password').placeholder = 'Laisser vide pour conserver le mot de passe actuel';
     document.getElementById('uf-phone').value = u.phone || ''; setCheckedValues('uf-campus', u.campus || u.region || u.regions_autorisees || '');
     document.getElementById('uf-role').value = u.role || 'student';
     const userSchools = getSchoolsArray(u.schools_autorisees || u.school);
     setCheckedValues('uf-schools', userSchools);
   }
-  if(!u){ document.getElementById('uf-password').value = randomPassword(); }
+  if(!u){ document.getElementById('uf-password').value = randomPassword(); document.getElementById('uf-password').placeholder = 'Mot de passe généré automatiquement'; }
   updateUserSchoolMode();
   const deleteBtn = document.getElementById('user-delete-btn');
   if(deleteBtn){ deleteBtn.style.display = (u && (u.email || '') !== 'admin') ? '' : 'none'; }
@@ -7068,7 +7011,10 @@ async function saveUser(){
   const firstName = document.getElementById('uf-firstname').value.trim();
   const lastName = document.getElementById('uf-lastname').value.trim();
   const email = document.getElementById('uf-email').value.trim().toLowerCase();
+  const idx = USERS.findIndex(u => u.id === S.editingUserId);
+  const existing = idx > -1 ? USERS[idx] : null;
   let password = document.getElementById('uf-password').value.trim();
+  if(!password && existing?.password){ password = existing.password; }
   if(!password){ password = randomPassword(); document.getElementById('uf-password').value = password; }
   const role = normalizeRoleValue(document.getElementById('uf-role').value || 'student');
   const selectedSchools = selectedUserSchools();
@@ -7088,8 +7034,6 @@ async function saveUser(){
   const duplicate = USERS.find(u => (u.email || '').toLowerCase() === email && u.id !== S.editingUserId);
   if(duplicate) return showToast('Un compte utilise déjà cette adresse mail', 'error');
 
-  const idx = USERS.findIndex(u => u.id === S.editingUserId);
-  const existing = idx > -1 ? USERS[idx] : null;
   const obj = {
     id: S.editingUserId || nextUserId(),
     supabase_id: existing?.supabase_id || null,
@@ -8037,7 +7981,7 @@ function downloadStudentsExcel(){
   const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Nos étudiants'); XLSX.writeFile(wb, 'EDH_etudiants.xlsx');
 }
 function downloadUsersExcel(){
-  const rows = USERS.map(u=>({Prénom:u.firstName, Nom:u.lastName, Email:u.email, Téléphone:u.phone, Rôle:u.role, École:u.school, 'Mot de passe':u.password}));
+  const rows = USERS.map(u=>({Prénom:u.firstName, Nom:u.lastName, Email:u.email, Téléphone:u.phone, Rôle:u.role, École:u.school}));
   const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Utilisateurs'); XLSX.writeFile(wb, 'EDH_utilisateurs.xlsx');
 }
 function openImportUsersModal(){ document.getElementById('users-import-file').value=''; document.getElementById('import-users-box').innerHTML="Sélectionne d'abord un fichier Excel."; IMPORT_USER_ROWS=[]; IMPORT_USER_HEADERS=[]; document.getElementById('modal-import-users').classList.add('open'); }
@@ -8199,8 +8143,9 @@ function addForumCustomTask(eventId){
   const ev = findCalendarEventById(eventId);
   if(!ev) return showToast('Forum introuvable','error');
   loadV39LocalState();
-  const title = (document.getElementById('new-forum-task-title')?.value || '').trim();
-  const desc = (document.getElementById('new-forum-task-desc')?.value || '').trim();
+  const domId = String(eventId || '').replace(/[^A-Za-z0-9_-]/g, '_');
+  const title = ((document.getElementById('new-forum-task-title-' + domId) || document.getElementById('new-forum-task-title'))?.value || '').trim();
+  const desc = ((document.getElementById('new-forum-task-desc-' + domId) || document.getElementById('new-forum-task-desc'))?.value || '').trim();
   if(!title) return showToast('Indique le nom de l’action à ajouter','error');
   const key = taskKeyForEvent(ev);
   if(!FORUM_CUSTOM_TASKS[key]) FORUM_CUSTOM_TASKS[key] = [];
@@ -8219,62 +8164,6 @@ function deleteForumCustomTask(eventId, taskId){
   if(FORUM_TODO_STATE[key]) delete FORUM_TODO_STATE[key][taskId];
   saveV39LocalState();
   selectTerrainEvent(canonicalEventId(ev) || ev.id, true);
-}
-function selectTerrainEvent(eventId, markActive=true){
-  const l = findCalendarEventById(eventId);
-  const detail = document.getElementById('terrain-detail');
-  if(!l || !detail) return;
-  if(markActive){
-    document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active'));
-    const active = document.getElementById('terrain-item-' + eventId);
-    if(active) active.classList.add('active');
-  }
-  const tasks = preparationTasksForEvent(l);
-  const done = tasks.filter(t=>t.ok).length;
-  const selectedCount = document.getElementById('terrain-selected-count');
-  if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions cochées`;
-  const id = canonicalEventId(l) || l.id;
-  const taskHtml = tasks.map(t => `
-    <div class="todo-row interactive">
-      <input class="todo-checkbox" type="checkbox" ${t.ok?'checked':''} onchange="toggleForumTask('${id}','${escapeHtml(t.id)}',this.checked)">
-      <div style="flex:1">
-        <div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'Fait':'À faire'}</span></div>
-        <div class="todo-row-title" style="margin-top:5px">${escapeHtml(t.step)} — ${escapeHtml(t.title)}</div>
-        <div class="todo-row-desc">${escapeHtml(t.desc || '')}</div>
-        ${t.custom ? `<div class="todo-row-actions"><button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="deleteForumCustomTask('${id}','${escapeHtml(t.id)}')">Supprimer</button></div>` : ''}
-      </div>
-    </div>`).join('');
-  detail.innerHTML = `
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
-      <div><div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(l.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${fmtDate(l.date)} · ${escapeHtml(l.heure||'Horaire à confirmer')} · ${escapeHtml(l.ville||'')}</div><div style="margin-top:8px">${schoolTags(l.ecoles)}</div></div>
-      <div class="small-actions">${actionButton('Itinéraire', `openMapsRoute('${id}')`)}${actionButton('Fiche terrain', `printForumFieldSheet('${id}')`)}${actionButton('Fiche lycée', `openDetail('${id}')`)}${actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary')}</div>
-    </div>
-    <div class="todo-checklist">${taskHtml}</div>
-    <div class="todo-custom-form">
-      <div class="form-grid">
-        <div class="form-field"><label class="form-label">Ajouter une action personnalisée</label><input class="form-input" id="new-forum-task-title" placeholder="Ex : imprimer les flyers EFAP"></div>
-        <div class="form-field" style="justify-content:flex-end"><button class="btn btn-primary" onclick="addForumCustomTask('${id}')">Ajouter</button></div>
-        <div class="form-field full"><label class="form-label">Détail optionnel</label><input class="form-input" id="new-forum-task-desc" placeholder="Précision, responsable, ressource à prévoir..."></div>
-      </div>
-    </div>
-    ${kitForumHtml(l)}`;
-}
-function renderTerrainPage(){
-  const events = activeValidatedForums();
-  const list = document.getElementById('terrain-forum-list');
-  const count = document.getElementById('terrain-count');
-  if(count) count.textContent = `${events.length} forum(s)`;
-  if(list){
-    list.innerHTML = events.length ? events.map((l, idx) => {
-      const id = canonicalEventId(l) || l.id;
-      const tasks = preparationTasksForEvent(l);
-      const done = tasks.filter(t => t.ok).length;
-      const pctDone = Math.round((done / Math.max(1,tasks.length)) * 100);
-      return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${id}" onclick="selectTerrainEvent('${id}')"><div class="terrain-item-title">${escapeHtml(l.nom)}</div><div class="terrain-item-meta">${fmtDate(l.date)} · ${escapeHtml(l.ville||'')} · ${done}/${tasks.length} fait</div><div class="terrain-progress"><span style="width:${pctDone}%"></span></div></div>`;
-    }).join('') : `<div class="crm-empty">Aucun forum à préparer : les forums terminés sont archivés et les autres ne sont pas encore validés.</div>`;
-  }
-  if(events.length) selectTerrainEvent(canonicalEventId(events[0]) || events[0].id, false);
-  else { const detail = document.getElementById('terrain-detail'); if(detail) detail.innerHTML = '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>'; }
 }
 function canSeeLeadForCurrentUser(lead){
   const cu = currentUser ? currentUser() : null;
@@ -9034,6 +8923,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const selectedCount = document.getElementById('terrain-selected-count');
     if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} actions cochées`;
     const id = eventId(ev);
+    const domId = String(id || '').replace(/[^A-Za-z0-9_-]/g, '_');
     const taskHtml = tasks.map(t => `
       <div class="todo-row interactive">
         <input class="todo-checkbox" type="checkbox" ${t.ok?'checked':''} onchange="toggleForumTask('${e(id)}','${e(t.id)}',this.checked)">
@@ -9050,7 +8940,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="small-actions">${typeof actionButton==='function'?actionButton('Itinéraire', `openSncfRoute('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Google Map', `openGoogleMapsRoute('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Fiche terrain', `printForumFieldSheet('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Fiche lycée', `openDetail('${e(id)}')`):''}${typeof actionButton==='function'?actionButton('Forum terminé', `completeForum('${e(id)}')`, 'btn btn-primary'):''}</div>
       </div>
       <div class="todo-checklist">${taskHtml}</div>
-      <div class="todo-custom-form"><div class="form-grid"><div class="form-field"><label class="form-label">Ajouter une action personnalisée</label><input class="form-input" id="new-forum-task-title" placeholder="Ex : imprimer les flyers EFAP"></div><div class="form-field" style="justify-content:flex-end"><button class="btn btn-primary" onclick="addForumCustomTask('${e(id)}')">Ajouter</button></div><div class="form-field full"><label class="form-label">Détail optionnel</label><input class="form-input" id="new-forum-task-desc" placeholder="Précision, responsable, ressource à prévoir..."></div></div></div>
+      <div class="todo-custom-form"><div class="form-grid"><div class="form-field"><label class="form-label">Ajouter une action personnalisée</label><input class="form-input" id="new-forum-task-title-${e(domId)}" placeholder="Ex : imprimer les flyers EFAP"></div><div class="form-field" style="justify-content:flex-end"><button class="btn btn-primary" onclick="addForumCustomTask('${e(id)}')">Ajouter</button></div><div class="form-field full"><label class="form-label">Détail optionnel</label><input class="form-input" id="new-forum-task-desc-${e(domId)}" placeholder="Précision, responsable, ressource à prévoir..."></div></div></div>
       ${typeof kitForumHtml==='function'?kitForumHtml(ev):''}`;
   };
   window.renderTerrainPage = function(){
@@ -10011,7 +9901,7 @@ window.addEventListener('DOMContentLoaded', () => {
 ══════════════════════════════════════ */
 (function(){
   const V51 = 'V51-2026-07-08-reporting-leads-cleanup';
-  window.EDH_APP_VERSION = V51;
+  window.EDH_APP_VERSION = APP_PATCH_VERSION;
   console.info('EDH app version:', V51);
 
   const DELETED_LEADS_STORAGE_KEY = 'edh_deleted_leads_v51';
@@ -10310,7 +10200,7 @@ window.addEventListener('DOMContentLoaded', () => {
 ══════════════════════════════════════ */
 (function(){
   const V52 = 'V52-2026-07-08-reporting-import-manuel-stable';
-  window.EDH_APP_VERSION = V52;
+  window.EDH_APP_VERSION = APP_PATCH_VERSION;
   console.info('EDH app version:', V52);
 
   const MANUAL_REPORTING_STORAGE_KEY = 'edh_manual_reporting_v52';
@@ -10631,7 +10521,7 @@ window.addEventListener('DOMContentLoaded', () => {
 ══════════════════════════════════════ */
 (function(){
   const V53 = 'V53-2026-07-08-reporting-import-supabase-ui';
-  window.EDH_APP_VERSION = V53;
+  window.EDH_APP_VERSION = APP_PATCH_VERSION;
   console.info('EDH app version:', V53);
 
   const escapeV53 = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -11114,7 +11004,7 @@ window.addEventListener('DOMContentLoaded', () => {
 (function(){
   if(window.__EDH_V56_SYNC_STUDENTS_FIX__) return;
   window.__EDH_V56_SYNC_STUDENTS_FIX__ = true;
-  window.EDH_APP_VERSION = 'V56-2026-07-08-sync-manual-ambassadeurs-complets';
+  window.EDH_APP_VERSION = APP_PATCH_VERSION;
 
   const STUDENT_FILTER_IDS = ['student-lycee-search','student-school-filter','student-origin-filter','student-city-filter','student-sort'];
   const savedStudentFilters = {};
@@ -11223,3 +11113,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+<!-- V57 cleanup applied: duplicate dead functions removed, password exposure reduced, version unified. -->
