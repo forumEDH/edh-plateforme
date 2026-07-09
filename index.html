@@ -560,7 +560,7 @@ td strong { color: var(--text); font-weight: 600; }
 .check-option:hover { background:var(--bg); color:var(--text); }
 .check-option input { accent-color:var(--primary); }
 
-.season-select { width:100%; margin-top:8px; padding:8px 10px; border:1px solid var(--border2); border-radius:7px; font-size:12px; font-family:'DM Sans',sans-serif; background:white; color:var(--text); }
+.season-select { width:100%; margin-top:8px; padding:8px 10px; border:1px solid var(--border2); border-radius:7px; font-size:12px; font-family:'DM Sans',sans-serif; background:var(--surface); color:var(--text); }
 .public-lead-overlay { position:fixed; inset:0; background:linear-gradient(135deg,#eff4ff,#f5f6fa); z-index:900; display:none; align-items:center; justify-content:center; padding:20px; }
 .public-lead-overlay.open { display:flex; }
 .public-lead-card { width:100%; max-width:540px; background:white; border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-lg); overflow:hidden; }
@@ -1243,7 +1243,8 @@ body.edh-global-sync-active::before {
   body { background:linear-gradient(180deg,#0b1020,#111827); }
   .card, .kpi-card, .school-card, .event-card, .student-card, .modal, .login-card, .public-lead-card, .filter-chip, .sync-status { background:var(--surface); }
   .topbar, .sidebar, .mobile-shell-header, .mobile-bottom-nav, .modal-footer { background:rgba(21,28,46,.96); }
-  .form-input, .form-select, .form-textarea, .filter-select, .check-dropdown-btn, .multi-filter-btn { background:#101827; color:var(--text); }
+  .form-input, .form-select, .form-textarea, .filter-select, .check-dropdown-btn, .multi-filter-btn,
+  .season-select, .theme-select, .role-box-select, .student-school-select { background:#101827; color:var(--text); }
   tr:hover td, .table-scroll table tbody tr:hover td { background:rgba(37,99,235,.10); }
   .skeleton-line, .skeleton-cell, .skeleton-card { background:linear-gradient(90deg,#172033 0%,#24304a 45%,#172033 90%); background-size:420px 100%; }
 }
@@ -1297,7 +1298,11 @@ html[data-theme="light"] .form-select,
 html[data-theme="light"] .form-textarea,
 html[data-theme="light"] .filter-select,
 html[data-theme="light"] .check-dropdown-btn,
-html[data-theme="light"] .multi-filter-btn { background: #ffffff; color: var(--text); }
+html[data-theme="light"] .multi-filter-btn,
+html[data-theme="light"] .season-select,
+html[data-theme="light"] .theme-select,
+html[data-theme="light"] .role-box-select,
+html[data-theme="light"] .student-school-select { background: #ffffff; color: var(--text); }
 
 html[data-theme="dark"] {
   --white:#0f172a; --bg:#0b1020; --bg2:#111827; --surface:#151c2e; --border:#293244; --border2:#354155;
@@ -1330,13 +1335,17 @@ html[data-theme="dark"] .form-select,
 html[data-theme="dark"] .form-textarea,
 html[data-theme="dark"] .filter-select,
 html[data-theme="dark"] .check-dropdown-btn,
-html[data-theme="dark"] .multi-filter-btn { background:#101827; color:var(--text); }
+html[data-theme="dark"] .multi-filter-btn,
+html[data-theme="dark"] .season-select,
+html[data-theme="dark"] .theme-select,
+html[data-theme="dark"] .role-box-select,
+html[data-theme="dark"] .student-school-select { background:#101827; color:var(--text); }
 html[data-theme="dark"] tr:hover td,
 html[data-theme="dark"] .table-scroll table tbody tr:hover td { background:rgba(37,99,235,.10); }
 html[data-theme="dark"] .skeleton-line,
 html[data-theme="dark"] .skeleton-cell,
 html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#172033 0%,#24304a 45%,#172033 90%); background-size:420px 100%; }
-.theme-select { width:100%; margin-top:8px; padding:8px 10px; border:1px solid var(--border2); border-radius:7px; font-size:12px; font-family:'DM Sans',sans-serif; background:white; color:var(--text); }
+.theme-select { width:100%; margin-top:8px; padding:8px 10px; border:1px solid var(--border2); border-radius:7px; font-size:12px; font-family:'DM Sans',sans-serif; background:var(--surface); color:var(--text); }
 .theme-hint { font-size:11px; color:var(--text3); margin-top:6px; line-height:1.4; }
 
 </style>
@@ -2933,11 +2942,11 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
         <div class="form-field"><label class="form-label">Prénom *</label><input class="form-input" id="public-lead-firstname" autocomplete="given-name" required></div>
         <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="public-lead-lastname" autocomplete="family-name" required></div>
         <div class="form-field"><label class="form-label">Email *</label><input class="form-input" id="public-lead-email" type="email" autocomplete="email" required></div>
-        <div class="form-field"><label class="form-label">Téléphone</label><input class="form-input" id="public-lead-phone" autocomplete="tel" required></div>
-        <div class="form-field"><label class="form-label">École intéressée</label><select class="form-select" id="public-lead-school" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner l’école qui vous intéresse</option><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
-        <div class="form-field"><label class="form-label">Niveau d’étude</label><select class="form-select" id="public-lead-level" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner votre niveau d’étude</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
-        <div class="form-field"><label class="form-label">Cursus souhaité</label><select class="form-select" id="public-lead-program" required><option value="">Sélectionner le cursus souhaité</option></select></div>
-        <div class="form-field full"><label class="form-label">Prise de notes</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..." required></textarea></div>
+        <div class="form-field"><label class="form-label">Téléphone *</label><input class="form-input" id="public-lead-phone" autocomplete="tel" required></div>
+        <div class="form-field"><label class="form-label">École intéressée *</label><select class="form-select" id="public-lead-school" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner l’école qui vous intéresse</option><option value="EFAP">EFAP</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option><option value="ICART">ICART</option><option value="À préciser">À préciser</option></select></div>
+        <div class="form-field"><label class="form-label">Niveau d’étude *</label><select class="form-select" id="public-lead-level" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner votre niveau d’étude</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
+        <div class="form-field"><label class="form-label">Cursus souhaité *</label><select class="form-select" id="public-lead-program" required><option value="">Sélectionner le cursus souhaité</option></select></div>
+        <div class="form-field full"><label class="form-label">Prise de notes *</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..." required></textarea></div>
       </div>
       <button class="btn btn-primary" id="public-lead-submit-btn" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Valider le formulaire</button>
       <div class="public-lead-success" id="public-lead-success">Merci, tes coordonnées ont bien été enregistrées.</div>
@@ -2972,8 +2981,7 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V58-2026-07-09-theme-toggle";
-console.log("EDH plateforme", APP_PATCH_VERSION);
+const APP_PATCH_VERSION = "V59-2026-07-09-cleanup-dark-sync-consolidation";
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
 // ══════════════════════════════════════
@@ -3054,11 +3062,10 @@ let SUPABASE_REALTIME_CHANNEL = null;
 let SUPABASE_REMOTE_REFRESH_TIMER = null;
 let SUPABASE_PERIODIC_REFRESH_TIMER = null;
 
-// V12 SAFE SYNC
-// On garde Supabase comme source de vérité, mais on désactive le temps réel
-// automatique et le polling permanent pour éviter de multiplier les connexions
-// lorsque plusieurs onglets ou collaborateurs sont ouverts. Les écritures restent
-// directes vers Supabase lors des vraies actions utilisateur.
+// V59 SAFE SYNC
+// On garde un seul canal Supabase realtime principal, sans polling permanent.
+// Le second canal V48 est automatiquement désactivé quand celui-ci est actif.
+// Les écritures restent directes vers Supabase lors des vraies actions utilisateur.
 const EDH_SUPABASE_REALTIME_ENABLED = true;
 const EDH_SUPABASE_AUTO_REFRESH_MS = 0;
 let SUPABASE_USERS_LAST_LOAD_AT = 0;
@@ -3139,7 +3146,6 @@ async function fetchAllSupabaseRows(tableName, { select='*', pageSize=1000, buil
 
 // Version debug / correctif stockage local
 window.EDH_APP_VERSION = APP_PATCH_VERSION;
-console.info('EDH app version:', APP_PATCH_VERSION);
 
 function minimalUserForStorage(u){
   return {
@@ -5982,6 +5988,16 @@ function openMailToLead(leadId){ const lead=LEADS.find(l=>l.id===leadId); if(!le
 function mailRecipient(event){ return event.mail_organisateur || event.mail_ecole || ''; }
 function mailContactName(event){ return event.organisateur || 'Madame, Monsieur'; }
 function emailTemplates(event, type){
+  try { if(typeof loadV39LocalState === 'function') loadV39LocalState(); } catch(_) {}
+  if(String(type || '').startsWith('custom:')){
+    const id = String(type).replace('custom:', '');
+    const list = Array.isArray(window.CUSTOM_EMAIL_TEMPLATES) ? window.CUSTOM_EMAIL_TEMPLATES : (typeof CUSTOM_EMAIL_TEMPLATES !== 'undefined' && Array.isArray(CUSTOM_EMAIL_TEMPLATES) ? CUSTOM_EMAIL_TEMPLATES : []);
+    const tpl = list.find(t => String(t.id) === String(id));
+    if(tpl){
+      const replacer = typeof replaceTemplateVariables === 'function' ? replaceTemplateVariables : ((txt) => txt);
+      return { subject: replacer(tpl.subject, event), body: replacer(tpl.body, event) };
+    }
+  }
   const nom = event.nom || 'votre établissement'; const date = event.date ? fmtDate(event.date) : '[date à préciser]'; const ecoles = eventSchoolsList(event);
   const templates = {
     prospection:{subject:`Intervention orientation - ${ecoles}`, body:`Bonjour ${mailContactName(event)},\n\nJe me permets de vous contacter dans le cadre des actions d'orientation menées par le groupe EDH (${ecoles}).\n\nNous souhaiterions proposer une intervention auprès des élèves de ${nom} afin de leur présenter nos formations et de les accompagner dans leur réflexion d'orientation.\n\nSeriez-vous disponible pour échanger à ce sujet ?\n\nJe reste à votre disposition et vous remercie par avance pour votre retour.\n\nBien cordialement,`},
@@ -5995,6 +6011,7 @@ function emailTemplates(event, type){
 }
 function openMailModal(eventId, type='prospection'){
   MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
+  try { if(typeof renderEmailTemplateSelect === 'function') renderEmailTemplateSelect(); } catch(_) {}
   document.getElementById('email-template-type').value=type;
   document.getElementById('email-to').value=mailRecipient(ev);
   document.getElementById('email-modal-title').textContent='Préparer un mail automatique';
@@ -7343,38 +7360,8 @@ function renderReportingPage(){
   // Le détail séparé par école a été supprimé : le tableau complet suffit avec le filtre par école.
 }
 
-function setReportingSchool(school){
-  S.reportingSchool = school;
-  SCHOOLS.forEach(s=>{
-    const el = document.getElementById(`report-tab-${s}`);
-    if(el) el.className = 'vtb' + (s===school ? ' active' : '');
-  });
 
-  const validated = getValidatedEventsForReporting();
-  const rows = validated
-    .filter(l=>schoolMatches(l.ecoles, school))
-    .sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
-
-  const body = document.getElementById('reporting-school-body');
-  if(!body) return;
-  body.innerHTML = rows.length ? rows.map(l=>{
-    const r = getReportRecord(l.id, school);
-    return `<tr>
-      <td><strong>${l.nom}</strong></td>
-      <td>${fmtDate(l.date)}</td>
-      <td>${fmt(l.ville)}</td>
-      <td>${reportInput(l.id, school, 'global', r.global)}</td>
-      <td>${reportInput(l.id, school, 'seconde', r.seconde)}</td>
-      <td>${reportInput(l.id, school, 'premiere', r.premiere)}</td>
-      <td>${reportInput(l.id, school, 'terminale', r.terminale)}</td>
-      <td>${reportInput(l.id, school, 'autres', r.autres)}</td>
-      <td>${reportInput(l.id, school, 'prospect', r.prospect)}</td>
-      <td>${reportInput(l.id, school, 'candidat', r.candidat)}</td>
-      <td>${reportInput(l.id, school, 'admis', r.admis)}</td>
-      <td>${reportInput(l.id, school, 'inscrit', r.inscrit)}</td>
-    </tr>`;
-  }).join('') + reportTotalRow(rows, school) : `<tr><td colspan="12"><div class="empty-state"><p>Aucun forum validé pour ${school}. Vérifie que les lycées sont bien en statut “Participation Validée” ou “Validée”.</p></div></td></tr>`;
-}
+// V59 : ancienne fonction de filtre reporting supprimée car son tableau cible n’existe plus.
 
 function populateStudentDropdownFilters(){
   const lyceeSelect = document.getElementById('student-origin-filter');
@@ -8349,10 +8336,6 @@ function syncReportingFromLeads(){
     rec.autres = Math.max(Number(rec.autres||0), counts.autres);
   });
 }
-const EDH_V38_renderReportingPage = renderReportingPage;
-function renderReportingPage(){ syncReportingFromLeads(); EDH_V38_renderReportingPage(); }
-const EDH_V38_renderPerformancePage = renderPerformancePage;
-function renderPerformancePage(){ syncReportingFromLeads(); EDH_V38_renderPerformancePage(); }
 function leadEventName(lead){
   const ev = findCalendarEventById(lead.eventId) || {};
   return ev.nom || lead.eventName || lead.lycee || '—';
@@ -8449,16 +8432,7 @@ function replaceTemplateVariables(text, event){
   const values = {lycee:event.nom||'votre établissement', date:event.date?fmtDate(event.date):'[date à préciser]', ecoles:eventSchoolsList(event), contact:mailContactName(event), ville:event.ville||''};
   return String(text||'').replace(/\{\{\s*(lycee|date|ecoles|contact|ville)\s*\}\}/gi, (_,k)=>values[k.toLowerCase()]||'');
 }
-const EDH_V38_emailTemplates = emailTemplates;
-function emailTemplates(event, type){
-  loadV39LocalState();
-  if(String(type||'').startsWith('custom:')){
-    const id = String(type).replace('custom:','');
-    const tpl = (CUSTOM_EMAIL_TEMPLATES || []).find(t=>String(t.id)===String(id));
-    if(tpl) return {subject:replaceTemplateVariables(tpl.subject,event), body:replaceTemplateVariables(tpl.body,event)};
-  }
-  return EDH_V38_emailTemplates(event,type);
-}
+// V59 : logique des templates personnalisés consolidée dans emailTemplates().
 function renderEmailTemplateSelect(){
   loadV39LocalState();
   const sel = document.getElementById('email-template-type'); if(!sel) return;
@@ -8469,16 +8443,7 @@ function renderEmailTemplateSelect(){
   sel.innerHTML = base.map(([v,l])=>`<option value="${v}">${l}</option>`).join('') + (CUSTOM_EMAIL_TEMPLATES.length ? '<optgroup label="Templates personnalisés">' + CUSTOM_EMAIL_TEMPLATES.map(t=>`<option value="custom:${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('') + '</optgroup>' : '');
   if([...sel.options].some(o=>o.value===current)) sel.value=current;
 }
-const EDH_V38_openMailModal = openMailModal;
-function openMailModal(eventId, type='prospection'){
-  MAIL_CONTEXT_ID = eventId; const ev=findCalendarEventById(eventId); if(!ev) return showToast('Événement introuvable','error');
-  renderEmailTemplateSelect();
-  document.getElementById('email-template-type').value=type;
-  document.getElementById('email-to').value=mailRecipient(ev);
-  document.getElementById('email-modal-title').textContent='Préparer un mail automatique';
-  document.getElementById('email-modal-subtitle').textContent=`${ev.nom||''} · ${ev.ville||''}`;
-  renderEmailPreview(); document.getElementById('modal-email').classList.add('open');
-}
+// V59 : ouverture mail consolidée dans openMailModal().
 function openEmailTemplateModal(){
   loadV39LocalState();
   ['custom-template-name','custom-template-subject','custom-template-body'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -8524,8 +8489,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     try {
       forceListingTelephoneColumn();
-      console.info('EDH V35 production GitHub : Supabase requis');
-    } catch(e) {}
+          } catch(e) {}
   }, 500);
 });
 
@@ -8616,32 +8580,8 @@ window.addEventListener('DOMContentLoaded', () => {
     window.renderActionsStructurePage();
     window.renderMyActionsPage();
   };
-  window.renderTerrainPage = function(autoSelect=true){
-    const forums = validatedForums(false);
-    const list = document.getElementById('terrain-forum-list');
-    const count = document.getElementById('terrain-count');
-    if(count) count.textContent = `${forums.length} forum(s) à préparer`;
-    if(list){
-      list.innerHTML = forums.length ? forums.map((l,idx)=>{
-        const id = idOf(l); const tasks = window.preparationTasksForEvent(l); const done = tasks.filter(t=>t.ok).length; const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
-        return `<div class="terrain-item ${idx===0?'active':''}" id="terrain-item-${e(id)}" onclick="selectTerrainEvent('${e(id)}')"><div class="terrain-item-title">${e(l.nom)}</div><div class="terrain-item-meta">${typeof fmtDate==='function'?fmtDate(l.date):e(l.date)} · ${e(l.ville||'')} · ${done}/${tasks.length} fait</div><div class="terrain-progress"><span style="width:${pct}%"></span></div></div>`;
-      }).join('') : '<div class="crm-empty">Aucun forum à préparer pour le moment.</div>';
-    }
-    const detail = document.getElementById('terrain-detail');
-    if(forums.length && autoSelect) window.selectTerrainEvent(idOf(forums[0]), true);
-    else if(!forums.length && detail) detail.innerHTML = '<div class="crm-empty">Tous les forums sont préparés ou archivés.</div>';
-  };
-  window.selectTerrainEvent = function(eventId, markActive=true){
-    const ev = typeof findCalendarEventById === 'function' ? findCalendarEventById(eventId) : null;
-    const detail = document.getElementById('terrain-detail');
-    if(!ev || !detail) return;
-    if(markActive){ document.querySelectorAll('.terrain-item').forEach(el=>el.classList.remove('active')); const active=document.getElementById('terrain-item-'+eventId); if(active) active.classList.add('active'); }
-    const id = idOf(ev); const tasks = window.preparationTasksForEvent(ev); const done = tasks.filter(t=>t.ok).length;
-    const selectedCount = document.getElementById('terrain-selected-count'); if(selectedCount) selectedCount.textContent = `${done}/${tasks.length} action(s) réalisées`;
-    const rows = tasks.map(t => `<label class="todo-row" style="cursor:pointer"><div><input type="checkbox" ${t.ok?'checked':''} onchange="toggleForumTask('${e(id)}','${e(t.id)}',this.checked)"></div><div><div class="todo-row-title">${e(t.title)}</div><div class="todo-row-desc">${e(t.desc)}</div></div><div><span class="todo-status ${t.ok?'todo-ok':'todo-warning'}">${t.ok?'Fait':'À faire'}</span></div></label>`).join('');
-    const kit = typeof kitForumHtml === 'function' ? kitForumHtml(ev) : '';
-    detail.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:18px;font-weight:800;color:var(--text)">${e(ev.nom)}</div><div style="font-size:12px;color:var(--text3);margin-top:3px">${typeof fmtDate==='function'?fmtDate(ev.date):e(ev.date)} · ${e(ev.heure||'Horaire à confirmer')} · ${e(ev.ville||'')}</div><div style="margin-top:8px">${typeof schoolTags==='function'?schoolTags(ev.ecoles):e(ev.ecoles)}</div></div><div class="small-actions">${typeof actionButton==='function'?actionButton('Itinéraire', `openMapsRoute('${id}')`):''}${typeof actionButton==='function'?actionButton('Fiche terrain', `printForumFieldSheet('${id}')`):''}${typeof actionButton==='function'?actionButton('Fiche lycée', `openDetail('${id}')`):''}${typeof actionButton==='function'?actionButton('Forum terminé', `completeForum('${id}')`, 'btn btn-primary'):''}</div></div><div class="todo-checklist">${rows}</div>${kit}`;
-  };
+  // V59 : ancienne implémentation terrain V41 retirée ; la version consolidée V39/V59 reste active plus bas.
+
 
   function actionRows(){
     const rows=[];
@@ -8708,43 +8648,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   window.syncReportingFromLeads = syncReportingFromLeadsV41;
-  window.renderReportingPage = function(){
-    syncReportingFromLeadsV41();
-    const events = validatedForums(true);
-    const visibleSchools = typeof schoolsVisibleForCurrentUser === 'function' ? schoolsVisibleForCurrentUser() : ['EFAP','ICART','CREAD','BRASSART'];
-    const selected = document.getElementById('reporting-school-filter')?.value || '';
-    const kpi=document.getElementById('reporting-summary-kpis');
-    const summary=document.getElementById('reporting-summary-body');
-    const body=document.getElementById('reporting-all-body');
-    const totals={global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
-    const rows = visibleSchools.map(school=>{
-      const evs = events.filter(ev => { try { return typeof schoolMatches==='function' ? schoolMatches(ev.ecoles, school) : true; } catch(_) { return true; }});
-      const sum={global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
-      evs.forEach(ev=>{ const rec=getReportRecord(reportId(ev), school); Object.keys(sum).forEach(k=>sum[k]+=Number(rec[k]||0)); });
-      Object.keys(totals).forEach(k=>totals[k]+=sum[k]);
-      return {school, forums:evs.length, ...sum};
-    });
-    if(kpi) kpi.innerHTML = `<div class="kpi-card"><div class="kpi-label">Forums validés</div><div class="kpi-value">${events.length}</div><div class="kpi-meta">saison active</div></div><div class="kpi-card"><div class="kpi-label">Prospects rencontrés</div><div class="kpi-value">${totals.global}</div><div class="kpi-meta">leads QR + saisie</div></div><div class="kpi-card"><div class="kpi-label">Candidats</div><div class="kpi-value">${totals.candidat}</div><div class="kpi-meta">reporting</div></div><div class="kpi-card"><div class="kpi-label">Inscrits</div><div class="kpi-value">${totals.inscrit}</div><div class="kpi-meta">conversion</div></div>`;
-    if(summary) summary.innerHTML = rows.map(r=>`<tr><td><strong>${e(r.school)}</strong></td><td>${r.forums}</td><td>${r.global}</td><td>${r.seconde}</td><td>${r.premiere}</td><td>${r.terminale}</td><td>${r.autres}</td><td>${r.prospect}</td><td>${r.candidat}</td><td>${r.admis}</td><td>${r.inscrit}</td></tr>`).join('') || '<tr><td colspan="11"><div class="crm-empty">Aucune donnée.</div></td></tr>';
-    if(body){
-      const lines=[];
-      events.forEach(ev=>{
-        const schools=(typeof getSchoolsArray==='function'?getSchoolsArray(ev.ecoles):visibleSchools).filter(s=>visibleSchools.includes(s)).filter(s=>!selected||s===selected);
-        schools.forEach(school=>{ const rec=getReportRecord(reportId(ev), school); const rid=reportId(ev); lines.push(`<tr><td>${e(school)}</td><td><strong>${e(ev.nom||'—')}</strong></td><td>${typeof fmtDate==='function'?fmtDate(ev.date):e(ev.date)}</td><td>${e(ev.ville||'—')}</td><td>${reportInput(rid,school,'global',rec.global)}</td><td>${reportInput(rid,school,'seconde',rec.seconde)}</td><td>${reportInput(rid,school,'premiere',rec.premiere)}</td><td>${reportInput(rid,school,'terminale',rec.terminale)}</td><td>${reportInput(rid,school,'autres',rec.autres)}</td><td>${reportInput(rid,school,'prospect',rec.prospect)}</td><td>${reportInput(rid,school,'candidat',rec.candidat)}</td><td>${reportInput(rid,school,'admis',rec.admis)}</td><td>${reportInput(rid,school,'inscrit',rec.inscrit)}</td></tr>`); });
-      });
-      body.innerHTML = lines.join('') || '<tr><td colspan="13"><div class="crm-empty">Aucun forum validé pour ce filtre.</div></td></tr>';
-    }
-  };
-  window.renderPerformancePage = function(){
-    syncReportingFromLeadsV41();
-    const events = validatedForums(true); const visibleSchools = typeof schoolsVisibleForCurrentUser==='function'?schoolsVisibleForCurrentUser():['EFAP'];
-    let totals={forums:events.length, prospects:0,candidats:0,admis:0,inscrits:0};
-    const rows = events.map(ev=>{ const sum={prospects:0,candidats:0,admis:0,inscrits:0}; visibleSchools.forEach(s=>{ try { if(typeof schoolMatches==='function' && !schoolMatches(ev.ecoles,s)) return; } catch(_) {} const r=getReportRecord(reportId(ev),s); sum.prospects+=Number(r.global||0); sum.candidats+=Number(r.candidat||0); sum.admis+=Number(r.admis||0); sum.inscrits+=Number(r.inscrit||0); }); totals.prospects+=sum.prospects; totals.candidats+=sum.candidats; totals.admis+=sum.admis; totals.inscrits+=sum.inscrits; return {ev,...sum}; });
-    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-    const pct=(a,b)=>b?Math.round(a/b*100)+'%':'0%';
-    set('perf-forums', totals.forums); set('perf-prospects', totals.prospects); set('perf-candidats', totals.candidats); set('perf-admis', totals.admis); set('perf-inscrits', totals.inscrits); set('perf-taux', pct(totals.inscrits, totals.prospects)); set('perf-count', `${rows.length} lycée(s)`);
-    const body=document.getElementById('performance-tbody'); if(body) body.innerHTML=rows.length?rows.map(r=>`<tr><td><strong>${e(r.ev.nom)}</strong><br><span style="font-size:11px;color:var(--text3)">${e(r.ev.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.ev.date):e(r.ev.date)}</td><td>${typeof schoolTags==='function'?schoolTags(r.ev.ecoles):e(r.ev.ecoles)}</td><td>${r.prospects}</td><td>${r.candidats}</td><td>${r.admis}</td><td>${r.inscrits}</td><td><span class="conversion-rate">${pct(r.inscrits,r.prospects)}</span></td><td>${r.prospects?'À analyser selon les conversions':'Aucun lead/reporting renseigné'}</td></tr>`).join(''):'<tr><td colspan="9"><div class="crm-empty">Aucune donnée de conversion.</div></td></tr>';
-  };
+  // V59 : anciennes vues reporting/performance V41 retirées ; la version finale consolidée V46/V59 reste active plus bas.
+
 
   window.updateLeadProgramOptions = function(scope='lead'){
     const schoolEl=document.getElementById(scope==='public'?'public-lead-school':'lead-school');
@@ -8946,16 +8851,8 @@ window.addEventListener('DOMContentLoaded', () => {
     try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
   };
 
-  const prevRenderReporting = window.renderReportingPage;
-  window.renderReportingPage = function(){
-    try { window.syncReportingFromLeadsV44(); } catch(err){ console.warn('sync reporting leads V44', err); }
-    if(typeof prevRenderReporting === 'function' && prevRenderReporting !== window.renderReportingPage) return prevRenderReporting.apply(this, arguments);
-  };
-  const prevRenderPerformance = window.renderPerformancePage;
-  window.renderPerformancePage = function(){
-    try { window.syncReportingFromLeadsV44(); } catch(err){ console.warn('sync performance leads V44', err); }
-    if(typeof prevRenderPerformance === 'function' && prevRenderPerformance !== window.renderPerformancePage) return prevRenderPerformance.apply(this, arguments);
-  };
+  // V59 : wrappers reporting/performance V44 retirés ; la synchro leads est appelée dans les renders finaux.
+
   const prevRenderLeads = window.renderLeadsPage;
   window.renderLeadsPage = function(){
     try { window.syncReportingFromLeadsV44(); } catch(_) {}
@@ -9264,7 +9161,6 @@ window.addEventListener('DOMContentLoaded', () => {
 (function(){
   if(window.__EDH_V46_STABILITY_PATCH) return;
   window.__EDH_V46_STABILITY_PATCH = true;
-  console.info('EDH patch V46 stabilité chargé');
 
   function safeText(v){ return String(v ?? ''); }
   function h(v){ return typeof escapeHtml === 'function' ? escapeHtml(v) : safeText(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -9371,6 +9267,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(window.__EDH_RENDER_REPORTING_LOCK) return;
     window.__EDH_RENDER_REPORTING_LOCK = true;
     try {
+      try { if(typeof mergeManualReportingV52 === 'function') mergeManualReportingV52(); } catch(_) {}
       window.syncReportingFromLeadsV46();
       const validated = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : [];
       const visibleSchools = visibleSchoolsSafe();
@@ -9385,6 +9282,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const rows = visibleSchools.map(school => { const events = validated.filter(l=>eventSchoolsSafe(l).includes(school)); const sum={global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0}; events.forEach(l=>{ const r=reportRec(l,school); Object.keys(sum).forEach(k=>sum[k]+=Number(r[k]||0)); }); return {school, events:events.length, ...sum}; });
       const summaryBody = document.getElementById('reporting-summary-body');
       if(summaryBody){ summaryBody.innerHTML = rows.map(r=>`<tr><td><strong>${h(r.school)}</strong></td><td>${r.events}</td><td>${r.global}</td><td>${r.seconde}</td><td>${r.premiere}</td><td>${r.terminale}</td><td>${r.autres}</td><td>${r.prospect}</td><td>${r.candidat}</td><td>${r.admis}</td><td>${r.inscrit}</td></tr>`).join('') || `<tr><td colspan="11"><div class="empty-state"><p>Aucun lycée validé trouvé.</p></div></td></tr>`; }
+      try { if(typeof enhanceReportingConversionBars === 'function') enhanceReportingConversionBars(); } catch(_) {}
+      try { if(typeof formatVisibleNumbers === 'function') formatVisibleNumbers(); } catch(_) {}
     } finally { window.__EDH_RENDER_REPORTING_LOCK = false; }
   };
 
@@ -9392,6 +9291,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(window.__EDH_RENDER_PERF_LOCK) return;
     window.__EDH_RENDER_PERF_LOCK = true;
     try {
+      try { if(typeof mergeManualReportingV52 === 'function') mergeManualReportingV52(); } catch(_) {}
       window.syncReportingFromLeadsV46();
       const events = typeof activeValidatedForums === 'function' ? activeValidatedForums() : [];
       const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
@@ -9408,6 +9308,7 @@ window.addEventListener('DOMContentLoaded', () => {
       set('perf-forums', totals.forums); set('perf-prospects', totals.prospects); set('perf-candidats', totals.candidats); set('perf-admis', totals.admis); set('perf-inscrits', totals.inscrits); set('perf-taux', typeof pct === 'function' ? pct(totals.inscrits, totals.prospects) : '—'); set('perf-count', `${rows.length} lycée(s)`);
       const body=document.getElementById('performance-tbody');
       if(body){ body.innerHTML = rows.length ? rows.map(r=>{ const id=evKey(r.l); return `<tr onclick="openDetail('${h(id)}')" style="cursor:pointer"><td><strong>${h(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${h(r.l.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.l.date):h(r.l.date||'—')}</td><td>${typeof schoolTags==='function'?schoolTags(r.l.ecoles):h(r.l.ecoles||'')}</td><td>${r.prospects}</td><td>${Number(r.report.candidat||0)}</td><td>${Number(r.report.admis||0)}</td><td>${Number(r.report.inscrit||0)}</td><td><span class="conversion-rate">${h(r.rate)}</span></td><td>${h(r.reading)}</td></tr>`; }).join('') : `<tr><td colspan="9"><div class="crm-empty">Aucun forum validé à analyser pour la saison active.</div></td></tr>`; }
+      try { if(typeof formatVisibleNumbers === 'function') formatVisibleNumbers(); } catch(_) {}
     } finally { window.__EDH_RENDER_PERF_LOCK = false; }
   };
 
@@ -9967,6 +9868,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function installRealtimeHintV48(){
     try {
+      // V59 : éviter deux canaux realtime concurrents. Si le realtime principal est actif,
+      // V48 conserve seulement les refresh focus/online et les refresh après création de lead.
+      if(typeof EDH_SUPABASE_REALTIME_ENABLED !== 'undefined' && EDH_SUPABASE_REALTIME_ENABLED) return;
       if(!supabaseClient || smartRealtimeChannel) return;
       smartRealtimeChannel = supabaseClient
         .channel('edh-v48-smart-sync')
@@ -10034,7 +9938,6 @@ window.addEventListener('DOMContentLoaded', () => {
 (function(){
   const V51 = 'V51-2026-07-08-reporting-leads-cleanup';
   window.EDH_APP_VERSION = APP_PATCH_VERSION;
-  console.info('EDH app version:', V51);
 
   const DELETED_LEADS_STORAGE_KEY = 'edh_deleted_leads_v51';
   let reportingSelectedSchoolV51 = '';
@@ -10333,7 +10236,6 @@ window.addEventListener('DOMContentLoaded', () => {
 (function(){
   const V52 = 'V52-2026-07-08-reporting-import-manuel-stable';
   window.EDH_APP_VERSION = APP_PATCH_VERSION;
-  console.info('EDH app version:', V52);
 
   const MANUAL_REPORTING_STORAGE_KEY = 'edh_manual_reporting_v52';
 
@@ -10608,20 +10510,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  const previousRenderReportingV52 = window.renderReportingPage;
-  if(typeof previousRenderReportingV52 === 'function'){
-    window.renderReportingPage = function(){
-      mergeManualReportingV52();
-      return previousRenderReportingV52.apply(this, arguments);
-    };
-  }
-  const previousRenderPerformanceV52 = window.renderPerformancePage;
-  if(typeof previousRenderPerformanceV52 === 'function'){
-    window.renderPerformancePage = function(){
-      mergeManualReportingV52();
-      return previousRenderPerformanceV52.apply(this, arguments);
-    };
-  }
+  // V59 : wrappers renderReporting/renderPerformance V52 consolidés dans les fonctions finales.
 
   const previousUpdateReportFieldV52 = window.updateReportField;
   if(typeof previousUpdateReportFieldV52 === 'function'){
@@ -10654,7 +10543,6 @@ window.addEventListener('DOMContentLoaded', () => {
 (function(){
   const V53 = 'V53-2026-07-08-reporting-import-supabase-ui';
   window.EDH_APP_VERSION = APP_PATCH_VERSION;
-  console.info('EDH app version:', V53);
 
   const escapeV53 = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const txtV53 = (v) => String(v ?? '').trim();
@@ -10955,14 +10843,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if(typeof previousRenderAllLeadsV53 === 'function'){
     window.renderAllLeadsPage = function(){ const r = previousRenderAllLeadsV53.apply(this, arguments); renderAllLeadFilterChips(); formatVisibleNumbers(); return r; };
   }
-  const previousRenderReportingV53 = window.renderReportingPage;
-  if(typeof previousRenderReportingV53 === 'function'){
-    window.renderReportingPage = function(){ const r = previousRenderReportingV53.apply(this, arguments); enhanceReportingConversionBars(); formatVisibleNumbers(); return r; };
-  }
-  const previousRenderPerformanceV53 = window.renderPerformancePage;
-  if(typeof previousRenderPerformanceV53 === 'function'){
-    window.renderPerformancePage = function(){ const r = previousRenderPerformanceV53.apply(this, arguments); formatVisibleNumbers(); return r; };
-  }
+  // V59 : wrappers renderReporting/renderPerformance V53 consolidés dans les fonctions finales.
 
   window.resolveConfirmModal = function(result){
     const modal = document.getElementById('modal-confirm');
@@ -11215,7 +11096,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if(page && typeof window.refreshFromSupabaseAndRender === 'function' && !document.body.classList.contains('public-lead-mode')){
         clearTimeout(window.__EDH_V56_PAGE_SYNC_TIMER);
         window.__EDH_V56_PAGE_SYNC_TIMER = setTimeout(() => {
-          window.refreshFromSupabaseAndRender(true, 'tab-change-' + page).catch(err => console.warn('Sync changement onglet V56 impossible', err));
+          window.refreshFromSupabaseAndRender(true, 'tab-change-' + page).catch(err => console.warn('Sync changement onglet impossible', err));
         }, 250);
       }
       setTimeout(() => { restoreStudentFilters(); if(page === 'students' && typeof window.renderStudentsPage === 'function') window.renderStudentsPage(); }, 0);
@@ -11236,7 +11117,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const efapLille = all.filter(s => String(s.school || s.ecole || '').toUpperCase().includes('EFAP') && String(s.campus || '').toLowerCase().includes('lille')).length;
     const visibleEfapLille = visible.filter(s => String(s.school || s.ecole || '').toUpperCase().includes('EFAP') && String(s.campus || '').toLowerCase().includes('lille')).length;
     const report = { totalChargeDepuisEtudiants: all.length, totalVisibleSelonDroits: visible.length, efapLilleCharge: efapLille, efapLilleVisible: visibleEfapLille, repartitionParEcole: bySchool, filtresAmbassadeurs: {...savedStudentFilters} };
-    console.table(report.repartitionParEcole);
     // Debug ambassadeurs retiré en V58 : pas de log console en production.
     return report;
   };
@@ -11245,4 +11125,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-<!-- V57 cleanup applied: duplicate dead functions removed, password exposure reduced, version unified. -->
+<!-- V59 cleanup applied: dark-mode selects fixed, required QR labels aligned, dead reporting code removed, render wrappers consolidated, duplicate realtime avoided. -->
