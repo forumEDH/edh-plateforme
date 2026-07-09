@@ -1248,6 +1248,97 @@ body.edh-global-sync-active::before {
   .skeleton-line, .skeleton-cell, .skeleton-card { background:linear-gradient(90deg,#172033 0%,#24304a 45%,#172033 90%); background-size:420px 100%; }
 }
 
+
+/* ── V58 THEME TOGGLE : clair / sombre / automatique ── */
+html[data-theme="light"] {
+  --white: #ffffff;
+  --bg: #f5f6fa;
+  --bg2: #eef0f5;
+  --surface: #ffffff;
+  --border: #e2e5ec;
+  --border2: #d0d4de;
+  --text: #1a1d27;
+  --text2: #4a5066;
+  --text3: #8a90a8;
+  --primary-light: #eff4ff;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --yellow-bg: #fefce8;
+  --yellow-border: #fde68a;
+  --red-bg: #fff1f2;
+  --red-border: #fecaca;
+  --orange-bg: #fff7ed;
+  --orange-border: #fed7aa;
+  --gray-bg: #f9fafb;
+  --gray-border: #e5e7eb;
+  --efap-bg: #f3f4f6;
+  --icart-bg: #fff7ed;
+  --cread-bg: #eff6ff;
+  --brassart-bg: #fdf2f8;
+}
+html[data-theme="light"] body { background: linear-gradient(180deg, #f8fafc 0%, #f3f5f9 42%, #eef1f6 100%); }
+html[data-theme="light"] .card,
+html[data-theme="light"] .kpi-card,
+html[data-theme="light"] .school-card,
+html[data-theme="light"] .event-card,
+html[data-theme="light"] .student-card,
+html[data-theme="light"] .modal,
+html[data-theme="light"] .login-card,
+html[data-theme="light"] .public-lead-card,
+html[data-theme="light"] .filter-chip,
+html[data-theme="light"] .sync-status { background: #ffffff; }
+html[data-theme="light"] .topbar,
+html[data-theme="light"] .sidebar,
+html[data-theme="light"] .mobile-shell-header,
+html[data-theme="light"] .mobile-bottom-nav,
+html[data-theme="light"] .modal-footer { background: #ffffff; }
+html[data-theme="light"] .form-input,
+html[data-theme="light"] .form-select,
+html[data-theme="light"] .form-textarea,
+html[data-theme="light"] .filter-select,
+html[data-theme="light"] .check-dropdown-btn,
+html[data-theme="light"] .multi-filter-btn { background: #ffffff; color: var(--text); }
+
+html[data-theme="dark"] {
+  --white:#0f172a; --bg:#0b1020; --bg2:#111827; --surface:#151c2e; --border:#293244; --border2:#354155;
+  --text:#f8fafc; --text2:#cbd5e1; --text3:#8da0ba; --primary-light:rgba(37,99,235,.18);
+  --green-bg:rgba(22,163,74,.12); --green-border:rgba(34,197,94,.28);
+  --yellow-bg:rgba(202,138,4,.13); --yellow-border:rgba(253,230,138,.22);
+  --red-bg:rgba(220,38,38,.13); --red-border:rgba(254,202,202,.22);
+  --orange-bg:rgba(234,88,12,.13); --orange-border:rgba(254,215,170,.22);
+  --gray-bg:rgba(148,163,184,.12); --gray-border:rgba(148,163,184,.22);
+  --efap-bg:rgba(243,244,246,.12); --icart-bg:rgba(249,115,22,.14); --cread-bg:rgba(37,99,235,.14); --brassart-bg:rgba(236,72,153,.14);
+}
+html[data-theme="dark"] body { background:linear-gradient(180deg,#0b1020,#111827); }
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .kpi-card,
+html[data-theme="dark"] .school-card,
+html[data-theme="dark"] .event-card,
+html[data-theme="dark"] .student-card,
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .login-card,
+html[data-theme="dark"] .public-lead-card,
+html[data-theme="dark"] .filter-chip,
+html[data-theme="dark"] .sync-status { background:var(--surface); }
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .mobile-shell-header,
+html[data-theme="dark"] .mobile-bottom-nav,
+html[data-theme="dark"] .modal-footer { background:rgba(21,28,46,.96); }
+html[data-theme="dark"] .form-input,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] .form-textarea,
+html[data-theme="dark"] .filter-select,
+html[data-theme="dark"] .check-dropdown-btn,
+html[data-theme="dark"] .multi-filter-btn { background:#101827; color:var(--text); }
+html[data-theme="dark"] tr:hover td,
+html[data-theme="dark"] .table-scroll table tbody tr:hover td { background:rgba(37,99,235,.10); }
+html[data-theme="dark"] .skeleton-line,
+html[data-theme="dark"] .skeleton-cell,
+html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#172033 0%,#24304a 45%,#172033 90%); background-size:420px 100%; }
+.theme-select { width:100%; margin-top:8px; padding:8px 10px; border:1px solid var(--border2); border-radius:7px; font-size:12px; font-family:'DM Sans',sans-serif; background:white; color:var(--text); }
+.theme-hint { font-size:11px; color:var(--text3); margin-top:6px; line-height:1.4; }
+
 </style>
 </head>
 <body>
@@ -1416,6 +1507,14 @@ body.edh-global-sync-active::before {
         <option value="2029-2030">2029 - 2030</option>
       </select>
       <div class="role-hint" id="season-hint">Le listing reste commun, les événements, leads et reportings sont séparés par saison.</div>
+      <div class="divider" style="margin:10px 0"></div>
+      <div class="role-box-label">Apparence</div>
+      <select id="theme-select" class="theme-select" onchange="changeTheme(this.value)">
+        <option value="auto">Automatique système</option>
+        <option value="light">Mode clair</option>
+        <option value="dark">Mode sombre</option>
+      </select>
+      <div class="theme-hint" id="theme-hint">Automatique suit le réglage clair/sombre de l’appareil.</div>
       <div class="divider" style="margin:10px 0"></div>
       <div class="role-box-label">Connexion</div>
       <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openLoginModal()">Se connecter</button>
@@ -2873,7 +2972,7 @@ body.edh-global-sync-active::before {
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V57-2026-07-08-cleanup-security-version";
+const APP_PATCH_VERSION = "V58-2026-07-09-theme-toggle";
 console.log("EDH plateforme", APP_PATCH_VERSION);
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
@@ -8015,10 +8114,43 @@ function importReportingFromFile(){
   saveLocalData(); closeModal('modal-import-reporting'); renderReportingPage(); showToast(`${imported} ligne(s) de reporting importée(s)`);
 }
 
+
+// ══════════════════════════════════════
+// THEME / APPARENCE
+// ══════════════════════════════════════
+const EDH_THEME_STORAGE_KEY = 'edh_forums_theme';
+function getStoredTheme(){
+  try { return localStorage.getItem(EDH_THEME_STORAGE_KEY) || 'auto'; } catch(_) { return 'auto'; }
+}
+function applyTheme(theme){
+  const safeTheme = ['auto','light','dark'].includes(theme) ? theme : 'auto';
+  if(safeTheme === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', safeTheme);
+  const select = document.getElementById('theme-select');
+  if(select) select.value = safeTheme;
+  const hint = document.getElementById('theme-hint');
+  if(hint){
+    hint.textContent = safeTheme === 'auto'
+      ? "Automatique suit le réglage clair/sombre de l’appareil."
+      : (safeTheme === 'dark' ? 'Mode sombre forcé sur cet appareil.' : 'Mode clair forcé sur cet appareil.');
+  }
+}
+function changeTheme(theme){
+  const safeTheme = ['auto','light','dark'].includes(theme) ? theme : 'auto';
+  try { localStorage.setItem(EDH_THEME_STORAGE_KEY, safeTheme); } catch(_) {}
+  applyTheme(safeTheme);
+  try { showToast(safeTheme === 'auto' ? 'Apparence automatique activée' : (safeTheme === 'dark' ? 'Mode sombre activé' : 'Mode clair activé')); } catch(_) {}
+}
+function initTheme(){
+  applyTheme(getStoredTheme());
+}
+try { initTheme(); } catch(_) {}
+
 // ══════════════════════════════════════
 // INIT
 // ══════════════════════════════════════
 async function init(){
+  initTheme();
   if(typeof window !== 'undefined') window.__EDH_EMBEDDED_LYCEES = [];
   if(supabaseClient) clearEventLocalCache(false);
 
@@ -11105,7 +11237,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const visibleEfapLille = visible.filter(s => String(s.school || s.ecole || '').toUpperCase().includes('EFAP') && String(s.campus || '').toLowerCase().includes('lille')).length;
     const report = { totalChargeDepuisEtudiants: all.length, totalVisibleSelonDroits: visible.length, efapLilleCharge: efapLille, efapLilleVisible: visibleEfapLille, repartitionParEcole: bySchool, filtresAmbassadeurs: {...savedStudentFilters} };
     console.table(report.repartitionParEcole);
-    console.log('EDH debug ambassadeurs V56', report);
+    // Debug ambassadeurs retiré en V58 : pas de log console en production.
     return report;
   };
 })();
