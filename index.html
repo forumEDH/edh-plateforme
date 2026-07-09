@@ -515,6 +515,11 @@ td strong { color: var(--text); font-weight: 600; }
 .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
 .empty-state svg { width: 40px; height: 40px; margin: 0 auto 12px; display: block; opacity: 0.4; }
 .empty-state p { font-size: 14px; }
+.empty-state.edh-empty-rich { max-width: 520px; margin: 0 auto; padding: 42px 20px; }
+.empty-state-illu { width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 18px; display:flex; align-items:center; justify-content:center; background:var(--primary-light); color:var(--primary); border:1px solid #bfdbfe; font-size:26px; font-weight:900; }
+.empty-state-title { font-size:15px; font-weight:800; color:var(--text); margin-bottom:5px; }
+.empty-state-copy { font-size:13px; color:var(--text3); line-height:1.55; margin:0 auto 14px; max-width:420px; }
+.empty-state-actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
 
 .referent-list { margin:0; padding-left:18px; line-height:1.7; }
 .referent-list li { white-space:normal; }
@@ -630,12 +635,13 @@ td strong { color: var(--text); font-weight: 600; }
   font-size: 10px; font-weight: 600; text-transform: uppercase;
   letter-spacing: 1px; color: var(--text3); margin-bottom: 8px;
 }
-.role-box-select, .student-school-select {
+.role-box-select {
   width: 100%;
   padding: 8px 10px; border: 1px solid var(--border2); border-radius: 7px;
   font-size: 12px; font-family: 'DM Sans', sans-serif;
-  background: white; color: var(--text); outline: none;
+  background: var(--surface); color: var(--text); outline: none;
 }
+.role-box-select:disabled { background: var(--bg2); color: var(--text3); cursor: not-allowed; opacity: 1; }
 .role-hint {
   font-size: 11px; color: var(--text3); margin-top: 8px; line-height: 1.4;
 }
@@ -1244,7 +1250,7 @@ body.edh-global-sync-active::before {
   .card, .kpi-card, .school-card, .event-card, .student-card, .modal, .login-card, .public-lead-card, .filter-chip, .sync-status { background:var(--surface); }
   .topbar, .sidebar, .mobile-shell-header, .mobile-bottom-nav, .modal-footer { background:rgba(21,28,46,.96); }
   .form-input, .form-select, .form-textarea, .filter-select, .check-dropdown-btn, .multi-filter-btn,
-  .season-select, .theme-select, .role-box-select, .student-school-select { background:#101827; color:var(--text); }
+  .season-select, .theme-select, .role-box-select { background:#101827; color:var(--text); }
   tr:hover td, .table-scroll table tbody tr:hover td { background:rgba(37,99,235,.10); }
   .skeleton-line, .skeleton-cell, .skeleton-card { background:linear-gradient(90deg,#172033 0%,#24304a 45%,#172033 90%); background-size:420px 100%; }
 }
@@ -1301,8 +1307,7 @@ html[data-theme="light"] .check-dropdown-btn,
 html[data-theme="light"] .multi-filter-btn,
 html[data-theme="light"] .season-select,
 html[data-theme="light"] .theme-select,
-html[data-theme="light"] .role-box-select,
-html[data-theme="light"] .student-school-select { background: #ffffff; color: var(--text); }
+html[data-theme="light"] .role-box-select { background: #ffffff; color: var(--text); }
 
 html[data-theme="dark"] {
   --white:#0f172a; --bg:#0b1020; --bg2:#111827; --surface:#151c2e; --border:#293244; --border2:#354155;
@@ -1338,8 +1343,7 @@ html[data-theme="dark"] .check-dropdown-btn,
 html[data-theme="dark"] .multi-filter-btn,
 html[data-theme="dark"] .season-select,
 html[data-theme="dark"] .theme-select,
-html[data-theme="dark"] .role-box-select,
-html[data-theme="dark"] .student-school-select { background:#101827; color:var(--text); }
+html[data-theme="dark"] .role-box-select { background:#101827; color:var(--text); }
 html[data-theme="dark"] tr:hover td,
 html[data-theme="dark"] .table-scroll table tbody tr:hover td { background:rgba(37,99,235,.10); }
 html[data-theme="dark"] .skeleton-line,
@@ -1527,7 +1531,7 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
       <div class="divider" style="margin:10px 0"></div>
       <div class="role-box-label">Connexion</div>
       <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openLoginModal()">Se connecter</button>
-      <select id="role-switch" class="role-box-select" style="margin-top:8px;background:#eef0f5;color:#6b7280;cursor:not-allowed" disabled>
+      <select id="role-switch" class="role-box-select" style="margin-top:8px" disabled>
         <option value="collaborateur">Espace collaborateur</option>
       </select>
       <div class="role-hint" id="role-hint">Espace collaborateur : accès réservé aux comptes collaborateurs et administrateurs.</div>
@@ -2981,7 +2985,7 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_PATCH_VERSION = "V59-2026-07-09-cleanup-dark-sync-consolidation";
+const APP_PATCH_VERSION = "V60-2026-07-09-ui-cleanup-showpage-consolidation";
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
 // ══════════════════════════════════════
@@ -3062,7 +3066,7 @@ let SUPABASE_REALTIME_CHANNEL = null;
 let SUPABASE_REMOTE_REFRESH_TIMER = null;
 let SUPABASE_PERIODIC_REFRESH_TIMER = null;
 
-// V59 SAFE SYNC
+// V60 SAFE SYNC
 // On garde un seul canal Supabase realtime principal, sans polling permanent.
 // Le second canal V48 est automatiquement désactivé quand celui-ci est actif.
 // Les écritures restent directes vers Supabase lors des vraies actions utilisateur.
@@ -5151,7 +5155,7 @@ function renderDashboard(){
       <td>${fmtDate(l.date)}</td>
       <td>${fmt(l.heure)}</td>
       <td><div style="display:flex;gap:3px;flex-wrap:wrap">${schoolTags(l.ecoles)}</div></td>
-    </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3)">Aucun forum validé à venir</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="6">${edhEmptyState({icon:'◷', title:'Aucun forum à venir', text:'Les prochains forums apparaîtront ici dès qu’une date validée sera renseignée.', primaryLabel:'Ajouter un événement', primaryAction:'openAddEventModal()', secondaryLabel:'Voir le listing', secondaryAction:'showPage(\'listing\')'})}</td></tr>`;
   renderDashboardV2();
 }
 
@@ -5198,11 +5202,19 @@ function renderListing(){
         </div>
       </td>
     </tr>`).join('')
-    : `<tr><td colspan="10"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><p>Aucun lycée ne correspond à votre recherche</p></div></td></tr>`;
+    : `<tr><td colspan="10">${edhEmptyState({icon:'⌕', title:'Aucun lycée trouvé', text:S.search || S.statut || S.dept || S.type ? 'Aucun établissement ne correspond aux filtres actifs. Réinitialise les filtres ou élargis ta recherche.' : 'Ajoute ton premier lycée pour commencer à construire le listing de prospection.', primaryLabel:'Ajouter un lycée', primaryAction:'openAddModal()', secondaryLabel:'Réinitialiser les filtres', secondaryAction:'clearListingFilters()'})}</td></tr>`;
   renderPagination(data.length, S.page, S.pageSize, 'listing-pag', 'goPage');
 }
 
 function goPage(p){ S.page=p; renderListing(); }
+
+function clearListingFilters(){
+  S.search=''; S.statut=''; S.dept=''; S.type=''; S.page=1;
+  const search=document.getElementById('global-search'); if(search) search.value='';
+  const type=document.getElementById('filter-type'); if(type) type.value='';
+  ['filter-statut-menu','filter-dept-menu'].forEach(id=>document.querySelectorAll(`#${id} input[type="checkbox"]`).forEach(cb=>cb.checked=false));
+  if(typeof applyFilters === 'function') applyFilters(); else renderListing();
+}
 function sortBy(col){ S.sortCol===col?S.sortAsc=!S.sortAsc:(S.sortCol=col,S.sortAsc=true); S.page=1; renderListing(); }
 
 // ══════════════════════════════════════
@@ -5633,6 +5645,14 @@ function generateUserPassword(){ document.getElementById('uf-password').value = 
 // V2 — SCORING / LEADS QR / MAILS AUTOMATIQUES
 // ══════════════════════════════════════
 function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function edhEmptyState({icon='◎', title='Aucune donnée', text='', primaryLabel='', primaryAction='', secondaryLabel='', secondaryAction=''} = {}){
+  const actionHtml = [
+    primaryLabel && primaryAction ? `<button type="button" class="btn btn-primary" onclick="${primaryAction}">${escapeHtml(primaryLabel)}</button>` : '',
+    secondaryLabel && secondaryAction ? `<button type="button" class="btn btn-outline" onclick="${secondaryAction}">${escapeHtml(secondaryLabel)}</button>` : ''
+  ].filter(Boolean).join('');
+  return `<div class="empty-state edh-empty-rich"><div class="empty-state-illu" aria-hidden="true">${escapeHtml(icon)}</div><div class="empty-state-title">${escapeHtml(title)}</div>${text ? `<div class="empty-state-copy">${escapeHtml(text)}</div>` : ''}${actionHtml ? `<div class="empty-state-actions">${actionHtml}</div>` : ''}</div>`;
+}
+
 function eventSchoolsList(event){ return getSchoolsArray(event?.ecoles).join(', ') || 'EDH'; }
 function reportTotalsForEvent(eventId){
   const totals = {global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
@@ -6512,7 +6532,7 @@ function renderPerformancePage(){
     body.innerHTML = rows.length ? rows.map(r => {
       const id = canonicalEventId(r.l) || r.l.id;
       return `<tr onclick="openDetail('${id}')" style="cursor:pointer"><td><strong>${escapeHtml(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${escapeHtml(r.l.ville||'')}</span></td><td>${fmtDate(r.l.date)}</td><td>${schoolTags(r.l.ecoles)}</td><td>${r.prospects}</td><td>${r.report.candidat}</td><td>${r.report.admis}</td><td>${r.report.inscrit}</td><td><span class="conversion-rate">${r.rate}</span></td><td>${escapeHtml(r.reading)}</td></tr>`;
-    }).join('') : `<tr><td colspan="9"><div class="crm-empty">Aucun forum validé à analyser pour la saison active.</div></td></tr>`;
+    }).join('') : `<tr><td colspan="9">${edhEmptyState({icon:'◌', title:'Aucun bilan à afficher', text:'Le bilan conversion apparaîtra dès qu’un forum validé possède du reporting ou des leads associés sur la saison active.', primaryLabel:'Importer un reporting', primaryAction:'openImportReportingModal()', secondaryLabel:'Voir le reporting', secondaryAction:'showPage(\'reporting\')'})}</td></tr>`;
   }
 }
 
@@ -7311,7 +7331,7 @@ function renderReportingAllTable(validatedEvents){
     </tr>`;
     body.innerHTML = lines + totalRow;
   } else {
-    body.innerHTML = `<tr><td colspan="13"><div class="empty-state"><p>Aucun lycée en “Participation Validée” ou “Validée” n’a été trouvé pour ce filtre. Vérifie les statuts dans le listing lycées.</p></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="13">${edhEmptyState({icon:'▦', title:'Aucun reporting disponible', text:'Aucun lycée validé ne correspond à ce filtre. Vérifie les statuts dans le listing ou importe ton reporting Excel.', primaryLabel:'Importer Excel', primaryAction:'openImportReportingModal()', secondaryLabel:'Voir le listing', secondaryAction:'showPage(\'listing\')'})}</td></tr>`;
   }
 }
 
@@ -7354,14 +7374,14 @@ function renderReportingPage(){
       <tr>
         <td><strong>${r.school}</strong></td><td>${r.events}</td><td>${r.global}</td><td>${r.seconde}</td><td>${r.premiere}</td><td>${r.terminale}</td><td>${r.autres}</td><td>${r.prospect}</td><td>${r.candidat}</td><td>${r.admis}</td><td>${r.inscrit}</td>
       </tr>
-    `).join('') || `<tr><td colspan="11"><div class="empty-state"><p>Aucun lycée validé trouvé.</p></div></td></tr>`;
+    `).join('') || `<tr><td colspan="11">${edhEmptyState({icon:'▦', title:'Aucun lycée validé', text:'Les KPI se rempliront dès qu’un lycée passera en participation validée ou qu’un reporting sera importé.', primaryLabel:'Voir le listing', primaryAction:'showPage(\'listing\')'})}</td></tr>`;
   }
 
   // Le détail séparé par école a été supprimé : le tableau complet suffit avec le filtre par école.
 }
 
 
-// V59 : ancienne fonction de filtre reporting supprimée car son tableau cible n’existe plus.
+// V60 : ancienne fonction de filtre reporting supprimée car son tableau cible n’existe plus.
 
 function populateStudentDropdownFilters(){
   const lyceeSelect = document.getElementById('student-origin-filter');
@@ -8411,28 +8431,12 @@ function rowsForLeadsExport(rows){
 }
 function downloadLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(getVisibleLeads())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads'); XLSX.writeFile(wb,`EDH_leads_QR_${S.season||DEFAULT_SEASON}.xlsx`); }
 function downloadFilteredLeadsExcel(){ const ws=XLSX.utils.json_to_sheet(rowsForLeadsExport(filteredAllLeadsRows())); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Leads filtrés'); XLSX.writeFile(wb,`EDH_leads_filtres_${S.season||DEFAULT_SEASON}.xlsx`); }
-const EDH_V38_saveLeadFromForm = saveLeadFromForm;
-async function saveLeadFromForm(){
-  await EDH_V38_saveLeadFromForm();
-  syncReportingFromLeads();
-  try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
-}
-const EDH_V38_refreshLeadsFromSupabase = refreshLeadsFromSupabase;
-async function refreshLeadsFromSupabase(){
-  await EDH_V38_refreshLeadsFromSupabase();
-  syncReportingFromLeads();
-  try { renderReportingPage(); renderPerformancePage(); renderAllLeadsPage(); } catch(e){}
-}
-const EDH_V38_submitPublicLead = submitPublicLead;
-async function submitPublicLead(){
-  await EDH_V38_submitPublicLead();
-  syncReportingFromLeads();
-}
+// V60 : anciens wrappers leads V38 supprimés ; la version finale consolidée est définie plus bas.
 function replaceTemplateVariables(text, event){
   const values = {lycee:event.nom||'votre établissement', date:event.date?fmtDate(event.date):'[date à préciser]', ecoles:eventSchoolsList(event), contact:mailContactName(event), ville:event.ville||''};
   return String(text||'').replace(/\{\{\s*(lycee|date|ecoles|contact|ville)\s*\}\}/gi, (_,k)=>values[k.toLowerCase()]||'');
 }
-// V59 : logique des templates personnalisés consolidée dans emailTemplates().
+// V60 : logique des templates personnalisés consolidée dans emailTemplates().
 function renderEmailTemplateSelect(){
   loadV39LocalState();
   const sel = document.getElementById('email-template-type'); if(!sel) return;
@@ -8443,7 +8447,7 @@ function renderEmailTemplateSelect(){
   sel.innerHTML = base.map(([v,l])=>`<option value="${v}">${l}</option>`).join('') + (CUSTOM_EMAIL_TEMPLATES.length ? '<optgroup label="Templates personnalisés">' + CUSTOM_EMAIL_TEMPLATES.map(t=>`<option value="custom:${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('') + '</optgroup>' : '');
   if([...sel.options].some(o=>o.value===current)) sel.value=current;
 }
-// V59 : ouverture mail consolidée dans openMailModal().
+// V60 : ouverture mail consolidée dans openMailModal().
 function openEmailTemplateModal(){
   loadV39LocalState();
   ['custom-template-name','custom-template-subject','custom-template-body'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -8580,7 +8584,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.renderActionsStructurePage();
     window.renderMyActionsPage();
   };
-  // V59 : ancienne implémentation terrain V41 retirée ; la version consolidée V39/V59 reste active plus bas.
+  // V60 : ancienne implémentation terrain V41 retirée ; la version consolidée V39/V60 reste active plus bas.
 
 
   function actionRows(){
@@ -8648,7 +8652,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   window.syncReportingFromLeads = syncReportingFromLeadsV41;
-  // V59 : anciennes vues reporting/performance V41 retirées ; la version finale consolidée V46/V59 reste active plus bas.
+  // V60 : anciennes vues reporting/performance V41 retirées ; la version finale consolidée V46/V60 reste active plus bas.
 
 
   window.updateLeadProgramOptions = function(scope='lead'){
@@ -8757,34 +8761,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  window.refreshCurrentPage = function(){
-    const active=document.querySelector('.page.active'); if(!active) return;
-    const id=active.id.replace('page-','');
-    if(id==='dashboard' && typeof renderDashboard==='function') renderDashboard();
-    else if(id==='listing' && typeof renderListing==='function') renderListing();
-    else if(id==='calendrier') { try{ S.calView==='grid'?renderCalGrid():renderCalList(); }catch(_){} }
-    else if(id==='students' && typeof renderStudentsPage==='function') renderStudentsPage();
-    else if(id==='registrations' && typeof renderRegistrationsPage==='function') renderRegistrationsPage();
-    else if(id==='users' && typeof renderUsersPage==='function') renderUsersPage();
-    else if(id==='reporting') window.renderReportingPage();
-    else if(id==='leads' && typeof renderLeadsPage==='function') renderLeadsPage();
-    else if(id==='leadsall' && typeof renderAllLeadsPage==='function') renderAllLeadsPage();
-    else if(id==='myactions') window.renderMyActionsPage();
-    else if(id==='actions') window.renderActionsStructurePage();
-    else if(id==='terrain') window.renderTerrainPage();
-    else if(id==='performance') window.renderPerformancePage();
-    else if(id==='inscriptions' && typeof renderInscriptionPage==='function') renderInscriptionPage();
-  };
-  window.showPage = function(page){
-    try { if(typeof updateTopbarForPage==='function') updateTopbarForPage(page); } catch(_) {}
-    ensureMyActionsPage();
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    const target=document.getElementById('page-'+page); if(target) target.classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    const map={dashboard:'Tableau de bord',myactions:'Mes actions',actions:'Pipeline CRM',listing:'Listing lycées',calendrier:'Calendrier forums',terrain:'Préparation forums',leads:'Leads & suivi',leadsall:'Tous les leads',students:'Ambassadeurs',registrations:'Inscriptions étudiants',reporting:'Reporting opérationnel',performance:'Bilan & conversion',users:'Utilisateurs',inscriptions:'Mes évènements'};
-    document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim()===map[page]) btn.classList.add('active'); });
-    window.refreshCurrentPage();
-  };
+  // V60 : refreshCurrentPage/showPage intermédiaires supprimés ; voir fonction consolidée en fin de fichier.
   document.addEventListener('DOMContentLoaded', function(){ ensureMyActionsPage(); setTimeout(()=>{ try { if(window.CURRENT_PUBLIC_LEAD_EVENT_ID) preparePublicLeadSelects(); } catch(_) {} }, 300); });
 })();
 
@@ -8851,7 +8828,7 @@ window.addEventListener('DOMContentLoaded', () => {
     try { if(typeof saveLocalData === 'function') saveLocalData(); } catch(_) {}
   };
 
-  // V59 : wrappers reporting/performance V44 retirés ; la synchro leads est appelée dans les renders finaux.
+  // V60 : wrappers reporting/performance V44 retirés ; la synchro leads est appelée dans les renders finaux.
 
   const prevRenderLeads = window.renderLeadsPage;
   window.renderLeadsPage = function(){
@@ -9100,16 +9077,7 @@ window.addEventListener('DOMContentLoaded', () => {
     installQrFullscreenButton();
   }
   window.edhSyncMobileChrome = syncMobileChrome;
-  if(!window.__EDH_V45_SHOWPAGE_WRAPPED && typeof window.showPage === 'function'){
-    window.__EDH_V45_SHOWPAGE_WRAPPED = true;
-    const baseShowPage = window.showPage;
-    window.showPage = function(){
-      const result = baseShowPage.apply(this, arguments);
-      setTimeout(syncMobileChrome, 0);
-      setTimeout(() => applyMobileTableLabels(document), 80);
-      return result;
-    };
-  }
+  // V60 : wrapper showPage mobile supprimé ; synchronisation mobile reprise dans showPage consolidé.
   window.closeMobileQrFullscreen = function(){ const overlay = document.getElementById('mobile-qr-fullscreen'); if(overlay) overlay.classList.remove('open'); };
   window.openMobileQrFullscreen = function(){
     const url = document.getElementById('lead-qr-url')?.value || '';
@@ -9235,7 +9203,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     rows.sort((a,b)=>new Date(a.event.date||0)-new Date(b.event.date||0) || safeText(a.event.nom).localeCompare(safeText(b.event.nom)) || a.school.localeCompare(b.school));
     if(!rows.length){
-      body.innerHTML = `<tr><td colspan="13"><div class="empty-state"><p>Aucun lycée en “Participation Validée” ou “Validée” n’a été trouvé pour ce filtre.</p></div></td></tr>`;
+      body.innerHTML = `<tr><td colspan="13">${edhEmptyState({icon:'▦', title:'Aucun reporting disponible', text:'Aucun lycée validé ne correspond à ce filtre. Vérifie les statuts dans le listing ou importe ton reporting Excel.', primaryLabel:'Importer Excel', primaryAction:'openImportReportingModal()', secondaryLabel:'Voir le listing', secondaryAction:'showPage(\'listing\')'})}</td></tr>`;
       return;
     }
     const totals = {global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0};
@@ -9281,7 +9249,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       const rows = visibleSchools.map(school => { const events = validated.filter(l=>eventSchoolsSafe(l).includes(school)); const sum={global:0,seconde:0,premiere:0,terminale:0,autres:0,prospect:0,candidat:0,admis:0,inscrit:0}; events.forEach(l=>{ const r=reportRec(l,school); Object.keys(sum).forEach(k=>sum[k]+=Number(r[k]||0)); }); return {school, events:events.length, ...sum}; });
       const summaryBody = document.getElementById('reporting-summary-body');
-      if(summaryBody){ summaryBody.innerHTML = rows.map(r=>`<tr><td><strong>${h(r.school)}</strong></td><td>${r.events}</td><td>${r.global}</td><td>${r.seconde}</td><td>${r.premiere}</td><td>${r.terminale}</td><td>${r.autres}</td><td>${r.prospect}</td><td>${r.candidat}</td><td>${r.admis}</td><td>${r.inscrit}</td></tr>`).join('') || `<tr><td colspan="11"><div class="empty-state"><p>Aucun lycée validé trouvé.</p></div></td></tr>`; }
+      if(summaryBody){ summaryBody.innerHTML = rows.map(r=>`<tr><td><strong>${h(r.school)}</strong></td><td>${r.events}</td><td>${r.global}</td><td>${r.seconde}</td><td>${r.premiere}</td><td>${r.terminale}</td><td>${r.autres}</td><td>${r.prospect}</td><td>${r.candidat}</td><td>${r.admis}</td><td>${r.inscrit}</td></tr>`).join('') || `<tr><td colspan="11">${edhEmptyState({icon:'▦', title:'Aucun lycée validé', text:'Les KPI se rempliront dès qu’un lycée passera en participation validée ou qu’un reporting sera importé.', primaryLabel:'Voir le listing', primaryAction:'showPage(\'listing\')'})}</td></tr>`; }
       try { if(typeof enhanceReportingConversionBars === 'function') enhanceReportingConversionBars(); } catch(_) {}
       try { if(typeof formatVisibleNumbers === 'function') formatVisibleNumbers(); } catch(_) {}
     } finally { window.__EDH_RENDER_REPORTING_LOCK = false; }
@@ -9307,7 +9275,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
       set('perf-forums', totals.forums); set('perf-prospects', totals.prospects); set('perf-candidats', totals.candidats); set('perf-admis', totals.admis); set('perf-inscrits', totals.inscrits); set('perf-taux', typeof pct === 'function' ? pct(totals.inscrits, totals.prospects) : '—'); set('perf-count', `${rows.length} lycée(s)`);
       const body=document.getElementById('performance-tbody');
-      if(body){ body.innerHTML = rows.length ? rows.map(r=>{ const id=evKey(r.l); return `<tr onclick="openDetail('${h(id)}')" style="cursor:pointer"><td><strong>${h(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${h(r.l.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.l.date):h(r.l.date||'—')}</td><td>${typeof schoolTags==='function'?schoolTags(r.l.ecoles):h(r.l.ecoles||'')}</td><td>${r.prospects}</td><td>${Number(r.report.candidat||0)}</td><td>${Number(r.report.admis||0)}</td><td>${Number(r.report.inscrit||0)}</td><td><span class="conversion-rate">${h(r.rate)}</span></td><td>${h(r.reading)}</td></tr>`; }).join('') : `<tr><td colspan="9"><div class="crm-empty">Aucun forum validé à analyser pour la saison active.</div></td></tr>`; }
+      if(body){ body.innerHTML = rows.length ? rows.map(r=>{ const id=evKey(r.l); return `<tr onclick="openDetail('${h(id)}')" style="cursor:pointer"><td><strong>${h(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${h(r.l.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.l.date):h(r.l.date||'—')}</td><td>${typeof schoolTags==='function'?schoolTags(r.l.ecoles):h(r.l.ecoles||'')}</td><td>${r.prospects}</td><td>${Number(r.report.candidat||0)}</td><td>${Number(r.report.admis||0)}</td><td>${Number(r.report.inscrit||0)}</td><td><span class="conversion-rate">${h(r.rate)}</span></td><td>${h(r.reading)}</td></tr>`; }).join('') : `<tr><td colspan="9">${edhEmptyState({icon:'◌', title:'Aucun bilan à afficher', text:'Le bilan conversion apparaîtra dès qu’un forum validé possède du reporting ou des leads associés sur la saison active.', primaryLabel:'Importer un reporting', primaryAction:'openImportReportingModal()', secondaryLabel:'Voir le reporting', secondaryAction:'showPage(\'reporting\')'})}</td></tr>`; }
       try { if(typeof formatVisibleNumbers === 'function') formatVisibleNumbers(); } catch(_) {}
     } finally { window.__EDH_RENDER_PERF_LOCK = false; }
   };
@@ -9764,24 +9732,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const originalShowPage = window.showPage;
-  window.showPage = function(page){
-    if(typeof originalShowPage === 'function') originalShowPage(page);
-    if(page === 'resources'){
-      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim() === 'Ressources') btn.classList.add('active'); });
-      loadResourcesFromSupabase(false);
-      const mt=document.getElementById('mobile-page-title'); if(mt) mt.textContent='Ressources';
-      const ms=document.getElementById('mobile-page-subtitle'); if(ms) ms.textContent='Documents forums';
-    }
-  };
-
-  const originalRefreshCurrentPage = window.refreshCurrentPage;
-  window.refreshCurrentPage = function(){
-    const active=document.querySelector('.page.active')?.id?.replace('page-','') || '';
-    if(active === 'resources') return renderResourcesPage();
-    if(typeof originalRefreshCurrentPage === 'function') return originalRefreshCurrentPage();
-  };
+  // V60 : wrappers showPage/refreshCurrentPage ressources supprimés ; logique reprise dans showPage consolidé.
 
   const originalSetRole = window.setRole;
   window.setRole = function(role){
@@ -9868,7 +9819,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function installRealtimeHintV48(){
     try {
-      // V59 : éviter deux canaux realtime concurrents. Si le realtime principal est actif,
+      // V60 : éviter deux canaux realtime concurrents. Si le realtime principal est actif,
       // V48 conserve seulement les refresh focus/online et les refresh après création de lead.
       if(typeof EDH_SUPABASE_REALTIME_ENABLED !== 'undefined' && EDH_SUPABASE_REALTIME_ENABLED) return;
       if(!supabaseClient || smartRealtimeChannel) return;
@@ -10510,7 +10461,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // V59 : wrappers renderReporting/renderPerformance V52 consolidés dans les fonctions finales.
+  // V60 : wrappers renderReporting/renderPerformance V52 consolidés dans les fonctions finales.
 
   const previousUpdateReportFieldV52 = window.updateReportField;
   if(typeof previousUpdateReportFieldV52 === 'function'){
@@ -10843,7 +10794,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if(typeof previousRenderAllLeadsV53 === 'function'){
     window.renderAllLeadsPage = function(){ const r = previousRenderAllLeadsV53.apply(this, arguments); renderAllLeadFilterChips(); formatVisibleNumbers(); return r; };
   }
-  // V59 : wrappers renderReporting/renderPerformance V53 consolidés dans les fonctions finales.
+  // V60 : wrappers renderReporting/renderPerformance V53 consolidés dans les fonctions finales.
 
   window.resolveConfirmModal = function(result){
     const modal = document.getElementById('modal-confirm');
@@ -11087,24 +11038,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.renderStudentsPage = wrappedRenderStudentsPage;
   }
 
-  const previousShowPageV56 = window.showPage;
-  if(typeof previousShowPageV56 === 'function' && !previousShowPageV56.__edhV56SyncWrapped){
-    const wrappedShowPage = function(page){
-      readStudentFilters();
-      const result = previousShowPageV56.apply(this, arguments);
-      // Sync légère au changement d'onglet, sans barre bleue et sans boucle périodique.
-      if(page && typeof window.refreshFromSupabaseAndRender === 'function' && !document.body.classList.contains('public-lead-mode')){
-        clearTimeout(window.__EDH_V56_PAGE_SYNC_TIMER);
-        window.__EDH_V56_PAGE_SYNC_TIMER = setTimeout(() => {
-          window.refreshFromSupabaseAndRender(true, 'tab-change-' + page).catch(err => console.warn('Sync changement onglet impossible', err));
-        }, 250);
-      }
-      setTimeout(() => { restoreStudentFilters(); if(page === 'students' && typeof window.renderStudentsPage === 'function') window.renderStudentsPage(); }, 0);
-      return result;
-    };
-    wrappedShowPage.__edhV56SyncWrapped = true;
-    window.showPage = wrappedShowPage;
-  }
+  // V60 : wrapper showPage V56 supprimé ; lecture/restauration filtres + sync reprise dans showPage consolidé.
 
   window.edhDebugAmbassadeursV56 = function(){
     const all = Array.isArray(window.STUDENTS || STUDENTS) ? (window.STUDENTS || STUDENTS) : [];
@@ -11122,7 +11056,78 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 })();
 
+
+/* ══════════════════════════════════════
+   V60 — Navigation consolidée
+   Une seule fonction showPage active en fin de fichier : elle reprend les effets utiles
+   des anciens wrappers V45/V47/V56 sans empiler de nouvelle surcouche.
+══════════════════════════════════════ */
+(function(){
+  window.EDH_APP_VERSION = APP_PATCH_VERSION;
+  const PAGE_LABELS = {dashboard:'Tableau de bord',myactions:'Mes actions',actions:'Pipeline CRM',listing:'Listing lycées',calendrier:'Calendrier forums',terrain:'Préparation forums',leads:'Leads & suivi',leadsall:'Tous les leads',students:'Ambassadeurs',registrations:'Inscriptions étudiants',reporting:'Reporting opérationnel',performance:'Bilan & conversion',users:'Utilisateurs',inscriptions:'Mes évènements',resources:'Ressources'};
+  function renderPageContent(page){
+    if(page==='dashboard' && typeof renderDashboard==='function') renderDashboard();
+    else if(page==='listing' && typeof renderListing==='function') renderListing();
+    else if(page==='calendrier'){
+      S.calView='list';
+      const listBtn=document.getElementById('vtb-list'); const gridBtn=document.getElementById('vtb-grid');
+      const list=document.getElementById('cal-list-view'); const grid=document.getElementById('cal-grid-view');
+      if(listBtn) listBtn.className='vtb active'; if(gridBtn) gridBtn.className='vtb';
+      if(list) list.style.display='block'; if(grid) grid.style.display='none';
+      if(typeof renderCalList==='function') renderCalList();
+    }
+    else if(page==='students' && typeof renderStudentsPage==='function') renderStudentsPage();
+    else if(page==='registrations' && typeof renderRegistrationsPage==='function') renderRegistrationsPage();
+    else if(page==='users' && typeof renderUsersPage==='function') renderUsersPage();
+    else if(page==='reporting' && typeof renderReportingPage==='function') renderReportingPage();
+    else if(page==='leads' && typeof renderLeadsPage==='function') renderLeadsPage();
+    else if(page==='leadsall' && typeof renderAllLeadsPage==='function') renderAllLeadsPage();
+    else if(page==='actions' && typeof renderActionsStructurePage==='function') renderActionsStructurePage();
+    else if(page==='myactions' && typeof renderMyActionsPage==='function') renderMyActionsPage();
+    else if(page==='terrain' && typeof renderTerrainPage==='function') renderTerrainPage();
+    else if(page==='performance' && typeof renderPerformancePage==='function') renderPerformancePage();
+    else if(page==='inscriptions' && typeof renderInscriptionPage==='function') renderInscriptionPage();
+    else if(page==='resources'){
+      if(typeof renderResourcesPage==='function') renderResourcesPage();
+      if(typeof loadResourcesFromSupabase==='function') loadResourcesFromSupabase(false);
+    }
+  }
+  function syncAfterNavigation(page){
+    try { if(typeof edhRestoreStudentFiltersV56==='function') edhRestoreStudentFiltersV56(); } catch(_) {}
+    try { if(typeof edhSyncMobileChrome==='function') edhSyncMobileChrome(); } catch(_) {}
+    try { if(typeof applyMobileTableLabels==='function') applyMobileTableLabels(document); } catch(_) {}
+    try {
+      if(page && typeof refreshFromSupabaseAndRender === 'function' && !document.body.classList.contains('public-lead-mode')){
+        clearTimeout(window.__EDH_V60_PAGE_SYNC_TIMER);
+        window.__EDH_V60_PAGE_SYNC_TIMER = setTimeout(() => {
+          refreshFromSupabaseAndRender(true, 'tab-change-' + page).catch(err => console.warn('Sync changement onglet impossible', err));
+        }, 250);
+      }
+    } catch(_) {}
+  }
+  window.refreshCurrentPage = function(){
+    const active = document.querySelector('.page.active')?.id?.replace('page-','') || 'dashboard';
+    renderPageContent(active);
+  };
+  window.showPage = function(page){
+    try { if(typeof edhReadStudentFiltersV56==='function') edhReadStudentFiltersV56(); } catch(_) {}
+    try { if(typeof ensureMyActionsPage==='function') ensureMyActionsPage(); } catch(_) {}
+    try { if(typeof updateTopbarForPage==='function') updateTopbarForPage(page); } catch(_) {}
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const target = document.getElementById('page-' + page);
+    if(target) target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    if(page === 'school'){
+      document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim() === S.currentSchool) btn.classList.add('active'); });
+    } else {
+      document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.textContent.trim() === PAGE_LABELS[page]) btn.classList.add('active'); });
+    }
+    renderPageContent(page);
+    setTimeout(() => syncAfterNavigation(page), 0);
+  };
+})();
+
 </script>
 </body>
 </html>
-<!-- V59 cleanup applied: dark-mode selects fixed, required QR labels aligned, dead reporting code removed, render wrappers consolidated, duplicate realtime avoided. -->
+<!-- V60 cleanup applied: role select dark mode, dead student-school CSS removed, richer empty states, final showPage consolidated. -->
