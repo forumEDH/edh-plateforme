@@ -17,7 +17,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='800' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232563eb'/%3E%3Ctext x='90' y='108' text-anchor='middle' font-family='Arial,sans-serif' font-size='52' font-weight='900' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
-<title>EDH — Forums Lycées 2025·2026</title>
+<title>EDH Forums — Version 2</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 
@@ -1352,9 +1352,93 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
 .theme-select { width:100%; margin-top:8px; padding:8px 10px; border:1px solid var(--border2); border-radius:7px; font-size:12px; font-family:'DM Sans',sans-serif; background:var(--surface); color:var(--text); }
 .theme-hint { font-size:11px; color:var(--text3); margin-top:6px; line-height:1.4; }
 
+
+
+/* ── V61 STABILITÉ / ACCESSIBILITÉ / UX ── */
+.app-network-banner{position:fixed;left:var(--sidebar-w);right:0;top:0;z-index:5000;display:none;padding:8px 16px;text-align:center;font-size:12px;font-weight:800;background:var(--red-bg);color:var(--red);border-bottom:1px solid var(--red-border)}
+body.is-offline .app-network-banner{display:block}.app-last-sync{font-size:10px;color:var(--text3);margin-top:5px;text-align:center}
+:focus-visible{outline:3px solid rgba(37,99,235,.35);outline-offset:2px}.btn:focus-visible,.nav-item:focus-visible,.mobile-nav-btn:focus-visible{outline-color:var(--primary)}
+.form-field.is-dirty .form-label::after{content:' •';color:var(--orange)}
+.modal-overlay[aria-hidden="true"]{display:none!important}.toast[aria-live]{max-width:min(440px,calc(100vw - 28px))}
+.skip-link{position:fixed;left:12px;top:-60px;z-index:99999;background:var(--text);color:var(--surface);padding:9px 13px;border-radius:8px;font-weight:800;text-decoration:none}.skip-link:focus{top:12px}
+@media(max-width:768px){.app-network-banner{left:0;top:calc(58px + env(safe-area-inset-top))}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+
+/* ══════════════════════════════════════
+   VERSION 2 — PRODUCT SHELL / PERFORMANCE / ACCESSIBILITÉ
+══════════════════════════════════════ */
+:root { --focus-ring:0 0 0 3px rgba(37,99,235,.22); --header-h:61px; }
+html { scroll-behavior:smooth; }
+body.v2-ready { text-rendering:optimizeLegibility; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible { outline:none; box-shadow:var(--focus-ring)!important; }
+.skip-link { position:fixed; left:14px; top:-60px; z-index:100000; background:var(--primary); color:white; padding:10px 14px; border-radius:9px; font-weight:800; text-decoration:none; transition:top .15s; }
+.skip-link:focus { top:14px; }
+.v2-network-banner { position:fixed; top:0; left:var(--sidebar-w); right:0; min-height:34px; z-index:4100; padding:7px 16px; display:none; align-items:center; justify-content:center; gap:10px; background:#7f1d1d; color:white; font-size:12px; font-weight:800; box-shadow:0 4px 18px rgba(0,0,0,.16); }
+.v2-network-banner.show { display:flex; }
+body.v2-offline .topbar { top:34px; }
+.v2-sync-meta { display:flex; align-items:center; gap:7px; color:var(--text3); font-size:11px; padding:6px 9px; border:1px solid var(--border); border-radius:999px; background:var(--surface); white-space:nowrap; }
+.v2-sync-meta::before { content:''; width:7px; height:7px; border-radius:99px; background:var(--green); }
+.v2-sync-meta.stale::before { background:var(--yellow); }
+.v2-command-overlay { position:fixed; inset:0; z-index:5000; display:none; align-items:flex-start; justify-content:center; padding:12vh 18px 18px; background:rgba(15,23,42,.52); backdrop-filter:blur(7px); }
+.v2-command-overlay.open { display:flex; }
+.v2-command { width:min(680px,100%); border-radius:18px; background:var(--surface); border:1px solid var(--border); box-shadow:0 28px 90px rgba(15,23,42,.32); overflow:hidden; }
+.v2-command-head { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border); }
+.v2-command-head input { flex:1; border:0; outline:0; background:transparent; color:var(--text); font:600 16px 'DM Sans',sans-serif; }
+.v2-command-kbd { font-size:10px; padding:3px 7px; border:1px solid var(--border2); border-radius:6px; color:var(--text3); background:var(--bg); }
+.v2-command-results { max-height:440px; overflow:auto; padding:8px; }
+.v2-command-item { width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px; border:0; background:transparent; color:var(--text); padding:11px 12px; border-radius:10px; cursor:pointer; text-align:left; font-family:inherit; }
+.v2-command-item:hover,.v2-command-item.active { background:var(--primary-light); color:var(--primary); }
+.v2-command-main { font-size:13px; font-weight:800; }
+.v2-command-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.v2-command-tag { font-size:10px; color:var(--text3); border:1px solid var(--border); border-radius:999px; padding:3px 7px; white-space:nowrap; }
+.v2-command-empty { padding:30px; text-align:center; color:var(--text3); }
+.v2-quick-search-btn { min-width:40px; padding:8px 10px; }
+.v2-quick-search-btn kbd { margin-left:5px; font:700 10px 'DM Mono',monospace; opacity:.72; }
+.table-scroll { position:relative; scrollbar-gutter:stable; }
+.table-scroll thead th { position:sticky; top:0; z-index:2; }
+.table-scroll tbody tr { content-visibility:auto; contain-intrinsic-size:44px; }
+.card { contain:layout style; }
+.btn:active { transform:translateY(0)!important; }
+.btn[disabled],.btn[aria-disabled="true"] { opacity:.55; cursor:not-allowed; pointer-events:none; }
+.v2-page-tools { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.v2-dirty-dot { display:none; color:var(--orange); font-size:11px; font-weight:800; }
+.v2-dirty-dot.show { display:inline-flex; }
+.form-input[aria-invalid="true"],.form-select[aria-invalid="true"],.form-textarea[aria-invalid="true"] { border-color:var(--red)!important; box-shadow:0 0 0 3px rgba(220,38,38,.10)!important; }
+.v2-error-summary { display:none; border:1px solid var(--red-border); background:var(--red-bg); color:var(--red); border-radius:11px; padding:11px 13px; margin-bottom:12px; font-size:12px; font-weight:700; }
+.v2-error-summary.show { display:block; }
+.v2-toast-action { margin-left:10px; border:1px solid rgba(255,255,255,.35); background:transparent; color:white; border-radius:6px; padding:3px 7px; cursor:pointer; font-weight:800; }
+@media (max-width:768px){
+ .v2-network-banner{left:0;top:calc(58px + env(safe-area-inset-top));}
+ body.v2-offline{padding-top:calc(92px + env(safe-area-inset-top));}
+ body.v2-offline .topbar{top:calc(92px + env(safe-area-inset-top));}
+ .v2-command-overlay{padding-top:calc(76px + env(safe-area-inset-top));align-items:flex-start;}
+ .v2-command{border-radius:16px;}
+ .v2-command-results{max-height:62vh;}
+ .v2-quick-search-btn kbd{display:none;}
+ .table-scroll tbody tr{content-visibility:visible;}
+}
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;} }
+
 </style>
 </head>
 <body>
+
+<a class="skip-link" href="#app-main-content">Aller au contenu principal</a>
+<div class="v2-network-banner" id="v2-network-banner" role="status" aria-live="polite">Connexion internet interrompue — les modifications seront à nouveau disponibles après reconnexion.</div>
+<div class="v2-command-overlay" id="v2-command-overlay" role="dialog" aria-modal="true" aria-labelledby="v2-command-title">
+  <div class="v2-command">
+    <div class="v2-command-head">
+      <span aria-hidden="true">⌕</span>
+      <input id="v2-command-input" autocomplete="off" placeholder="Rechercher une page, un lycée, un événement, un lead ou un étudiant…" aria-label="Recherche globale">
+      <span class="v2-command-kbd">Échap</span>
+    </div>
+    <div class="v2-command-results" id="v2-command-results"></div>
+  </div>
+</div>
+
+<a class="skip-link" href="#main-content">Aller au contenu principal</a>
+<div class="app-network-banner" id="app-network-banner" role="status" aria-live="polite">Connexion internet interrompue — les modifications seront à réessayer après reconnexion.</div>
 <div id="edh-global-syncbar" aria-hidden="true"></div>
 
 
@@ -1542,7 +1626,7 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
 </aside>
 
 <!-- ═══ MAIN ═══ -->
-<div class="main">
+<div class="main" id="main-content" tabindex="-1">
 
   <!-- TOPBAR -->
   <div class="topbar" id="topbar-page-actions" style="display:none">
@@ -1599,7 +1683,7 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
     </div>
   </div>
 
-  <div class="content">
+  <div class="content" id="app-main-content" tabindex="-1">
 
     <!-- ═══ DASHBOARD ═══ -->
     <div class="page active" id="page-dashboard">
@@ -2982,10 +3066,10 @@ html[data-theme="dark"] .skeleton-card { background:linear-gradient(90deg,#17203
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V60-2026-07-09-ui-cleanup-showpage-consolidation";
+const APP_PATCH_VERSION = "V61-2026-07-10-stability-security-ux";
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
 // ══════════════════════════════════════
@@ -3158,7 +3242,6 @@ function minimalUserForStorage(u){
     firstName: u?.firstName || '',
     lastName: u?.lastName || '',
     email: u?.email || '',
-    password: u?.password || '',
     role: u?.role || 'student',
     school: u?.school || '',
     campus: u?.campus || '',
@@ -4854,7 +4937,8 @@ function saveSessionOnly(){
   safeLocalStorageSet('edh_student_profile_v2', JSON.stringify(S.studentProfile || null));
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
-  safeLocalStorageSet('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
+  try { sessionStorage.setItem('edh_current_user_v3', JSON.stringify(S.currentUserId || null)); } catch(_) {}
+  safeLocalStorageRemove('edh_current_user_v3');
   safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
 }
 function saveLocalData(){
@@ -4863,7 +4947,8 @@ function saveLocalData(){
   safeLocalStorageSet('edh_student_profile_v2', JSON.stringify(S.studentProfile || null));
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
-  safeLocalStorageSet('edh_current_user_v3', JSON.stringify(S.currentUserId || null));
+  try { sessionStorage.setItem('edh_current_user_v3', JSON.stringify(S.currentUserId || null)); } catch(_) {}
+  safeLocalStorageRemove('edh_current_user_v3');
   safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
 
   // En mode Supabase, ne jamais réécrire un cache local d'événements / lycées.
@@ -4935,7 +5020,7 @@ function loadLocalData(){
     ensureDefaultUsers();
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
     safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
-    S.currentUserId = JSON.parse(localStorage.getItem('edh_current_user_v3') || 'null');
+    S.currentUserId = JSON.parse(sessionStorage.getItem('edh_current_user_v3') || 'null');
     const savedProfile = JSON.parse(localStorage.getItem('edh_student_profile_v2') || 'null');
     S.studentProfile = savedProfile;
     if(S.currentUserId){
@@ -8185,9 +8270,8 @@ async function init(){
   if(supabaseClient){
     SUPABASE_SYNC_READY = true;
     setupSupabaseRealtime();
-    window.addEventListener('focus', () => refreshFromSupabaseAndRender(true, 'window-focus'));
-    document.addEventListener('visibilitychange', () => { if(!document.hidden) refreshFromSupabaseAndRender(true, 'visible-again'); });
-    window.addEventListener('online', () => refreshFromSupabaseAndRender(true, 'online-again'));
+    window.addEventListener('focus', () => { if(typeof edhRequestSmartRefresh === 'function') edhRequestSmartRefresh('window-focus', 60000); });
+    window.addEventListener('online', () => { if(typeof edhRequestSmartRefresh === 'function') edhRequestSmartRefresh('online-again', 0); });
     setTimeout(async () => {
       try {
         const supabaseLoaded = await refreshFromSupabaseAndRender(false, 'initial', S.season || DEFAULT_SEASON);
@@ -11096,14 +11180,8 @@ window.addEventListener('DOMContentLoaded', () => {
     try { if(typeof edhRestoreStudentFiltersV56==='function') edhRestoreStudentFiltersV56(); } catch(_) {}
     try { if(typeof edhSyncMobileChrome==='function') edhSyncMobileChrome(); } catch(_) {}
     try { if(typeof applyMobileTableLabels==='function') applyMobileTableLabels(document); } catch(_) {}
-    try {
-      if(page && typeof refreshFromSupabaseAndRender === 'function' && !document.body.classList.contains('public-lead-mode')){
-        clearTimeout(window.__EDH_V60_PAGE_SYNC_TIMER);
-        window.__EDH_V60_PAGE_SYNC_TIMER = setTimeout(() => {
-          refreshFromSupabaseAndRender(true, 'tab-change-' + page).catch(err => console.warn('Sync changement onglet impossible', err));
-        }, 250);
-      }
-    } catch(_) {}
+    // V61 : la navigation ne déclenche plus un rechargement global Supabase.
+    // Les données déjà chargées sont rendues immédiatement ; Realtime et les sauvegardes ciblées gardent l'état à jour.
   }
   window.refreshCurrentPage = function(){
     const active = document.querySelector('.page.active')?.id?.replace('page-','') || 'dashboard';
@@ -11127,7 +11205,314 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 })();
 
+
+/* ══════════════════════════════════════
+   V61 — Robustesse, sécurité navigateur, accessibilité et fluidité
+══════════════════════════════════════ */
+(function(){
+  if(window.__EDH_V61__) return;
+  window.__EDH_V61__ = true;
+  window.EDH_APP_VERSION = APP_PATCH_VERSION;
+  let lastSmartRefreshAt = 0;
+  let smartRefreshPromise = null;
+  let activeModalBeforeFocus = null;
+
+  window.edhRequestSmartRefresh = async function(reason='manual', minInterval=30000){
+    if(!navigator.onLine || !supabaseClient || SUPABASE_IS_LOADING || SUPABASE_IS_PUSHING) return false;
+    if(document.body.classList.contains('public-lead-mode')) return false;
+    const now = Date.now();
+    if(minInterval && now - lastSmartRefreshAt < minInterval) return false;
+    if(smartRefreshPromise) return smartRefreshPromise;
+    lastSmartRefreshAt = now;
+    smartRefreshPromise = Promise.resolve(refreshFromSupabaseAndRender(true, 'smart-' + reason))
+      .finally(() => { smartRefreshPromise = null; updateLastSyncLabel(); });
+    return smartRefreshPromise;
+  };
+
+  function updateNetworkState(){
+    document.body.classList.toggle('is-offline', !navigator.onLine);
+    const status = document.getElementById('supabase-status-label');
+    if(!navigator.onLine && status) status.textContent = 'Hors connexion — aucune écriture distante possible';
+  }
+  function updateLastSyncLabel(){
+    const box=document.getElementById('supabase-status');
+    if(!box) return;
+    let label=box.parentElement?.querySelector('.app-last-sync');
+    if(!label){ label=document.createElement('div'); label.className='app-last-sync'; box.insertAdjacentElement('afterend',label); }
+    label.textContent='Dernière actualisation : '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  function enhanceLabels(root=document){
+    root.querySelectorAll('label.form-label').forEach(label=>{
+      if(label.htmlFor) return;
+      const field=label.parentElement?.querySelector('input[id],select[id],textarea[id],button[id]');
+      if(field) label.htmlFor=field.id;
+    });
+  }
+  function enhanceButtons(root=document){
+    root.querySelectorAll('button:not([type])').forEach(btn=>btn.type='button');
+    root.querySelectorAll('.modal-close').forEach(btn=>{ if(!btn.getAttribute('aria-label')) btn.setAttribute('aria-label','Fermer la fenêtre'); });
+  }
+  function enhanceDropdowns(root=document){
+    root.querySelectorAll('.check-dropdown-btn,.multi-filter-btn').forEach(btn=>{
+      btn.setAttribute('aria-haspopup','true');
+      btn.setAttribute('aria-expanded', String(btn.closest('.open')!==null));
+    });
+  }
+  function markDirty(e){
+    const field=e.target.closest?.('.form-field');
+    if(field && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) field.classList.add('is-dirty');
+  }
+  function clearDirtyIn(modal){ modal?.querySelectorAll('.form-field.is-dirty').forEach(x=>x.classList.remove('is-dirty')); }
+
+  function activeOpenModal(){ return Array.from(document.querySelectorAll('.modal-overlay.open,.login-overlay.open,.public-lead-overlay.open')).pop() || null; }
+  function focusFirst(modal){
+    const el=modal?.querySelector('input:not([type="hidden"]):not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled])');
+    if(el) setTimeout(()=>el.focus({preventScroll:true}),0);
+  }
+  document.addEventListener('keydown',e=>{
+    const modal=activeOpenModal();
+    if(e.key==='Escape' && modal && modal.id!=='public-lead-overlay'){
+      e.preventDefault();
+      if(modal.id==='login-modal') closeLoginModal(); else if(modal.id==='modal-confirm' && typeof resolveConfirmModal==='function') resolveConfirmModal(false); else closeModal(modal.id);
+      activeModalBeforeFocus?.focus?.();
+    }
+    if(e.key==='Tab' && modal){
+      const list=[...modal.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
+      if(!list.length) return;
+      const first=list[0], last=list[list.length-1];
+      if(e.shiftKey && document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  },true);
+
+  const modalObserver=new MutationObserver(entries=>{
+    for(const entry of entries){
+      const el=entry.target;
+      if(!(el instanceof HTMLElement)) continue;
+      const open=el.classList.contains('open');
+      el.setAttribute('aria-hidden',String(!open));
+      if(open){ activeModalBeforeFocus=document.activeElement; enhanceLabels(el); enhanceButtons(el); focusFirst(el); }
+      else clearDirtyIn(el);
+    }
+    enhanceDropdowns();
+  });
+  document.querySelectorAll('.modal-overlay,.login-overlay,.public-lead-overlay').forEach(el=>{
+    el.setAttribute('aria-hidden',String(!el.classList.contains('open')));
+    modalObserver.observe(el,{attributes:true,attributeFilter:['class']});
+  });
+
+  // Nettoyage immédiat des anciens mots de passe éventuellement présents dans le cache local.
+  try{
+    const raw=localStorage.getItem('edh_users_v3');
+    if(raw){
+      const users=JSON.parse(raw);
+      if(Array.isArray(users)) localStorage.setItem('edh_users_v3',JSON.stringify(users.map(u=>{const x={...u};delete x.password;delete x.mot_de_passe;return x;})));
+    }
+    localStorage.removeItem('edh_current_user_v3');
+  }catch(_){}
+
+  // Évite les doubles clics rapides sur les actions de sauvegarde/suppression/import.
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest?.('button');
+    if(!btn || btn.disabled) return;
+    const action=(btn.getAttribute('onclick')||'').toLowerCase();
+    if(!/(save|submit|import|upload|delete|archive|create)/.test(action)) return;
+    if(btn.dataset.edhClickLock==='1'){ e.preventDefault(); e.stopImmediatePropagation(); return; }
+    btn.dataset.edhClickLock='1';
+    setTimeout(()=>{ delete btn.dataset.edhClickLock; },900);
+  },true);
+
+  document.addEventListener('input',markDirty,true);
+  document.addEventListener('change',markDirty,true);
+  window.addEventListener('online',()=>{ updateNetworkState(); edhRequestSmartRefresh('reconnected',0); });
+  window.addEventListener('offline',updateNetworkState);
+
+  // Met à jour les attributs actifs de navigation sans nouvelle requête réseau.
+  document.addEventListener('click',e=>{
+    const nav=e.target.closest?.('.nav-item,.mobile-nav-btn');
+    if(!nav) return;
+    document.querySelectorAll('.nav-item,.mobile-nav-btn').forEach(x=>x.removeAttribute('aria-current'));
+    nav.setAttribute('aria-current','page');
+  },true);
+
+  enhanceLabels(); enhanceButtons(); enhanceDropdowns(); updateNetworkState();
+  const observer=new MutationObserver(()=>{enhanceLabels();enhanceButtons();enhanceDropdowns();});
+  observer.observe(document.body,{childList:true,subtree:true});
+})();
+
 </script>
+
+<script>
+/* ══════════════════════════════════════
+   EDH FORUMS VERSION 2 — noyau transversal unique
+   Compatible avec le schéma Supabase historique.
+══════════════════════════════════════ */
+(()=>{
+  'use strict';
+  if(window.__EDH_V2__) return;
+  window.__EDH_V2__=true;
+
+  const V2={
+    route:'dashboard', lastSync:0, syncing:false, pendingRefresh:false,
+    commandIndex:[], commandSelection:0, dirtyForms:new WeakSet(),
+    original:{}, refreshTTL:45000
+  };
+  window.EDH_V2=V2;
+
+  const $=(id)=>document.getElementById(id);
+  const norm=(v)=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const safe=(v)=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const debounce=(fn,wait=220)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}};
+
+  // Façade d'état unique : les modules historiques restent compatibles mais exposent une lecture commune.
+  Object.defineProperty(V2,'store',{get(){return{
+    lycees:typeof DATA!=='undefined'?DATA:[], events:typeof EVENTS!=='undefined'?EVENTS:[],
+    students:typeof STUDENTS!=='undefined'?STUDENTS:[], users:typeof USERS!=='undefined'?USERS:[],
+    leads:typeof LEADS!=='undefined'?LEADS:[], registrations:typeof REGISTRATIONS!=='undefined'?REGISTRATIONS:[],
+    reporting:typeof REPORTING_DATA!=='undefined'?REPORTING_DATA:{}, resources:typeof RESOURCES!=='undefined'?RESOURCES:[],
+    session:typeof CURRENT_USER!=='undefined'?CURRENT_USER:null, appState:typeof S!=='undefined'?S:null
+  }}});
+
+  function setSyncMeta(stale=false){
+    let node=$('v2-sync-meta');
+    if(!node){
+      node=document.createElement('div'); node.id='v2-sync-meta'; node.className='v2-sync-meta';
+      const host=document.querySelector('.topbar-right')||document.querySelector('.topbar');
+      host?.prepend(node);
+    }
+    node.classList.toggle('stale',stale);
+    node.textContent=V2.lastSync?`Actualisé ${new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit'}).format(V2.lastSync)}`:'Données locales';
+  }
+
+  function updateNetwork(){
+    const offline=!navigator.onLine;
+    document.body.classList.toggle('v2-offline',offline);
+    $('v2-network-banner')?.classList.toggle('show',offline);
+    if(!offline && V2.pendingRefresh){V2.pendingRefresh=false;smartRefresh('reconnexion',true);}
+  }
+
+  async function smartRefresh(reason='manuel',force=false){
+    if(!navigator.onLine){V2.pendingRefresh=true;updateNetwork();return false;}
+    if(V2.syncing) return false;
+    if(!force && Date.now()-V2.lastSync<V2.refreshTTL) return true;
+    if(typeof refreshFromSupabaseAndRender!=='function') return false;
+    V2.syncing=true; document.body.classList.add('edh-global-sync-active');
+    try{
+      const ok=await refreshFromSupabaseAndRender(true,'v2-'+reason);
+      V2.lastSync=Date.now();setSyncMeta(false);buildCommandIndex();return ok!==false;
+    }catch(err){
+      console.error('[EDH V2 sync]',err);setSyncMeta(true);
+      if(typeof showToast==='function') showToast('Synchronisation impossible. Les données affichées sont conservées.','error');
+      return false;
+    }finally{V2.syncing=false;document.body.classList.remove('edh-global-sync-active');}
+  }
+  window.edhV2Refresh=()=>smartRefresh('utilisateur',true);
+
+  // Navigation instantanée : aucun rechargement réseau à l'ouverture d'une page.
+  const historicShow=window.showPage;
+  if(typeof historicShow==='function'){
+    window.showPage=function(page){
+      V2.route=page||'dashboard';
+      const result=historicShow.apply(this,arguments);
+      history.replaceState({page:V2.route},'',location.pathname+location.search+(location.hash||''));
+      requestAnimationFrame(()=>{
+        document.querySelector(`#page-${CSS.escape(V2.route)}`)?.setAttribute('aria-live','polite');
+        buildCommandIndex();
+      });
+      return result;
+    };
+  }
+
+  function commandPages(){return[
+    ['dashboard','Tableau de bord','Pilotage et priorités'],['listing','Listing des lycées','Prospection'],
+    ['calendrier','Calendrier des événements','Forums'],['students','Ambassadeurs','Étudiants'],
+    ['registrations','Inscriptions étudiants','Événements'],['users','Utilisateurs','Administration'],
+    ['reporting','Reporting opérationnel','Analyse'],['leads','Leads & suivi','Collecte'],
+    ['leadsall','Tous les leads','CRM'],['myactions','Mes actions','Priorités'],['actions','Pipeline CRM','Prospection'],
+    ['terrain','Préparation forums','Terrain'],['resources','Ressources','Documents'],['performance','Bilan & conversion','Analyse']
+  ].map(x=>({type:'Page',title:x[1],sub:x[2],search:norm(x.join(' ')),run:()=>window.showPage?.(x[0])}));}
+
+  function buildCommandIndex(){
+    const st=V2.store, items=[...commandPages()];
+    (st.lycees||[]).slice(0,2500).forEach(x=>items.push({type:'Lycée',title:x.nom||x.name||'Établissement',sub:[x.ville,x.departement,x.statut].filter(Boolean).join(' · '),search:norm([x.nom,x.ville,x.departement,x.statut,x.ecoles].join(' ')),run:()=>{window.showPage?.('listing');setTimeout(()=>window.openDetail?.(x.id),40)}}));
+    (st.events||[]).slice(0,1500).forEach(x=>items.push({type:'Événement',title:x.nom||x.lycee_nom||x.lycee||'Forum',sub:[x.date,x.ville].filter(Boolean).join(' · '),search:norm([x.nom,x.lycee_nom,x.lycee,x.ville,x.date].join(' ')),run:()=>{window.showPage?.('calendrier');setTimeout(()=>window.openEventDetail?.(x.id),40)}}));
+    (st.leads||[]).slice(0,1500).forEach(x=>items.push({type:'Lead',title:[x.firstName||x.prenom,x.lastName||x.nom].filter(Boolean).join(' ')||x.email||'Lead',sub:[x.email,x.school||x.ecole].filter(Boolean).join(' · '),search:norm([x.firstName,x.prenom,x.lastName,x.nom,x.email,x.phone,x.school,x.ecole].join(' ')),run:()=>window.showPage?.('leadsall')}));
+    (st.students||[]).slice(0,1500).forEach(x=>items.push({type:'Ambassadeur',title:[x.firstName||x.prenom,x.lastName||x.nom].filter(Boolean).join(' ')||'Étudiant',sub:[x.school||x.ecole,x.lycee||x.lycee_origine].filter(Boolean).join(' · '),search:norm([x.firstName,x.prenom,x.lastName,x.nom,x.school,x.ecole,x.lycee,x.lycee_origine].join(' ')),run:()=>window.showPage?.('students')}));
+    V2.commandIndex=items;
+  }
+
+  function renderCommand(query=''){
+    const q=norm(query); let result=q?V2.commandIndex.filter(x=>x.search.includes(q)||norm(x.title).includes(q)):V2.commandIndex.filter(x=>x.type==='Page');
+    result=result.slice(0,30);V2.commandSelection=Math.min(V2.commandSelection,Math.max(0,result.length-1));
+    const host=$('v2-command-results');if(!host)return;
+    host.innerHTML=result.length?result.map((x,i)=>`<button type="button" class="v2-command-item ${i===V2.commandSelection?'active':''}" data-v2-command="${i}"><span><span class="v2-command-main">${safe(x.title)}</span><span class="v2-command-sub">${safe(x.sub||'')}</span></span><span class="v2-command-tag">${safe(x.type)}</span></button>`).join(''):'<div class="v2-command-empty">Aucun résultat correspondant.</div>';
+    host.querySelectorAll('[data-v2-command]').forEach((el,i)=>el.onclick=()=>{result[i]?.run();closeCommand()});
+    V2.visibleCommands=result;
+  }
+  function openCommand(){buildCommandIndex();$('v2-command-overlay')?.classList.add('open');V2.commandSelection=0;const input=$('v2-command-input');if(input){input.value='';renderCommand();setTimeout(()=>input.focus(),0)}}
+  function closeCommand(){$('v2-command-overlay')?.classList.remove('open')}
+  window.openGlobalSearch=openCommand;
+
+  function installSearchButton(){
+    const top=document.querySelector('.topbar');if(!top||$('v2-search-btn'))return;
+    const b=document.createElement('button');b.type='button';b.id='v2-search-btn';b.className='btn btn-outline v2-quick-search-btn';b.innerHTML='⌕ Recherche <kbd>⌘K</kbd>';b.onclick=openCommand;b.setAttribute('aria-label','Ouvrir la recherche globale');
+    top.appendChild(b);
+  }
+
+  // Validation HTML native enrichie et résumé d'erreur.
+  document.addEventListener('invalid',e=>{const field=e.target;if(!(field instanceof HTMLElement))return;field.setAttribute('aria-invalid','true');field.closest('.form-field')?.classList.add('has-error')},true);
+  document.addEventListener('input',e=>{const field=e.target;if(field instanceof HTMLInputElement||field instanceof HTMLSelectElement||field instanceof HTMLTextAreaElement){if(field.checkValidity()){field.removeAttribute('aria-invalid');field.closest('.form-field')?.classList.remove('has-error')}const form=field.closest('form');if(form){V2.dirtyForms.add(form);form.dataset.v2Dirty='1'}}},true);
+
+  // Brouillons uniquement pour les formulaires non sensibles.
+  const draftIds=['edit-form','student-form'];
+  function saveDrafts(){draftIds.forEach(id=>{const f=$(id);if(!f||f.dataset.v2Dirty!=='1')return;const data={};f.querySelectorAll('input:not([type=password]):not([type=file]),select,textarea').forEach(el=>{if(el.id)data[el.id]=el.type==='checkbox'?el.checked:el.value});try{sessionStorage.setItem('edh_v2_draft_'+id,JSON.stringify({at:Date.now(),data}))}catch(_){}})}
+  setInterval(saveDrafts,5000);
+
+  // Nettoyage renforcé de toute donnée d'authentification historique stockée côté navigateur.
+  function purgeSecrets(storage){
+    for(let i=storage.length-1;i>=0;i--){const k=storage.key(i);if(!k)continue;if(/password|mot.?de.?passe|credential/i.test(k)){storage.removeItem(k);continue}try{const raw=storage.getItem(k);if(!raw||raw[0]!=='{'&&raw[0]!=='[')continue;const value=JSON.parse(raw);const clean=(v)=>{if(Array.isArray(v))return v.map(clean);if(v&&typeof v==='object'){const o={};for(const [a,b] of Object.entries(v)){if(!/password|mot.?de.?passe|credential/i.test(a))o[a]=clean(b)}return o}return v};storage.setItem(k,JSON.stringify(clean(value)))}catch(_){}}
+  }
+  purgeSecrets(localStorage);purgeSecrets(sessionStorage);
+
+  // Erreurs utilisateur : message stable, détail uniquement dans la console.
+  window.addEventListener('unhandledrejection',e=>{console.error('[EDH V2 async]',e.reason);if(typeof showToast==='function')showToast('Une opération a échoué. Vérifiez la connexion puis réessayez.','error')});
+
+  // Limite les traitements de recherche lourds en remplaçant les attributs inline connus par un debounce.
+  ['student-lycee-search','registration-search','user-search','resource-search','global-search'].forEach(id=>{
+    const el=$(id);if(!el)return;const code=el.getAttribute('oninput');if(!code)return;el.removeAttribute('oninput');
+    const fn=debounce(()=>{try{new Function(code).call(el)}catch(err){console.error('[EDH V2 search]',err)}},180);el.addEventListener('input',fn);
+  });
+
+  $('v2-command-input')?.addEventListener('input',debounce(e=>{V2.commandSelection=0;renderCommand(e.target.value)},80));
+  $('v2-command-overlay')?.addEventListener('click',e=>{if(e.target.id==='v2-command-overlay')closeCommand()});
+  document.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openCommand();return}
+    if(!$('v2-command-overlay')?.classList.contains('open'))return;
+    if(e.key==='Escape'){e.preventDefault();closeCommand()}
+    if(e.key==='ArrowDown'){e.preventDefault();V2.commandSelection=Math.min((V2.visibleCommands?.length||1)-1,V2.commandSelection+1);renderCommand($('v2-command-input')?.value)}
+    if(e.key==='ArrowUp'){e.preventDefault();V2.commandSelection=Math.max(0,V2.commandSelection-1);renderCommand($('v2-command-input')?.value)}
+    if(e.key==='Enter'){e.preventDefault();V2.visibleCommands?.[V2.commandSelection]?.run();closeCommand()}
+  },true);
+
+  window.addEventListener('online',()=>{updateNetwork();smartRefresh('online',true)});
+  window.addEventListener('offline',updateNetwork);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&Date.now()-V2.lastSync>120000)smartRefresh('retour-application')});
+  window.addEventListener('beforeunload',e=>{saveDrafts();const dirty=[...document.querySelectorAll('form[data-v2-dirty="1"]')];if(dirty.length){e.preventDefault();e.returnValue=''}});
+
+  // Amélioration sémantique des tables dynamiques et boutons icônes.
+  function enhanceDOM(){
+    document.querySelectorAll('table:not([role])').forEach(t=>t.setAttribute('role','table'));
+    document.querySelectorAll('.modal-close:not([aria-label])').forEach(b=>b.setAttribute('aria-label','Fermer la fenêtre'));
+    document.querySelectorAll('.nav-item').forEach(b=>b.setAttribute('aria-label',b.textContent.trim()));
+    document.body.classList.add('v2-ready');installSearchButton();setSyncMeta(Date.now()-V2.lastSync>V2.refreshTTL);
+  }
+  const mo=new MutationObserver(debounce(enhanceDOM,120));mo.observe(document.body,{subtree:true,childList:true});
+  updateNetwork();enhanceDOM();buildCommandIndex();
+  setTimeout(()=>{V2.lastSync=Date.now();setSyncMeta(false)},1200);
+})();
+</script>
+
 </body>
 </html>
-<!-- V60 cleanup applied: role select dark mode, dead student-school CSS removed, richer empty states, final showPage consolidated. -->
+<!-- EDH Forums Version 2 — build production compatible Supabase historique. -->
