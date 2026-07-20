@@ -1584,6 +1584,44 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
 }
 </style>
 
+
+<style id="edh-v75-repair-style">
+/* V75 — réparation de la connexion et navigation hiérarchisée */
+.sidebar-logo .v72-product-name{display:none!important}
+.login-overlay{z-index:7000!important}
+.login-overlay.open{display:flex!important}
+.login-shell{position:relative;z-index:1}
+.sidebar .nav{padding:10px 10px 18px}
+.nav-direct-item{margin-bottom:3px}
+.nav-group{margin:3px 0}
+.nav-group-toggle{
+  width:100%;min-height:42px;padding:9px 11px;border:0;border-radius:10px;
+  display:flex;align-items:center;gap:9px;background:transparent;color:var(--text2);
+  font:700 13px 'DM Sans',sans-serif;text-align:left;cursor:pointer;
+  transition:background .14s,color .14s;
+}
+.nav-group-toggle:hover{background:var(--bg);color:var(--text)}
+.nav-group-toggle svg,.nav-subitem svg{width:16px;height:16px;flex:0 0 16px;fill:none;stroke:currentColor;stroke-width:1.8}
+.nav-group-label{flex:1;min-width:0}
+.nav-group-chevron{width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:transform .18s ease}
+.nav-group-chevron svg{width:15px;height:15px}
+.nav-group.open .nav-group-chevron{transform:rotate(90deg)}
+.nav-group.open>.nav-group-toggle,.nav-group.has-active>.nav-group-toggle{background:var(--primary-light);color:var(--primary)}
+.nav-submenu{display:grid;grid-template-rows:0fr;transition:grid-template-rows .2s ease}
+.nav-submenu-inner{min-height:0;overflow:hidden;padding-left:12px}
+.nav-group.open .nav-submenu{grid-template-rows:1fr}
+.nav-subitem{position:relative;margin:2px 0!important;padding:9px 10px 9px 16px!important;border-radius:9px!important;font-size:12px!important;border-left:0!important}
+.nav-subitem::before{content:'';position:absolute;left:4px;top:50%;width:5px;height:5px;border-radius:999px;background:var(--border2);transform:translateY(-50%)}
+.nav-subitem.active::before{background:var(--primary)}
+html[data-theme="dark"] .nav-group-toggle:hover{background:#171717}
+html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"] .nav-group.has-active>.nav-group-toggle{background:rgba(59,130,246,.20)!important;color:#fff!important}
+@media(max-width:768px){
+  .nav-group-toggle{min-height:46px;font-size:14px}
+  .nav-subitem{min-height:44px;font-size:13px!important}
+  .login-overlay{padding:12px!important;align-items:center!important}
+  .login-shell{max-height:calc(100dvh - 24px);overflow:auto}
+}
+</style>
 </head>
 <body>
 
@@ -1648,117 +1686,114 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
     <div class="sidebar-season" id="sidebar-season-label"></div>
   </div>
 
-  <nav class="nav">
-    <div class="nav-section-label">Menu</div>
+  <nav class="nav" aria-label="Navigation principale">
+    <div class="nav-section-label">Navigation</div>
 
-    <button class="nav-item active" data-role="collaborateur" onclick="showPage('dashboard')">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      Tableau de bord
+    <button class="nav-item nav-direct-item active" data-page="dashboard" data-role="collaborateur" type="button" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/><path d="M9 20v-6h6v6"/></svg>
+      <span>Accueil</span>
     </button>
 
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('listing')">
-      <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-      Listing lycées
+    <div class="nav-group open" data-nav-group="forums" data-role="collaborateur">
+      <button class="nav-group-toggle" type="button" aria-expanded="true" aria-controls="nav-submenu-forums">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>
+        <span class="nav-group-label">Forums &amp; lycées</span>
+        <span class="nav-group-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="nav-submenu" id="nav-submenu-forums"><div class="nav-submenu-inner">
+        <button class="nav-item nav-subitem" data-page="listing" data-role="collaborateur" type="button" onclick="showPage('listing')">
+          <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+          <span>Base de données</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="calendrier" type="button" onclick="showPage('calendrier')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Calendrier</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="registrations" data-role="collaborateur" type="button" onclick="showPage('registrations')">
+          <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          <span>Affectation des étudiants</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="terrain" data-role="collaborateur" type="button" onclick="showPage('terrain')">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>Préparation des forums</span>
+        </button>
+      </div></div>
+    </div>
+
+    <div class="nav-group" data-nav-group="administration" data-role="collaborateur">
+      <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="nav-submenu-administration">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+        <span class="nav-group-label">Administration</span>
+        <span class="nav-group-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="nav-submenu" id="nav-submenu-administration"><div class="nav-submenu-inner">
+        <button class="nav-item nav-subitem" data-page="students" data-role="collaborateur" type="button" onclick="showPage('students')">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <span>Ambassadeurs</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="users" data-role="collaborateur" type="button" onclick="showPage('users')">
+          <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+          <span>Utilisateurs</span>
+        </button>
+      </div></div>
+    </div>
+
+    <div class="nav-group" data-nav-group="leads" data-role="collaborateur">
+      <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="nav-submenu-leads">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3v7h-7v-3"/></svg>
+        <span class="nav-group-label">Leads</span>
+        <span class="nav-group-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="nav-submenu" id="nav-submenu-leads"><div class="nav-submenu-inner">
+        <button class="nav-item nav-subitem" data-page="leads" data-role="collaborateur" type="button" onclick="showPage('leads')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h7v7h-7z"/></svg>
+          <span>QR code &amp; saisie</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="leadsall" data-role="collaborateur" type="button" onclick="showPage('leadsall')">
+          <svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+          <span>Tous les leads</span>
+        </button>
+      </div></div>
+    </div>
+
+    <div class="nav-group" data-nav-group="pilotage" data-role="collaborateur">
+      <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="nav-submenu-pilotage">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/></svg>
+        <span class="nav-group-label">Pilotage</span>
+        <span class="nav-group-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="nav-submenu" id="nav-submenu-pilotage"><div class="nav-submenu-inner">
+        <button class="nav-item nav-subitem" data-page="reporting" data-role="collaborateur" type="button" onclick="showPage('reporting')">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+          <span>Reporting forums</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="myactions" data-role="collaborateur" type="button" onclick="showPage('myactions')">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>Actions prioritaires</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="actions" data-role="collaborateur" type="button" onclick="showPage('actions')">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg>
+          <span>Pipeline commercial</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="performance" data-role="collaborateur" type="button" onclick="showPage('performance')">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg>
+          <span>Bilan &amp; conversion</span>
+        </button>
+      </div></div>
+    </div>
+
+    <button class="nav-item nav-direct-item" data-page="resources" data-role="collaborateur" type="button" onclick="showPage('resources')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+      <span>Ressources</span>
     </button>
 
-    <button class="nav-item" onclick="showPage('calendrier')">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Calendrier forums
+    <button class="nav-item nav-direct-item" data-page="inscriptions" data-role="student" style="display:none" type="button" onclick="showPage('inscriptions')">
+      <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      <span>Mes évènements</span>
     </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('students')">
-      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-      Ambassadeurs
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('registrations')">
-      <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
-      Inscriptions étudiants
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('users')">
-      <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
-      Utilisateurs
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('reporting')">
-      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
-      Reporting opérationnel
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('leads')">
+    <button class="nav-item nav-direct-item" data-page="leads" data-role="student-assigned" style="display:none" type="button" onclick="showPage('leads')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h7v7h-7z"/></svg>
-      Leads & suivi
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('leadsall')">
-      <svg viewBox="0 0 24 24"><path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/></svg>
-      Tous les leads
-    </button>
-
-
-    <div class="nav-section-label" style="margin-top:8px" data-role="collaborateur">Pilotage CRM</div>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('myactions')">
-      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      Mes actions
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('actions')">
-      <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/><circle cx="8" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg>
-      Pipeline CRM
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('terrain')">
-      <svg viewBox="0 0 24 24"><path d="M12 21s7-4.4 7-11a7 7 0 1 0-14 0c0 6.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-      Préparation forums
-    </button>
-
-
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('resources')">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
-      Ressources
-    </button>
-
-    <button class="nav-item" data-role="collaborateur" onclick="showPage('performance')">
-      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg>
-      Bilan & conversion
-    </button>
-
-
-    <button class="nav-item" data-role="student" style="display:none" onclick="showPage('inscriptions')">
-      <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
-      Mes évènements
-    </button>
-
-    <button class="nav-item" data-role="student-assigned" style="display:none" onclick="showPage('leads')">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h7v7h-7z"/></svg>
-      Leads &amp; suivi
-    </button>
-
-    <button class="nav-item" data-role="student-assigned" style="display:none" onclick="showPage('leadsall')">
-      <svg viewBox="0 0 24 24"><path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/></svg>
-      Tous les leads
-    </button>
-
-    <div class="nav-section-label" style="margin-top:8px">Par école</div>
-
-    <button class="nav-item" onclick="showSchoolPage('EFAP')">
-      <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-      EFAP
-    </button>
-    <button class="nav-item" onclick="showSchoolPage('ICART')">
-      <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-      ICART
-    </button>
-    <button class="nav-item" onclick="showSchoolPage('CREAD')">
-      <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-      CREAD
-    </button>
-    <button class="nav-item" onclick="showSchoolPage('BRASSART')">
-      <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-      BRASSART
+      <span>Leads &amp; suivi</span>
     </button>
   </nav>
 
@@ -1921,13 +1956,13 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
     <div class="page" id="page-listing">
       <div class="page-header">
         <div>
-          <div class="page-title">Listing des lycées</div>
-          <div class="page-subtitle" id="listing-sub">519 établissements</div>
+          <div class="page-title">Base de données</div>
+          <div class="page-subtitle" id="listing-sub">Toutes les coordonnées et informations disponibles sur les établissements</div>
         </div>
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Établissements</div>
+          <div class="card-title">Établissements et coordonnées</div>
           <div class="card-count" id="listing-count"></div>
         </div>
         <div class="table-scroll">
@@ -2993,7 +3028,7 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
     <div class="login-brand-panel login-brand-panel-clean">
       <div class="login-edh-mark" aria-label="Groupe EDH">
         <div class="login-edh-badge">EDH</div>
-        <div class="login-edh-text">Groupe EDH</div>
+        <div class="login-edh-text">EDH Gestion Event</div>
       </div>
     </div>
     <div class="login-card">
@@ -6836,226 +6871,7 @@ html[data-theme="dark"] .card-header{background:linear-gradient(180deg,var(--sur
 html[data-theme="dark"] table td strong,html[data-theme="dark"] .advanced-title,html[data-theme="dark"] .resource-title,html[data-theme="dark"] .crm-action-card-title,html[data-theme="dark"] .kit-card-title{color:var(--text)}
 @media(max-width:1000px){.v3-dashboard-welcome{grid-template-columns:1fr}.v3-quick-grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:768px){.content{padding-top:13px}.context-tabs{width:100%;border-radius:11px}.context-tab{flex:0 0 auto}.v3-dashboard-welcome{display:block}.v3-quick-actions{margin-top:10px}.v3-quick-grid{grid-template-columns:1fr 1fr}.v3-hero{padding:19px;min-height:135px}.v3-hero-title{font-size:20px}.v3-student-top{display:block}.v3-student-stats{grid-template-columns:1fr}.v3-student-actions{display:grid;grid-template-columns:1fr}.v3-student-actions .btn{width:100%}}
-</style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div>
-<style id="edh-v74-navigation-style">
-/* ══════════════════════════════════════
-   V74 — Navigation latérale hiérarchisée
-══════════════════════════════════════ */
-.sidebar .nav{padding:10px 10px 18px}
-.sidebar .nav-section-label{padding:10px 10px 7px}
-.nav-direct-item{margin-bottom:3px}
-.nav-group{margin:3px 0}
-.nav-group-toggle{
-  width:100%;min-height:42px;padding:9px 11px;border:0;border-radius:10px;
-  display:flex;align-items:center;gap:9px;background:transparent;color:var(--text2);
-  font:700 13px 'DM Sans',sans-serif;text-align:left;cursor:pointer;transition:background .14s,color .14s;
-}
-.nav-group-toggle:hover{background:var(--bg);color:var(--text)}
-.nav-group-toggle svg,.nav-subitem svg{width:16px;height:16px;flex:0 0 16px;fill:none;stroke:currentColor;stroke-width:1.8}
-.nav-group-toggle .nav-group-label{flex:1;min-width:0}
-.nav-group-chevron{width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:transform .18s ease}
-.nav-group.open .nav-group-chevron{transform:rotate(90deg)}
-.nav-group.open>.nav-group-toggle,.nav-group.has-active>.nav-group-toggle{background:var(--primary-light);color:var(--primary)}
-.nav-submenu{display:grid;grid-template-rows:0fr;transition:grid-template-rows .2s ease}
-.nav-submenu-inner{min-height:0;overflow:hidden;padding-left:12px}
-.nav-group.open .nav-submenu{grid-template-rows:1fr}
-.nav-subitem{
-  position:relative;margin:2px 0!important;padding:9px 10px 9px 16px!important;
-  border-radius:9px!important;font-size:12px!important;border-left:0!important;
-}
-.nav-subitem::before{content:'';position:absolute;left:4px;top:50%;width:5px;height:5px;border-radius:999px;background:var(--border2);transform:translateY(-50%)}
-.nav-subitem.active::before{background:var(--primary)}
-.nav-item[data-page="resources"]{margin-top:5px}
-html[data-theme="dark"] .nav-group-toggle:hover{background:#171717}
-html[data-theme="dark"] .nav-group.open>.nav-group-toggle,
-html[data-theme="dark"] .nav-group.has-active>.nav-group-toggle{background:rgba(59,130,246,.20)!important;color:#fff!important}
-@media(max-width:768px){
-  .nav-group-toggle{min-height:46px;font-size:14px}
-  .nav-subitem{min-height:44px;font-size:13px!important}
-}
-</style>
-
-<script id="edh-v74-navigation-script">
-(function(){
-  'use strict';
-  if(window.__EDH_V74_NAVIGATION__) return;
-  window.__EDH_V74_NAVIGATION__=true;
-
-  const icon={
-    home:'<svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/><path d="M9 20v-6h6v6"/></svg>',
-    forums:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>',
-    database:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>',
-    calendar:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>',
-    registrations:'<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>',
-    prepare:'<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
-    team:'<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>',
-    students:'<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.2a4 4 0 0 1 0 7.6"/></svg>',
-    users:'<svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2M19 8v6M22 11h-6"/></svg>',
-    leads:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 14h3v7h-7v-3"/></svg>',
-    allLeads:'<svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg>',
-    pilot:'<svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/></svg>',
-    report:'<svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
-    actions:'<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
-    pipeline:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg>',
-    performance:'<svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/></svg>',
-    resources:'<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>',
-    chevron:'<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>'
-  };
-
-  const item=(page,label,svg,role='collaborateur',extra='')=>
-    `<button class="nav-item nav-subitem" data-page="${page}" data-role="${role}" ${extra} type="button" onclick="showPage('${page}')">${svg}<span>${label}</span></button>`;
-  const direct=(page,label,svg,role='collaborateur',extra='')=>
-    `<button class="nav-item nav-direct-item" data-page="${page}" data-role="${role}" ${extra} type="button" onclick="showPage('${page}')">${svg}<span>${label}</span></button>`;
-  const group=(id,label,svg,children)=>
-    `<div class="nav-group" data-nav-group="${id}" data-role="collaborateur">
-      <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="nav-submenu-${id}">${svg}<span class="nav-group-label">${label}</span><span class="nav-group-chevron">${icon.chevron}</span></button>
-      <div class="nav-submenu" id="nav-submenu-${id}"><div class="nav-submenu-inner">${children}</div></div>
-    </div>`;
-
-  function buildNavigation(){
-    const nav=document.querySelector('.sidebar > .nav');
-    if(!nav) return;
-    nav.innerHTML=`
-      <div class="nav-section-label">Navigation</div>
-      ${direct('dashboard','Accueil',icon.home)}
-      ${group('forums','Forums & lycées',icon.forums,
-        item('listing','Base de données',icon.database)+
-        item('calendrier','Calendrier',icon.calendar)+
-        item('registrations','Affectation des étudiants',icon.registrations)+
-        item('terrain','Préparation des forums',icon.prepare)
-      )}
-      ${group('team','Équipe & accès',icon.team,
-        item('students','Base ambassadeurs',icon.students)+
-        item('users','Comptes utilisateurs',icon.users)
-      )}
-      ${group('leads','Leads',icon.leads,
-        item('leads','QR code & saisie',icon.leads)+
-        item('leadsall','Tous les leads collectés',icon.allLeads)
-      )}
-      ${group('pilotage','Pilotage',icon.pilot,
-        item('reporting','Reporting forums',icon.report)+
-        item('myactions','Actions prioritaires',icon.actions)+
-        item('actions','Pipeline commercial',icon.pipeline)+
-        item('performance','Bilan et conversion',icon.performance)
-      )}
-      ${direct('resources','Ressources',icon.resources)}
-      ${direct('inscriptions','Mes forums',icon.calendar,'student','style="display:none"')}
-      ${direct('leads','Collecter des leads',icon.leads,'student-assigned','style="display:none"')}
-    `;
-
-    nav.querySelectorAll('.nav-group-toggle').forEach(toggle=>{
-      toggle.addEventListener('click',()=>{
-        const current=toggle.closest('.nav-group');
-        const willOpen=!current.classList.contains('open');
-        nav.querySelectorAll('.nav-group').forEach(g=>setGroup(g,false));
-        setGroup(current,willOpen);
-        if(willOpen) localStorage.setItem('edh_sidebar_group',current.dataset.navGroup||'');
-        else localStorage.removeItem('edh_sidebar_group');
-      });
-    });
-  }
-
-  function setGroup(group,open){
-    if(!group) return;
-    group.classList.toggle('open',!!open);
-    group.querySelector(':scope > .nav-group-toggle')?.setAttribute('aria-expanded',open?'true':'false');
-  }
-
-  function roleValue(){
-    try{return typeof normalizeRoleValue==='function'?normalizeRoleValue(window.S?.role):String(window.S?.role||'collaborateur')}catch(_){return 'collaborateur'}
-  }
-  function internalRole(){
-    const role=roleValue();
-    try{return typeof roleIsInternal==='function'?roleIsInternal(role):role!=='student'}catch(_){return role!=='student'}
-  }
-
-  function syncRoleNavigation(){
-    const internal=internalRole();
-    const student=roleValue()==='student';
-    document.querySelectorAll('.nav-group[data-role="collaborateur"],.nav-direct-item[data-role="collaborateur"]').forEach(el=>el.style.display=internal?'':'none');
-    document.querySelectorAll('.nav-direct-item[data-role="student"]').forEach(el=>el.style.display=student?'':'none');
-    let assigned=false;
-    try{assigned=student&&typeof studentHasAssignedForums==='function'&&studentHasAssignedForums()}catch(_){}
-    document.querySelectorAll('.nav-direct-item[data-role="student-assigned"]').forEach(el=>el.style.display=assigned?'':'none');
-  }
-
-  const pageToGroup={listing:'forums',calendrier:'forums',registrations:'forums',terrain:'forums',students:'team',users:'team',leads:'leads',leadsall:'leads',reporting:'pilotage',myactions:'pilotage',actions:'pilotage',performance:'pilotage'};
-  const mobileTitles={dashboard:'Accueil',listing:'Base de données',calendrier:'Calendrier',registrations:'Affectation des étudiants',terrain:'Préparation des forums',students:'Ambassadeurs',users:'Utilisateurs',leads:'QR code & saisie',leadsall:'Tous les leads',reporting:'Reporting',myactions:'Actions prioritaires',actions:'Pipeline commercial',performance:'Bilan et conversion',resources:'Ressources',inscriptions:'Mes forums'};
-
-  function activePage(){return document.querySelector('.page.active')?.id?.replace('page-','')||'dashboard'}
-  function syncActiveNavigation(page=activePage()){
-    document.querySelectorAll('.sidebar .nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
-    document.querySelectorAll('.nav-group').forEach(g=>g.classList.remove('has-active'));
-    const active=document.querySelector(`.sidebar .nav-item[data-page="${CSS.escape(page)}"]`);
-    const group=active?.closest('.nav-group');
-    if(group){
-      document.querySelectorAll('.nav-group').forEach(g=>setGroup(g,g===group));
-      group.classList.add('has-active');
-      localStorage.setItem('edh_sidebar_group',group.dataset.navGroup||'');
-    }else if(page==='dashboard'||page==='resources'||page==='inscriptions'){
-      document.querySelectorAll('.nav-group').forEach(g=>setGroup(g,false));
-    }
-    const mobileTitle=document.getElementById('mobile-page-title');
-    if(mobileTitle&&mobileTitles[page]) mobileTitle.textContent=mobileTitles[page];
-    document.body.classList.remove('mobile-sidebar-open');
-  }
-
-  function updateListingCopy(){
-    const page=document.getElementById('page-listing');
-    if(!page) return;
-    const title=page.querySelector('.page-title');
-    const subtitle=page.querySelector('.page-subtitle');
-    const cardTitle=page.querySelector('.card-title');
-    if(title) title.textContent='Base de données';
-    if(subtitle) subtitle.textContent='Retrouvez l’ensemble des coordonnées et informations disponibles pour les établissements.';
-    if(cardTitle) cardTitle.textContent='Établissements et coordonnées';
-  }
-
-  buildNavigation();
-  updateListingCopy();
-  syncRoleNavigation();
-  const initial=activePage();
-  if(initial==='dashboard'&&internalRole()){
-    const saved=localStorage.getItem('edh_sidebar_group')||'forums';
-    const g=document.querySelector(`.nav-group[data-nav-group="${CSS.escape(saved)}"]`);
-    if(g) setGroup(g,true);
-  }
-  syncActiveNavigation(initial);
-  if(initial==='dashboard'&&internalRole()){
-    const g=document.querySelector('.nav-group[data-nav-group="forums"]');
-    if(g) setGroup(g,true);
-  }
-
-  const previousShowPage=window.showPage;
-  if(typeof previousShowPage==='function'){
-    window.showPage=function(){
-      const result=previousShowPage.apply(this,arguments);
-      setTimeout(()=>{updateListingCopy();syncRoleNavigation();syncActiveNavigation(activePage())},0);
-      return result;
-    };
-  }
-  const previousSetRole=window.setRole;
-  if(typeof previousSetRole==='function'){
-    window.setRole=function(){
-      const result=previousSetRole.apply(this,arguments);
-      setTimeout(()=>{syncRoleNavigation();syncActiveNavigation(activePage())},0);
-      return result;
-    };
-  }
-  const previousAssigned=window.updateStudentAssignedNavigation;
-  if(typeof previousAssigned==='function'){
-    window.updateStudentAssignedNavigation=function(){
-      const result=previousAssigned.apply(this,arguments);
-      setTimeout(syncRoleNavigation,0);
-      return result;
-    };
-  }
-
-  setTimeout(()=>{updateListingCopy();syncRoleNavigation();syncActiveNavigation(activePage())},900);
-})();
-</script>
-
-</body></html>`;
+</style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
 }
 function printForumFieldSheet(eventId){
   const ev = findCalendarEventById(eventId);
@@ -7363,7 +7179,7 @@ function showPage(page){
     dashboard: "Tableau de bord",
     myactions: "Mes actions",
     actions: "Pipeline CRM",
-    listing: "Listing lycées",
+    listing: "Base de données",
     calendrier: "Calendrier forums",
     terrain: "Préparation forums",
     leads: "Leads & suivi",
@@ -12357,6 +12173,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let activePage='dashboard';
 
   function installNavigation(){
+    if(document.querySelector('.nav-group')) return;
     document.querySelectorAll('.nav-item').forEach(btn=>{
       const label=btn.textContent.trim();
       if(hiddenLabels.has(label)){btn.classList.add('v3-secondary-nav');btn.style.display='none';return;}
@@ -12393,7 +12210,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const copy={
       'page-dashboard':['Accueil','Les informations essentielles pour organiser les forums et traiter les actions prioritaires.'],
       'page-calendrier':['Forums','Planifiez les événements et retrouvez les informations utiles.'],
-      'page-listing':['Lycées','Retrouvez et gérez les établissements de votre périmètre.'],
+      'page-listing':['Base de données','Retrouvez l’ensemble des coordonnées et informations disponibles pour les établissements.'],
       'page-registrations':['Équipe étudiante','Affectez plusieurs ambassadeurs à un même forum.'],
       'page-terrain':['Préparation','Vérifiez que chaque forum est prêt avant le départ.'],
       'page-leads':['Collecte & suivi','Créez le QR code et traitez les prospects du forum.'],
@@ -12748,7 +12565,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const originalRefreshSupabase=window.refreshFromSupabaseAndRender;
   if(typeof originalRefreshSupabase==='function')window.refreshFromSupabaseAndRender=async function(){const result=await originalRefreshSupabase.apply(this,arguments);markAllPagesDirty();updateNotificationCenter(true);return result;};
 
-  function mobilePageLabel(page){return({dashboard:'Accueil',calendrier:'Forums',inscriptions:'Mes forums',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',listing:'Lycées',registrations:'Équipe étudiante',reporting:'Reporting',performance:'Conversion',users:'Administration',resources:'Ressources',terrain:'Préparation',actions:'Pipeline',myactions:'Mes actions'}[page]||'EDH Forums');}
+  function mobilePageLabel(page){return({dashboard:'Accueil',calendrier:'Forums',inscriptions:'Mes forums',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',listing:'Base de données',registrations:'Équipe étudiante',reporting:'Reporting',performance:'Conversion',users:'Administration',resources:'Ressources',terrain:'Préparation',actions:'Pipeline',myactions:'Mes actions'}[page]||'EDH Forums');}
   function updateMobileNavV71(page=currentPage){
     const nav=document.querySelector('.mobile-bottom-nav');const buttons=[...document.querySelectorAll('.mobile-nav-btn')];if(!nav||!buttons.length)return;
     if(isStudent()){
@@ -12771,7 +12588,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     const target=$('page-'+page);if(target)target.classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    const labels={dashboard:'Accueil',calendrier:'Forums',listing:'Lycées',registrations:'Équipe étudiante',terrain:'Préparation',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',reporting:'Pilotage',myactions:'Mes actions',actions:'Pipeline',performance:'Conversion',users:'Administration',inscriptions:'Mes forums',resources:'Ressources'};
+    const labels={dashboard:'Accueil',calendrier:'Forums',listing:'Base de données',registrations:'Équipe étudiante',terrain:'Préparation',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',reporting:'Pilotage',myactions:'Mes actions',actions:'Pipeline',performance:'Conversion',users:'Administration',inscriptions:'Mes forums',resources:'Ressources'};
     document.querySelectorAll('.nav-item').forEach(btn=>{if(btn.textContent.trim()===labels[page])btn.classList.add('active');});
     const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'EDH Gestion Event · terrain & recrutement';
     updateMobileNavV71(page);removeContextTabs();document.body.classList.remove('mobile-sidebar-open');
@@ -13114,7 +12931,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
 })();
 </script>
 
-<style id="edh-v73-fixes">
+<style id="edh-v73-fixes-style">
 /* V73 — navigation, formulaire prospect et alignement */
 .public-lead-overlay.crm-public .public-lead-card{width:min(100%,720px);max-width:720px}
 .public-lead-overlay.crm-public .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
@@ -13126,7 +12943,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
 .public-consent-help{margin-top:6px;color:var(--text3);font-size:11px;line-height:1.45}
 @media(max-width:700px){.public-lead-overlay.crm-public .form-grid{grid-template-columns:1fr}.public-lead-overlay.crm-public .form-field.full{grid-column:auto}}
 </style>
-<script id="edh-v73-fixes">
+<script id="edh-v73-fixes-script">
 (function(){
   function enforceInternalNavigation(){
     const role=typeof normalizeRoleValue==='function'?normalizeRoleValue(window.S?.role):String(window.S?.role||'');
@@ -13153,6 +12970,136 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
 })();
 </script>
 
+
+<script id="edh-v75-repair-script">
+(function(){
+  'use strict';
+  if(window.__EDH_V75_REPAIR__) return;
+  window.__EDH_V75_REPAIR__ = true;
+
+  const pageToGroup = {
+    listing:'forums', calendrier:'forums', registrations:'forums', terrain:'forums',
+    students:'administration', users:'administration',
+    leads:'leads', leadsall:'leads',
+    reporting:'pilotage', myactions:'pilotage', actions:'pilotage', performance:'pilotage'
+  };
+  const mobileTitles = {
+    dashboard:'Accueil', listing:'Base de données', calendrier:'Calendrier', registrations:'Affectation des étudiants',
+    terrain:'Préparation des forums', students:'Ambassadeurs', users:'Utilisateurs', leads:'QR code & saisie',
+    leadsall:'Tous les leads', reporting:'Reporting forums', myactions:'Actions prioritaires', actions:'Pipeline commercial',
+    performance:'Bilan & conversion', resources:'Ressources', inscriptions:'Mes évènements'
+  };
+
+  function setGroup(group, open){
+    if(!group) return;
+    group.classList.toggle('open', Boolean(open));
+    const toggle = group.querySelector(':scope > .nav-group-toggle');
+    if(toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function activePage(){
+    return document.querySelector('.page.active')?.id?.replace('page-','') || 'dashboard';
+  }
+
+  function syncNavigation(page){
+    page = page || activePage();
+    document.querySelectorAll('.sidebar .nav-item[data-page]').forEach(item => {
+      item.classList.toggle('active', item.dataset.page === page);
+    });
+    document.querySelectorAll('.nav-group').forEach(group => group.classList.remove('has-active'));
+    const wanted = pageToGroup[page];
+    if(wanted){
+      document.querySelectorAll('.nav-group').forEach(group => setGroup(group, group.dataset.navGroup === wanted));
+      const group = document.querySelector('.nav-group[data-nav-group="'+wanted+'"]');
+      if(group) group.classList.add('has-active');
+      try { localStorage.setItem('edh_sidebar_group', wanted); } catch(_) {}
+    } else if(['dashboard','resources','inscriptions'].includes(page)) {
+      document.querySelectorAll('.nav-group').forEach(group => setGroup(group, false));
+    }
+    const mobileTitle = document.getElementById('mobile-page-title');
+    if(mobileTitle && mobileTitles[page]) mobileTitle.textContent = mobileTitles[page];
+    document.body.classList.remove('mobile-sidebar-open');
+  }
+
+  function installGroupToggles(){
+    document.querySelectorAll('.nav-group-toggle').forEach(toggle => {
+      if(toggle.dataset.v75Bound === '1') return;
+      toggle.dataset.v75Bound = '1';
+      toggle.addEventListener('click', () => {
+        const current = toggle.closest('.nav-group');
+        const willOpen = !current?.classList.contains('open');
+        document.querySelectorAll('.nav-group').forEach(group => setGroup(group, false));
+        setGroup(current, willOpen);
+        try {
+          if(willOpen) localStorage.setItem('edh_sidebar_group', current?.dataset.navGroup || '');
+          else localStorage.removeItem('edh_sidebar_group');
+        } catch(_) {}
+      });
+    });
+  }
+
+  function ensureLoginAvailable(){
+    const modal = document.getElementById('login-modal');
+    if(!modal) return;
+    const publicMode = document.body.classList.contains('public-lead-mode') || document.querySelector('.public-lead-overlay.open');
+    let loggedIn = false;
+    try { loggedIn = Boolean(typeof currentUser === 'function' && currentUser()); } catch(_) {}
+    if(!publicMode && !loggedIn && !modal.classList.contains('open')){
+      if(typeof openLoginModal === 'function') openLoginModal();
+      else modal.classList.add('open');
+    }
+  }
+
+  function installLoginKeyboard(){
+    ['login-username','login-password'].forEach(id => {
+      const input = document.getElementById(id);
+      if(!input || input.dataset.v75Bound === '1') return;
+      input.dataset.v75Bound = '1';
+      input.addEventListener('keydown', event => {
+        if(event.key === 'Enter'){
+          event.preventDefault();
+          if(typeof submitLogin === 'function') submitLogin();
+        }
+      });
+    });
+  }
+
+  const previousShowPage = window.showPage;
+  if(typeof previousShowPage === 'function'){
+    window.showPage = function(page){
+      const result = previousShowPage.apply(this, arguments);
+      setTimeout(() => syncNavigation(activePage()), 0);
+      return result;
+    };
+  }
+
+  const previousSetRole = window.setRole;
+  if(typeof previousSetRole === 'function'){
+    window.setRole = function(){
+      const result = previousSetRole.apply(this, arguments);
+      setTimeout(() => syncNavigation(activePage()), 0);
+      return result;
+    };
+  }
+
+  function boot(){
+    installGroupToggles();
+    installLoginKeyboard();
+    const page = activePage();
+    if(page === 'dashboard'){
+      let saved = 'forums';
+      try { saved = localStorage.getItem('edh_sidebar_group') || 'forums'; } catch(_) {}
+      const group = document.querySelector('.nav-group[data-nav-group="'+saved+'"]');
+      if(group) setGroup(group, true);
+    } else syncNavigation(page);
+    setTimeout(ensureLoginAvailable, 120);
+    setTimeout(ensureLoginAvailable, 900);
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
+})();
+</script>
 </body>
 </html>
 <!-- EDH Forums Version 2 — build production compatible Supabase historique. -->
