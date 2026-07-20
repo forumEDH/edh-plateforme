@@ -6684,6 +6684,50 @@ function forumFieldSheetHtml(eventObj){
 
 
 
+
+
+/* ══════════════════════════════════════
+   V70 — REFACTOR UX/UI : navigation simplifiée, rôles et parcours
+══════════════════════════════════════ */
+:root{--radius-xs:7px;--radius-sm:10px;--radius-md:14px;--radius-lg:20px;--content-max:1520px}
+.content{width:100%;max-width:var(--content-max);margin:0 auto;padding-top:22px}
+.sidebar{background:color-mix(in srgb,var(--surface) 96%,transparent)}
+.sidebar-header{padding:20px 18px 15px}.sidebar-logo{font-size:17px}.nav{padding:10px 10px 16px}
+.nav-section-label{padding:13px 10px 6px}.nav-item{margin:2px 0;padding:10px 11px;border-radius:10px;border-left:0!important}
+.nav-item.active{box-shadow:none;background:var(--primary-light)}
+.sidebar .school-nav{display:none!important}
+.page-header{align-items:center;margin-bottom:16px}.page-title{font-size:23px}.page-subtitle{max-width:760px;line-height:1.45}
+.card,.kpi-card,.school-card,.event-card,.student-card,.inline-form,.lead-filter-box,.resource-filters{border-radius:var(--radius-md)}
+.card-header{padding:15px 17px}.card-title{font-size:14px;font-weight:800}.card-count{font-size:11px}
+.kpi-row{gap:10px}.kpi-card{padding:15px}.kpi-label{font-size:10px}.kpi-value{font-size:25px}
+.btn{border-radius:9px;font-weight:700}.btn-primary{box-shadow:0 6px 18px rgba(37,99,235,.15)}
+.form-input,.form-select,.form-textarea,.filter-select,.check-dropdown-btn,.multi-filter-btn{border-radius:9px}
+.muted-box,.placeholder-box,.detail-panel,.form-section{border-radius:12px}
+.context-tabs{display:flex;align-items:center;gap:4px;padding:4px;margin:0 0 18px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:max-content;max-width:100%;overflow:auto;scrollbar-width:none}
+.context-tabs::-webkit-scrollbar{display:none}.context-tab{border:0;background:transparent;color:var(--text2);font:700 12px 'DM Sans',sans-serif;padding:8px 12px;border-radius:8px;white-space:nowrap;cursor:pointer}
+.context-tab:hover{color:var(--text);background:color-mix(in srgb,var(--surface) 60%,transparent)}.context-tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow-sm)}
+.v3-dashboard-welcome{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:14px;margin-bottom:18px}
+.v3-hero{position:relative;overflow:hidden;padding:22px 24px;border-radius:18px;background:linear-gradient(135deg,#172554,#1d4ed8);color:white;min-height:150px;display:flex;flex-direction:column;justify-content:center}
+.v3-hero:after{content:'';position:absolute;width:190px;height:190px;border-radius:50%;right:-50px;top:-70px;background:rgba(255,255,255,.10)}
+.v3-hero-kicker{position:relative;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.72)}
+.v3-hero-title{position:relative;font-size:23px;font-weight:900;line-height:1.2;margin-top:7px;letter-spacing:-.4px}.v3-hero-copy{position:relative;font-size:13px;color:rgba(255,255,255,.78);margin-top:7px;max-width:650px}
+.v3-quick-actions{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:15px;box-shadow:var(--shadow-sm)}
+.v3-quick-title{font-size:12px;font-weight:900;color:var(--text);margin-bottom:9px}.v3-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.v3-quick-grid .btn{width:100%;justify-content:flex-start;padding:9px 10px;font-size:12px}
+.v3-student-hero{margin-bottom:16px;padding:22px;border-radius:18px;background:linear-gradient(145deg,#0f172a,#1d4ed8);color:white;box-shadow:0 14px 34px rgba(29,78,216,.18)}
+.v3-student-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.v3-student-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:900;color:rgba(255,255,255,.66)}
+.v3-student-title{font-size:22px;font-weight:900;margin-top:5px}.v3-student-meta{font-size:13px;color:rgba(255,255,255,.78);margin-top:5px}.v3-student-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.v3-student-actions .btn-outline{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.28);color:white}
+.v3-student-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0 16px}.v3-student-stat{padding:12px 14px;border:1px solid var(--border);background:var(--surface);border-radius:12px}.v3-student-stat strong{display:block;font-size:20px;color:var(--text)}.v3-student-stat span{font-size:11px;color:var(--text3)}
+.v3-empty-action{padding:28px;text-align:center;border:1px dashed var(--border2);border-radius:14px;background:var(--surface)}
+.v3-empty-action-title{font-size:15px;font-weight:900;color:var(--text)}.v3-empty-action-copy{font-size:12px;color:var(--text3);margin:5px auto 12px;max-width:420px}
+.table-scroll{border-radius:0 0 var(--radius-md) var(--radius-md)}th{padding:10px 13px}td{padding:11px 13px}.lead-filter-box{padding:12px}
+.page-subtitle,.module-section-sub,.advanced-desc,.resource-desc,.event-meta,.student-meta{color:var(--text3)}
+html[data-theme="dark"] .v3-quick-actions,html[data-theme="dark"] .v3-student-stat,html[data-theme="dark"] .v3-empty-action{background:var(--surface)}
+html[data-theme="dark"] .inline-form,html[data-theme="dark"] .advanced-card,html[data-theme="dark"] .checklist-box,html[data-theme="dark"] .resource-card,html[data-theme="dark"] .kit-card,html[data-theme="dark"] .crm-action-card,html[data-theme="dark"] .terrain-item,html[data-theme="dark"] .insight-card,html[data-theme="dark"] .lead-filter-box,html[data-theme="dark"] .resource-filters{background:var(--surface);color:var(--text)}
+html[data-theme="dark"] .form-section,html[data-theme="dark"] .muted-box,html[data-theme="dark"] .placeholder-box,html[data-theme="dark"] .detail-panel,html[data-theme="dark"] .todo-row,html[data-theme="dark"] .login-footer-note,html[data-theme="dark"] .email-preview{background:var(--bg2)}
+html[data-theme="dark"] .card-header{background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--surface) 88%,#000))}
+html[data-theme="dark"] table td strong,html[data-theme="dark"] .advanced-title,html[data-theme="dark"] .resource-title,html[data-theme="dark"] .crm-action-card-title,html[data-theme="dark"] .kit-card-title{color:var(--text)}
+@media(max-width:1000px){.v3-dashboard-welcome{grid-template-columns:1fr}.v3-quick-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:768px){.content{padding-top:13px}.context-tabs{width:100%;border-radius:11px}.context-tab{flex:0 0 auto}.v3-dashboard-welcome{display:block}.v3-quick-actions{margin-top:10px}.v3-quick-grid{grid-template-columns:1fr 1fr}.v3-hero{padding:19px;min-height:135px}.v3-hero-title{font-size:20px}.v3-student-top{display:block}.v3-student-stats{grid-template-columns:1fr}.v3-student-actions{display:grid;grid-template-columns:1fr}.v3-student-actions .btn{width:100%}}
 </style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
 }
 function printForumFieldSheet(eventId){
@@ -11961,6 +12005,138 @@ window.addEventListener('DOMContentLoaded', () => {
   const mo=new MutationObserver(debounce(enhanceDOM,120));mo.observe(document.body,{subtree:true,childList:true});
   updateNetwork();enhanceDOM();buildCommandIndex();
   setTimeout(()=>{V2.lastSync=Date.now();setSyncMeta(false)},1200);
+})();
+
+
+/* ══════════════════════════════════════
+   V70 — ORCHESTRATION UX/UI ET PARCOURS PAR RÔLE
+══════════════════════════════════════ */
+(function(){
+  const $=id=>document.getElementById(id);
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const compactNav={
+    'Tableau de bord':'Accueil','Calendrier forums':'Forums','Leads & suivi':'Leads','Ambassadeurs':'Ambassadeurs',
+    'Reporting opérationnel':'Pilotage','Ressources':'Ressources','Utilisateurs':'Administration','Mes évènements':'Mes forums'
+  };
+  const hiddenLabels=new Set(['Listing lycées','Inscriptions étudiants','Tous les leads','Mes actions','Pipeline CRM','Préparation forums','Bilan & conversion','EFAP','ICART','CREAD','BRASSART']);
+  const tabGroups={
+    forums:[['calendrier','Calendrier'],['listing','Lycées'],['registrations','Équipe étudiante'],['terrain','Préparation']],
+    leads:[['leads','Collecte & suivi'],['leadsall','Tous les leads']],
+    pilotage:[['reporting','Reporting'],['myactions','Mes actions'],['actions','Pipeline'],['performance','Conversion']],
+    admin:[['users','Utilisateurs'],['resources','Ressources']]
+  };
+  const pageGroup={calendrier:'forums',listing:'forums',registrations:'forums',terrain:'forums',leads:'leads',leadsall:'leads',reporting:'pilotage',myactions:'pilotage',actions:'pilotage',performance:'pilotage',users:'admin'};
+  let activePage='dashboard';
+
+  function installNavigation(){
+    document.querySelectorAll('.nav-item').forEach(btn=>{
+      const label=btn.textContent.trim();
+      if(hiddenLabels.has(label)){btn.classList.add('v3-secondary-nav');btn.style.display='none';return;}
+      if(compactNav[label]){
+        const nodes=[...btn.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE);
+        if(nodes.length) nodes[nodes.length-1].textContent='\n      '+compactNav[label]+'\n    ';
+      }
+    });
+    document.querySelectorAll('.nav-section-label').forEach((el,i)=>{
+      const t=el.textContent.trim();
+      if(t==='Pilotage CRM'||t==='Par école') el.style.display='none';
+      else if(i===0) el.textContent='Navigation';
+    });
+    const resources=[...document.querySelectorAll('.nav-item')].find(b=>b.textContent.trim()==='Ressources');
+    if(resources) resources.dataset.role='collaborateur';
+  }
+
+  function installTabs(){
+    Object.entries(pageGroup).forEach(([page,group])=>{
+      const host=$('page-'+page);if(!host||host.querySelector('.context-tabs'))return;
+      const tabs=document.createElement('div');tabs.className='context-tabs';tabs.dataset.group=group;
+      tabs.setAttribute('aria-label','Navigation de la section');
+      tabs.innerHTML=tabGroups[group].map(([target,label])=>`<button type="button" class="context-tab" data-target="${target}" onclick="showPage('${target}')">${label}</button>`).join('');
+      host.insertBefore(tabs,host.firstElementChild);
+    });
+  }
+
+  function updateTabs(page){
+    activePage=page;
+    document.querySelectorAll('.context-tab').forEach(b=>b.classList.toggle('active',b.dataset.target===page));
+  }
+
+  function simplifyCopy(){
+    const copy={
+      'page-dashboard':['Accueil','Les informations essentielles pour organiser les forums et traiter les actions prioritaires.'],
+      'page-calendrier':['Forums','Planifiez les événements et retrouvez les informations utiles.'],
+      'page-listing':['Lycées','Retrouvez et gérez les établissements de votre périmètre.'],
+      'page-registrations':['Équipe étudiante','Affectez plusieurs ambassadeurs à un même forum.'],
+      'page-terrain':['Préparation','Vérifiez que chaque forum est prêt avant le départ.'],
+      'page-leads':['Collecte & suivi','Créez le QR code et traitez les prospects du forum.'],
+      'page-leadsall':['Tous les leads','Recherchez, filtrez et exportez les contacts accessibles.'],
+      'page-students':['Ambassadeurs','Trouvez les étudiants disponibles et leur lycée d’origine.'],
+      'page-reporting':['Reporting','Complétez les résultats de chaque forum.'],
+      'page-myactions':['Mes actions','Retrouvez uniquement les tâches qui demandent votre attention.'],
+      'page-actions':['Pipeline','Priorisez les relances et sécurisez les prochains forums.'],
+      'page-performance':['Conversion','Mesurez les résultats du prospect jusqu’à l’inscription.'],
+      'page-users':['Utilisateurs','Gérez les comptes et leurs accès.'],
+      'page-resources':['Ressources','Retrouvez les supports utiles aux équipes terrain.'],
+      'page-inscriptions':['Mes forums','Retrouvez vos affectations et collectez les leads sur place.']
+    };
+    Object.entries(copy).forEach(([id,[title,sub]])=>{const p=$(id);if(!p)return;const t=p.querySelector('.page-title'),s=p.querySelector('.page-subtitle');if(t)t.textContent=title;if(s)s.textContent=sub});
+  }
+
+  function installDashboardWelcome(){
+    const page=$('page-dashboard');if(!page||$('v3-dashboard-welcome'))return;
+    const header=page.querySelector('.page-header');if(!header)return;
+    const block=document.createElement('div');block.id='v3-dashboard-welcome';block.className='v3-dashboard-welcome';
+    block.innerHTML=`<div class="v3-hero"><div class="v3-hero-kicker">Pilotage des forums lycées</div><div class="v3-hero-title">Bonjour, <span id="v3-welcome-name">l’équipe</span></div><div class="v3-hero-copy">Préparez les prochains forums, affectez les ambassadeurs et traitez les leads sans parcourir toute la plateforme.</div></div><div class="v3-quick-actions"><div class="v3-quick-title">Actions rapides</div><div class="v3-quick-grid"><button class="btn btn-outline" onclick="showPage('calendrier')">Voir les forums</button><button class="btn btn-outline" onclick="showPage('registrations')">Affecter l’équipe</button><button class="btn btn-outline" onclick="showPage('leads')">Ouvrir les leads</button><button class="btn btn-outline" onclick="showPage('myactions')">Mes actions</button></div></div>`;
+    header.insertAdjacentElement('afterend',block);
+  }
+  function updateWelcome(){const u=typeof currentUser==='function'?currentUser():null;const n=$('v3-welcome-name');if(n)n.textContent=u?.firstName||'l’équipe'}
+
+  function studentStats(regs){
+    const now=new Date();let upcoming=0,completed=0,leadCount=0;
+    regs.forEach(r=>{const ev=typeof findCalendarEventById==='function'?findCalendarEventById(r.eventId):null;if(ev?.date&&new Date(ev.date)>=new Date(now.toDateString()))upcoming++;else completed++;const eid=ev?.id||r.eventId;leadCount+=(window.LEADS||[]).filter(l=>String(l.eventId||'')===String(eid||'')).length});
+    return {upcoming,completed,leadCount};
+  }
+  function enhanceStudentPage(){
+    const page=$('page-inscriptions');if(!page)return;
+    const regs=typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[];
+    const list=$('student-events-list');if(!list)return;
+    page.querySelectorAll('.v3-student-hero,.v3-student-stats').forEach(x=>x.remove());
+    const sorted=regs.map(r=>({r,ev:typeof findCalendarEventById==='function'?findCalendarEventById(r.eventId):null})).filter(x=>x.ev).sort((a,b)=>new Date(a.ev.date||0)-new Date(b.ev.date||0));
+    const next=sorted.find(x=>new Date(x.ev.date||0)>=new Date(new Date().toDateString()))||sorted[0];
+    const hero=document.createElement('div');hero.className='v3-student-hero';
+    if(next){const ev=next.ev;hero.innerHTML=`<div class="v3-student-top"><div><div class="v3-student-eyebrow">${sorted.find(x=>x===next&&new Date(x.ev.date||0)>=new Date(new Date().toDateString()))?'Prochain forum':'Dernier forum attribué'}</div><div class="v3-student-title">${esc(ev.nom||'Forum lycée')}</div><div class="v3-student-meta">${typeof fmtDate==='function'?fmtDate(ev.date):esc(ev.date||'')}${ev.heure?' · '+esc(ev.heure):''}${ev.ville?' · '+esc(ev.ville):''}</div></div><span class="student-pill">${esc(next.r.school||S.studentProfile?.school||'')}</span></div><div class="v3-student-actions"><button class="btn btn-outline" onclick="downloadSingleICS('${esc(ev.id)}')">Ajouter au calendrier</button><button class="btn btn-outline" onclick="window.open('${esc(typeof getMapsTrainUrl==='function'?getMapsTrainUrl(ev):'#')}','_blank')">Itinéraire</button>${typeof studentHasAssignedForums==='function'&&studentHasAssignedForums()?`<button class="btn btn-primary" onclick="openLeadForEvent('${esc(ev.id)}')">Collecter des leads</button>`:''}</div>`}
+    else hero.innerHTML=`<div class="v3-student-eyebrow">Espace étudiant</div><div class="v3-student-title">Aucun forum attribué</div><div class="v3-student-meta">Un collaborateur doit vous affecter à un événement avant que ses informations apparaissent ici.</div>`;
+    const st=studentStats(regs);const stats=document.createElement('div');stats.className='v3-student-stats';stats.innerHTML=`<div class="v3-student-stat"><strong>${st.upcoming}</strong><span>Forum(s) à venir</span></div><div class="v3-student-stat"><strong>${st.completed}</strong><span>Forum(s) terminé(s)</span></div><div class="v3-student-stat"><strong>${st.leadCount}</strong><span>Lead(s) sur mes forums</span></div>`;
+    const layout=page.querySelector('.simple-grid-2');if(layout){layout.insertAdjacentElement('beforebegin',stats);layout.insertAdjacentElement('beforebegin',hero)}
+    const access=page.querySelector('#student-access-school')?.closest('.inline-form');if(access)access.style.display='none';
+  }
+
+  function updateMobileNav(){
+    const student=(typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student';
+    const nav=document.querySelector('.mobile-bottom-nav');
+    const buttons=[...document.querySelectorAll('.mobile-nav-btn')];
+    if(student){
+      const first=buttons[0];
+      if(first){first.dataset.mobilePage='inscriptions';first.setAttribute('onclick',"showPage('inscriptions')");first.innerHTML='<span>◷</span><span>Mes forums</span>';}
+      buttons.forEach((b,i)=>{const p=b.dataset.mobilePage;b.style.display=(i===0||p==='leads')?'flex':'none'});
+      if(nav)nav.style.gridTemplateColumns='repeat(2,1fr)';
+    }else{
+      const first=buttons[0];
+      if(first){first.dataset.mobilePage='dashboard';first.setAttribute('onclick',"showPage('dashboard')");first.innerHTML='<span>⌂</span><span>Accueil</span>';}
+      buttons.forEach(b=>b.style.display='flex');
+      if(nav)nav.style.gridTemplateColumns='repeat(5,1fr)';
+    }
+  }
+
+  const originalShow=window.showPage;
+  if(typeof originalShow==='function') window.showPage=function(page){const result=originalShow.apply(this,arguments);updateTabs(page);setTimeout(()=>{if(page==='inscriptions')enhanceStudentPage();updateWelcome();updateMobileNav()},0);return result};
+  const originalStudent=window.renderInscriptionPage;
+  if(typeof originalStudent==='function') window.renderInscriptionPage=function(){const result=originalStudent.apply(this,arguments);setTimeout(enhanceStudentPage,0);return result};
+  const originalSetRole=window.setRole;
+  if(typeof originalSetRole==='function') window.setRole=function(){const result=originalSetRole.apply(this,arguments);setTimeout(()=>{installNavigation();updateMobileNav();updateWelcome()},0);return result};
+
+  installNavigation();installTabs();simplifyCopy();installDashboardWelcome();updateWelcome();updateTabs(document.querySelector('.page.active')?.id?.replace('page-','')||'dashboard');updateMobileNav();
+  setTimeout(()=>{installNavigation();installTabs();simplifyCopy();if((typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student')enhanceStudentPage()},500);
 })();
 </script>
 
