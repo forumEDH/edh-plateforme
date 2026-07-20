@@ -2953,12 +2953,18 @@ html[data-theme="dark"] .public-lead-overlay.crm-public { background:linear-grad
             <label class="form-label">Mot de passe *</label>
             <div style="display:flex;gap:6px">
               <input class="form-input" id="uf-password" type="password" style="flex:1" autocomplete="new-password" placeholder="Nouveau mot de passe ou laisser vide en modification">
+              <button type="button" class="btn btn-outline" id="uf-password-toggle" onclick="toggleUserPasswordVisibility()">Afficher</button>
               <button type="button" class="btn btn-outline" onclick="generateUserPassword()">Générer</button>
             </div>
           </div>
           <div class="form-field">
             <label class="form-label">Téléphone</label>
             <input class="form-input" id="uf-phone">
+          </div>
+          <div class="form-field full" id="uf-credentials-note" style="display:none">
+            <div class="login-footer-note" style="margin-top:0">
+              Modifie ou génère le mot de passe, puis clique sur <strong>Enregistrer + envoyer les identifiants</strong>. Le nouveau mot de passe sera enregistré dans Supabase et ajouté au mail.
+            </div>
           </div>
           <div class="form-field full">
             <label class="form-label">Campus autorisé(s)</label>
@@ -2990,7 +2996,8 @@ html[data-theme="dark"] .public-lead-overlay.crm-public { background:linear-grad
     <div class="modal-footer">
       <button class="btn btn-danger" id="user-delete-btn" style="margin-right:auto;display:none" onclick="deleteUserFromModal()">Supprimer définitivement</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-user')">Annuler</button>
-      <button class="btn btn-primary" onclick="saveUser()">Enregistrer</button>
+      <button class="btn btn-outline" id="user-save-email-btn" style="display:none" onclick="saveUser(true)">Enregistrer + envoyer les identifiants</button>
+      <button class="btn btn-primary" onclick="saveUser(false)">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -3188,7 +3195,7 @@ html[data-theme="dark"] .public-lead-overlay.crm-public { background:linear-grad
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V62-2026-07-20-student-leads-multi-registration-recaps";
+const APP_PATCH_VERSION = "V63-2026-07-20-user-password-email-fix";
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
 // ══════════════════════════════════════
@@ -3566,12 +3573,20 @@ async function fetchUtilisateursRows(){
 }
 
 async function refreshUsersFromSupabase(){
+  const previousUsers = Array.isArray(USERS) ? USERS.slice() : [];
+  const previousById = new Map(previousUsers.map(u => [String(u.id || ''), u]));
+  const previousByEmail = new Map(previousUsers.map(u => [String(u.email || '').toLowerCase(), u]));
   const rows = await fetchUtilisateursRows();
   const remoteUsers = rows
     .map(mapSupabaseUserToApp)
     .filter(u => u.email || u.firstName || u.lastName || u.supabase_id)
+    .map(u => {
+      const previous = previousById.get(String(u.id || '')) || previousByEmail.get(String(u.email || '').toLowerCase());
+      const remembered = getRememberedUserPassword(u);
+      if(!u.password) u.password = previous?.password || remembered || '';
+      return u;
+    })
     .sort((a,b)=>(a.lastName||'').localeCompare(b.lastName||'') || (a.firstName||'').localeCompare(b.firstName||'') || (a.email||'').localeCompare(b.email||''));
-  // La page Utilisateurs doit refléter toute la table Supabase, sans filtre école/campus.
   USERS = remoteUsers;
   SUPABASE_USERS_LAST_LOAD_AT = Date.now();
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
@@ -5878,18 +5893,57 @@ function openMapsRoute(eventId){
   if(!eventObj) return showToast('Évènement introuvable', 'error');
   window.open(getMapsTrainUrl(eventObj), '_blank');
 }
+function canManageUserAccounts(){
+  const cu = currentUser();
+  return Boolean(cu && roleIsInternal(cu.role));
+}
+function userPasswordSessionKey(user){
+  const token = String(user?.id || user?.email || '').toLowerCase().replace(/[^a-z0-9@._-]+/g, '_');
+  return token ? `edh_user_password_${token}` : '';
+}
+function rememberUserPassword(user){
+  if(!user?.password) return;
+  const key = userPasswordSessionKey(user);
+  if(!key) return;
+  try { sessionStorage.setItem(key, user.password); } catch(_) {}
+}
+function getRememberedUserPassword(user){
+  const key = userPasswordSessionKey(user);
+  if(!key) return '';
+  try { return sessionStorage.getItem(key) || ''; } catch(_) { return ''; }
+}
 function sendUserCredentialsEmail(user){
   const platformLink = window.location.href.split('#')[0];
   const subject = 'Vos identifiants — Plateforme EDH Forums Lycées';
-  const password = user.password || '';
-  const body = `Bonjour ${user.firstName || ''},\n\nVotre compte sur la plateforme EDH Forums Lycées a été créé.\n\nLien de la plateforme : ${platformLink}\nIdentifiant : ${user.email || '—'}\nMot de passe temporaire : ${password || 'Mot de passe non disponible — générez-en un depuis la fiche utilisateur'}\n\nRôle : ${roleLabel(user.role || 'student')}\nÉcoles associées : ${user.school || 'Non renseignée'}\nCampus associé(s) : ${user.campus || user.region || 'Non renseigné'}\n\nConservez ces identifiants de manière confidentielle et ne transférez pas ce message.\n\nÀ bientôt,\nGroupe EDH`;
+  const password = user.password || getRememberedUserPassword(user) || '';
+  const body = `Bonjour ${user.firstName || ''},
+
+Votre compte sur la plateforme EDH Forums Lycées est disponible.
+
+Lien de la plateforme : ${platformLink}
+Identifiant : ${user.email || '—'}
+Mot de passe : ${password || '—'}
+
+Rôle : ${roleLabel(user.role || 'student')}
+Écoles associées : ${user.school || 'Non renseignée'}
+Campus associé(s) : ${user.campus || user.region || 'Non renseigné'}
+
+Conservez ces identifiants de manière confidentielle et ne transférez pas ce message.
+
+À bientôt,
+Groupe EDH`;
   return `mailto:${encodeURIComponent(user.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 function openCredentialsEmail(userId){
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
   const user = USERS.find(u => u.id === userId);
   if(!user) return showToast('Utilisateur introuvable', 'error');
-  if(!user.password) return showToast('Le mot de passe n’est pas disponible dans cette session. Ouvre la fiche utilisateur, génère un nouveau mot de passe puis enregistre-la.', 'error');
-  window.open(sendUserCredentialsEmail(user), '_blank');
+  openUserCredentialsModal(userId);
+}
+function openUserCredentialsModal(userId){
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
+  openUserModal(userId, true);
+  showToast('Génère ou saisis le nouveau mot de passe, puis enregistre et envoie les identifiants.');
 }
 function randomPassword(len=10){
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#';
@@ -5897,7 +5951,21 @@ function randomPassword(len=10){
   for(let i=0;i<len;i++) out += chars[Math.floor(Math.random()*chars.length)];
   return out;
 }
-function generateUserPassword(){ document.getElementById('uf-password').value = randomPassword(); }
+function generateUserPassword(){
+  const input = document.getElementById('uf-password');
+  if(!input) return;
+  input.value = randomPassword();
+  input.type = 'text';
+  const toggle = document.getElementById('uf-password-toggle');
+  if(toggle) toggle.textContent = 'Masquer';
+}
+function toggleUserPasswordVisibility(){
+  const input = document.getElementById('uf-password');
+  const toggle = document.getElementById('uf-password-toggle');
+  if(!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  if(toggle) toggle.textContent = input.type === 'password' ? 'Afficher' : 'Masquer';
+}
 
 // ══════════════════════════════════════
 // V2 — SCORING / LEADS QR / MAILS AUTOMATIQUES
@@ -6902,6 +6970,10 @@ function updateTopbarForPage(page){
 
 function showPage(page){
   const role = normalizeRoleValue(S.role);
+  if(page === 'users' && !canManageUserAccounts()){
+    showToast('Les étudiants n’ont pas accès à la gestion des utilisateurs.', 'error');
+    page = role === 'student' ? 'inscriptions' : 'dashboard';
+  }
   if(role === 'student'){
     const studentAllowed = ['inscriptions','leads','leadsall'];
     if(!studentAllowed.includes(page)) page = 'inscriptions';
@@ -7420,7 +7492,11 @@ async function reloadUsersFromSupabaseAndRender(){
 }
 
 function renderUsersPage(autoRefresh=true){
-  if(autoRefresh && supabaseClient && isAdminMode() && !SUPABASE_USERS_PAGE_REFRESHING && (!SUPABASE_USERS_LAST_LOAD_AT || Date.now() - SUPABASE_USERS_LAST_LOAD_AT > 15000)){
+  if(!canManageUserAccounts()){
+    showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
+    return showPage('inscriptions');
+  }
+  if(autoRefresh && supabaseClient && canManageUserAccounts() && !SUPABASE_USERS_PAGE_REFRESHING && (!SUPABASE_USERS_LAST_LOAD_AT || Date.now() - SUPABASE_USERS_LAST_LOAD_AT > 15000)){
     SUPABASE_USERS_PAGE_REFRESHING = true;
     refreshUsersFromSupabase().then(ok => {
       if(ok) renderUsersPage(false);
@@ -7457,7 +7533,7 @@ function renderUsersPage(autoRefresh=true){
       <td>
         <div class="small-actions">
           <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" onclick="openUserModal('${u.id}')">Modifier</button>
-          ${(u.email||'') !== 'admin' ? `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openCredentialsEmail('${u.id}')">Email identifiants</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteUser('${u.id}')">Supprimer</button>` : '<span style="font-size:11px;color:var(--text3)">Compte principal non supprimable</span>'}
+          ${(u.email||'') !== 'admin' ? `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="openCredentialsEmail('${u.id}')">Mot de passe / Email</button><button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteUser('${u.id}')">Supprimer</button>` : '<span style="font-size:11px;color:var(--text3)">Compte principal non supprimable</span>'}
         </div>
       </td>
     </tr>`;
@@ -7473,34 +7549,48 @@ function updateUserSchoolMode(){ updateAccessLabels(); const note=document.getEl
 function onUserSchoolCheckbox(clicked){ updateUserSchoolMode(); }
 
 
-function openUserModal(id=''){
-  if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
+function openUserModal(id='', credentialsMode=false){
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
   S.editingUserId = id || null;
+  S.userCredentialsMode = Boolean(credentialsMode);
   const u = USERS.find(x=>x.id===id);
-  document.getElementById('user-modal-title').textContent = u ? 'Modifier un utilisateur' : 'Créer un utilisateur';
+  document.getElementById('user-modal-title').textContent = credentialsMode && u ? 'Modifier le mot de passe et envoyer les identifiants' : (u ? 'Modifier un utilisateur' : 'Créer un utilisateur');
   document.getElementById('user-form').reset();
   setCheckedValues('uf-schools', []);
   setCheckedValues('uf-campus', []);
+  const passwordInput = document.getElementById('uf-password');
+  const passwordToggle = document.getElementById('uf-password-toggle');
+  if(passwordInput) passwordInput.type = 'password';
+  if(passwordToggle) passwordToggle.textContent = 'Afficher';
   if(u){
     document.getElementById('uf-firstname').value = u.firstName || '';
     document.getElementById('uf-lastname').value = u.lastName || '';
     document.getElementById('uf-email').value = u.email || '';
-    document.getElementById('uf-password').value = '';
-    document.getElementById('uf-password').placeholder = 'Laisser vide pour conserver le mot de passe actuel';
-    document.getElementById('uf-phone').value = u.phone || ''; setCheckedValues('uf-campus', u.campus || u.region || u.regions_autorisees || '');
+    const availablePassword = u.password || getRememberedUserPassword(u) || '';
+    passwordInput.value = credentialsMode ? (availablePassword || randomPassword()) : '';
+    passwordInput.placeholder = credentialsMode ? 'Mot de passe envoyé dans le mail' : 'Laisser vide pour conserver le mot de passe actuel';
+    document.getElementById('uf-phone').value = u.phone || '';
+    setCheckedValues('uf-campus', u.campus || u.region || u.regions_autorisees || '');
     document.getElementById('uf-role').value = u.role || 'student';
     const userSchools = getSchoolsArray(u.schools_autorisees || u.school);
     setCheckedValues('uf-schools', userSchools);
   }
-  if(!u){ document.getElementById('uf-password').value = randomPassword(); document.getElementById('uf-password').placeholder = 'Mot de passe généré automatiquement'; }
+  if(!u){
+    passwordInput.value = randomPassword();
+    passwordInput.placeholder = 'Mot de passe généré automatiquement';
+  }
   updateUserSchoolMode();
+  const credentialsNote = document.getElementById('uf-credentials-note');
+  const saveEmailBtn = document.getElementById('user-save-email-btn');
+  if(credentialsNote) credentialsNote.style.display = credentialsMode ? '' : 'none';
+  if(saveEmailBtn) saveEmailBtn.style.display = credentialsMode || !u ? '' : 'none';
   const deleteBtn = document.getElementById('user-delete-btn');
-  if(deleteBtn){ deleteBtn.style.display = (u && (u.email || '') !== 'admin') ? '' : 'none'; }
+  if(deleteBtn) deleteBtn.style.display = (u && (u.email || '') !== 'admin' && !credentialsMode) ? '' : 'none';
   document.getElementById('modal-user').classList.add('open');
 }
 
-async function saveUser(){
-  if(!isAdminMode()) return showToast("Accès réservé aux collaborateurs", 'error');
+async function saveUser(sendCredentials=false){
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
   const firstName = document.getElementById('uf-firstname').value.trim();
   const lastName = document.getElementById('uf-lastname').value.trim();
   const email = document.getElementById('uf-email').value.trim().toLowerCase();
@@ -7547,9 +7637,12 @@ async function saveUser(){
 
   if(idx > -1) USERS[idx] = obj;
   else USERS.unshift(obj);
+  rememberUserPassword(obj);
 
   try { await refreshUsersFromSupabase(); }
   catch(e){ console.warn('Rechargement utilisateurs après sauvegarde impossible', e); }
+  const refreshedUser = USERS.find(u => u.id === obj.id || (u.email || '').toLowerCase() === obj.email);
+  if(refreshedUser && !refreshedUser.password) refreshedUser.password = obj.password;
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   setSupabaseStatus('ok', 'Supabase : utilisateur enregistré');
   document.getElementById('user-search').value = '';
@@ -7558,7 +7651,13 @@ async function saveUser(){
   closeModal('modal-user'); closeModal('modal-email');
   renderUsersPage();
   showToast(idx > -1 ? 'Compte utilisateur mis à jour dans Supabase' : 'Compte utilisateur créé dans Supabase');
-  if(idx === -1 && email !== 'admin') showToast('Compte créé. Clique sur Email identifiants pour préparer le mail.');
+  if(sendCredentials){
+    window.location.href = sendUserCredentialsEmail(obj);
+    showToast('Mot de passe enregistré. Le mail d’identifiants est prêt à être envoyé.');
+  } else if(idx === -1 && email !== 'admin') {
+    showToast('Compte créé. Utilise “Mot de passe / Email” pour envoyer les identifiants.');
+  }
+  S.userCredentialsMode = false;
 }
 
 
