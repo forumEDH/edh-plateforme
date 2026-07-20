@@ -1485,6 +1485,105 @@ html[data-theme="dark"] .public-lead-overlay { color:var(--text); }
 html[data-theme="dark"] .public-lead-overlay.crm-public { background:linear-gradient(135deg,#050816,#172554); }
 
 </style>
+
+<style id="edh-v71-style">
+/* ══════════════════════════════════════
+   V71 — iOS, contraste sombre complet et navigation fluide
+══════════════════════════════════════ */
+:root{
+  --radius-xs:7px;--radius-sm:10px;--radius-md:14px;--radius-lg:20px;
+  --content-max:1520px;
+}
+
+/* Les sous-onglets ajoutés en V70 sont volontairement retirés. */
+.context-tabs,.context-tab{display:none!important}
+
+.content{width:100%;max-width:var(--content-max);margin:0 auto;padding-top:22px}
+.sidebar{background:color-mix(in srgb,var(--surface) 96%,transparent)}
+.sidebar-header{padding:20px 18px 15px}.sidebar-logo{font-size:17px}.nav{padding:10px 10px 16px}
+.nav-section-label{padding:13px 10px 6px}.nav-item{margin:2px 0;padding:10px 11px;border-radius:10px;border-left:0!important}
+.nav-item.active{box-shadow:none;background:var(--primary-light)}
+.sidebar .school-nav{display:none!important}
+.page-header{align-items:center;margin-bottom:16px}.page-title{font-size:23px}.page-subtitle{max-width:760px;line-height:1.45}
+.card,.kpi-card,.school-card,.event-card,.student-card,.inline-form,.lead-filter-box,.resource-filters,.cal-list-item{border-radius:var(--radius-md)}
+.card-header{padding:15px 17px}.card-title{font-size:14px;font-weight:800}.card-count{font-size:11px}
+.kpi-row{gap:10px}.kpi-card{padding:15px}.kpi-label{font-size:10px}.kpi-value{font-size:25px}
+.btn{border-radius:9px;font-weight:700}.btn-primary{box-shadow:0 6px 18px rgba(37,99,235,.15)}
+.form-input,.form-select,.form-textarea,.filter-select,.check-dropdown-btn,.multi-filter-btn{border-radius:9px}
+.muted-box,.placeholder-box,.detail-panel,.form-section{border-radius:12px}
+.v3-dashboard-welcome{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:14px;margin-bottom:18px}
+.v3-hero{position:relative;overflow:hidden;padding:22px 24px;border-radius:18px;background:linear-gradient(135deg,#172554,#1d4ed8);color:white;min-height:150px;display:flex;flex-direction:column;justify-content:center}
+.v3-hero:after{content:'';position:absolute;width:190px;height:190px;border-radius:50%;right:-50px;top:-70px;background:rgba(255,255,255,.10)}
+.v3-hero-kicker{position:relative;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.72)}
+.v3-hero-title{position:relative;font-size:23px;font-weight:900;line-height:1.2;margin-top:7px;letter-spacing:-.4px}.v3-hero-copy{position:relative;font-size:13px;color:rgba(255,255,255,.78);margin-top:7px;max-width:650px}
+.v3-quick-actions{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:15px;box-shadow:var(--shadow-sm)}
+.v3-quick-title{font-size:12px;font-weight:900;color:var(--text);margin-bottom:9px}.v3-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.v3-quick-grid .btn{width:100%;justify-content:flex-start;padding:9px 10px;font-size:12px}
+.v3-student-hero{margin-bottom:16px;padding:22px;border-radius:18px;background:linear-gradient(145deg,#0f172a,#1d4ed8);color:white;box-shadow:0 14px 34px rgba(29,78,216,.18)}
+.v3-student-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.v3-student-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:900;color:rgba(255,255,255,.66)}
+.v3-student-title{font-size:22px;font-weight:900;margin-top:5px}.v3-student-meta{font-size:13px;color:rgba(255,255,255,.78);margin-top:5px}.v3-student-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.v3-student-actions .btn-outline{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.28);color:white}
+.v3-student-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0 16px}.v3-student-stat{padding:12px 14px;border:1px solid var(--border);background:var(--surface);border-radius:12px}.v3-student-stat strong{display:block;font-size:20px;color:var(--text)}.v3-student-stat span{font-size:11px;color:var(--text3)}
+.table-scroll{border-radius:0 0 var(--radius-md) var(--radius-md)}th{padding:10px 13px}td{padding:11px 13px}.lead-filter-box{padding:12px}
+.page.is-rendering::after{content:'Mise à jour…';position:fixed;right:20px;bottom:20px;z-index:8000;padding:7px 11px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text3);font-size:11px;font-weight:800;box-shadow:var(--shadow-md)}
+.registration-activity-section{margin-bottom:18px}.registration-activity-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}.registration-activity-heading h3{font-size:14px;color:var(--text)}
+.registration-activity-list{display:flex;flex-direction:column;gap:9px}.registration-activity-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 13px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.registration-activity-title{font-size:13px;font-weight:850;color:var(--text)}.registration-activity-meta{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5}.registration-activity-icon{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900}.registration-activity-icon.join{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}.registration-activity-icon.leave{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.student-event-toggle{min-width:112px}
+
+/* Mode sombre réellement inversé : surfaces blanches noires, textes noirs blancs. */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --white:#000000;--bg:#000000;--bg2:#090909;--surface:#111111;
+  --border:#2b2b2b;--border2:#404040;
+  --text:#ffffff;--text2:#e5e5e5;--text3:#a3a3a3;
+  --primary-light:rgba(59,130,246,.20);
+  --efap:#ffffff;--efap-bg:#171717;
+  --icart-bg:rgba(249,115,22,.15);--cread-bg:rgba(37,99,235,.17);--brassart-bg:rgba(236,72,153,.16);
+  --gray-bg:#151515;--gray-border:#333333;
+}
+html[data-theme="dark"] body{background:#000!important;color:#fff!important}
+html[data-theme="dark"] :is(.sidebar,.topbar,.mobile-shell-header,.mobile-bottom-nav,.card,.kpi-card,.school-card,.event-card,.student-card,.modal,.login-card,.public-lead-card,.filter-chip,.sync-status,.inline-form,.advanced-card,.checklist-box,.resource-card,.kit-card,.crm-action-card,.terrain-item,.insight-card,.lead-filter-box,.resource-filters,.cal-list-item,.cal-cell,.v3-quick-actions,.v3-student-stat,.registration-activity-card){background:#111!important;color:#fff!important;border-color:#2b2b2b!important}
+html[data-theme="dark"] :is(.card-header,.modal-footer,.login-footer-note,.form-section,.muted-box,.placeholder-box,.detail-panel,.todo-row,.email-preview,.cal-list-date,.role-box,.pagination,.multi-filter-menu,.check-dropdown-menu,.student-lookup-results,.student-lookup-item,.resource-empty){background:#090909!important;color:#fff!important;border-color:#2b2b2b!important}
+html[data-theme="dark"] :is(.form-input,.form-select,.form-textarea,.filter-select,.check-dropdown-btn,.multi-filter-btn,.season-select,.theme-select,.role-box-select,.report-input,.report-select,.pag-btn,.btn-outline,.btn-ghost,.btn-ics,.cal-month-export,.vtb){background:#111!important;color:#fff!important;border-color:#404040!important}
+html[data-theme="dark"] :is(.form-input,.form-select,.form-textarea,.filter-select,.season-select,.theme-select,.role-box-select)::placeholder{color:#777!important}
+html[data-theme="dark"] select option{background:#111!important;color:#fff!important}
+html[data-theme="dark"] :is(.page-title,.card-title,.modal-title,.cal-list-nom,.cal-list-day,.event-title,.student-name,.detail-value,.todo-row-title,.advanced-title,.resource-title,.crm-action-card-title,.kit-card-title,.insight-title,.empty-state-title,.v3-quick-title,.registration-activity-title,td strong){color:#fff!important}
+html[data-theme="dark"] :is(.page-subtitle,.card-count,.cal-list-meta,.cal-list-month-short,.event-meta,.student-meta,.detail-label,.role-hint,.theme-hint,.module-section-sub,.advanced-desc,.resource-desc,.registration-activity-meta){color:#aaa!important}
+html[data-theme="dark"] :is(th,td){color:#e5e5e5!important;border-color:#262626!important}
+html[data-theme="dark"] th{background:#080808!important}
+html[data-theme="dark"] tr:hover td,html[data-theme="dark"] .table-scroll table tbody tr:hover td{background:#171717!important}
+html[data-theme="dark"] .btn-primary{color:#fff!important}
+html[data-theme="dark"] .btn-danger{color:#fecaca!important}
+html[data-theme="dark"] :is(.tag-sm,.school-badge,.tag-efap,.school-btn.active-efap){background:#171717!important;color:#fff!important;border-color:#444!important}
+html[data-theme="dark"] :is(.lead-status-box,.public-lead-brand,.public-lead-event-pill){background:#101827!important;color:#e5e7eb!important;border-color:#334155!important}
+html[data-theme="dark"] [style*="background:white"],html[data-theme="dark"] [style*="background: white"],html[data-theme="dark"] [style*="background:#fff"],html[data-theme="dark"] [style*="background: #fff"]{background:#111!important}
+html[data-theme="dark"] [style*="color:#111827"],html[data-theme="dark"] [style*="color: #111827"],html[data-theme="dark"] [style*="color:black"],html[data-theme="dark"] [style*="color: black"]{color:#fff!important}
+html[data-theme="dark"] .public-lead-overlay{background:#000!important}
+html[data-theme="dark"] .login-shell{background:#111!important}
+html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!important;border-color:#333!important}
+
+@media(max-width:1000px){.v3-dashboard-welcome{grid-template-columns:1fr}.v3-quick-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* Expérience iPhone / application ajoutée à l’écran d’accueil. */
+@media(max-width:768px){
+  body{padding-top:calc(64px + env(safe-area-inset-top));padding-bottom:calc(90px + env(safe-area-inset-bottom));overscroll-behavior-y:none}
+  .mobile-shell-header{height:calc(64px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 12px 0;box-shadow:0 3px 18px rgba(15,23,42,.08)}
+  .mobile-menu-btn{width:44px;height:44px;border-radius:14px}.mobile-brand-title{font-size:15px;max-width:190px}.mobile-brand-sub{max-width:190px}
+  .content{padding:12px 11px calc(104px + env(safe-area-inset-bottom));max-width:none}
+  .page-header{margin-bottom:12px}.page-title{font-size:21px}.page-subtitle{font-size:12px;line-height:1.42}
+  .v3-dashboard-welcome{display:block}.v3-quick-actions{margin-top:10px}.v3-quick-grid{grid-template-columns:1fr 1fr}.v3-hero{padding:19px;min-height:135px}.v3-hero-title{font-size:20px}
+  .v3-student-top{display:block}.v3-student-stats{grid-template-columns:1fr 1fr 1fr;gap:7px}.v3-student-stat{padding:10px}.v3-student-stat strong{font-size:18px}.v3-student-stat span{font-size:10px}
+  .v3-student-actions{display:grid;grid-template-columns:1fr}.v3-student-actions .btn{width:100%}
+  .cal-list-month{margin-bottom:18px}.cal-list-month-header{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:20;background:var(--bg);padding:10px 2px 8px;margin-bottom:8px}.cal-month-export{display:none!important}
+  .cal-list-item{display:grid!important;grid-template-columns:58px minmax(0,1fr);gap:10px!important;padding:12px!important;margin-bottom:9px!important;align-items:start!important}
+  .cal-list-date{width:58px;min-width:58px;padding:8px 3px}.cal-list-day{font-size:22px}.cal-list-info{min-width:0}.cal-list-nom{font-size:14px;line-height:1.25}.cal-list-meta{font-size:11px;line-height:1.45;margin-top:3px}.cal-list-schools{gap:3px;margin-top:7px}
+  .cal-list-actions{grid-column:1/-1;display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;width:100%;margin-top:2px}.cal-list-actions .btn,.cal-list-actions .btn-ics{width:100%;min-height:46px;font-size:12px!important;padding:8px!important}.cal-list-actions .student-event-toggle{grid-column:1/-1}
+  .view-toggle-btns{display:none!important}#page-calendrier .page-header>div:last-child{display:grid!important;grid-template-columns:1fr;width:100%}#page-calendrier .page-header .btn{width:100%}
+  .mobile-bottom-nav{min-height:74px;padding:6px 7px calc(7px + env(safe-area-inset-bottom));gap:4px}.mobile-nav-btn{min-height:58px;border-radius:15px;font-size:10px}.mobile-nav-btn span:first-child{font-size:20px}
+  .modal-overlay,#modal-user.modal-overlay{align-items:flex-end!important}.modal,#modal-user .modal{max-height:calc(94dvh - env(safe-area-inset-top))!important}.modal-footer{position:sticky!important;bottom:0!important;background:var(--surface)!important;z-index:5;box-shadow:0 -8px 24px rgba(15,23,42,.08)}
+  .registration-activity-card{display:grid;grid-template-columns:34px minmax(0,1fr);padding:11px}.registration-activity-card>.btn{grid-column:1/-1;width:100%}
+  .page.is-rendering::after{right:12px;bottom:calc(92px + env(safe-area-inset-bottom))}
+}
+</style>
+
 </head>
 <body>
 
@@ -3195,7 +3294,7 @@ html[data-theme="dark"] .public-lead-overlay.crm-public { background:linear-grad
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V63-2026-07-20-user-password-email-fix";
+const APP_PATCH_VERSION = "V71-2026-07-20-ios-dark-self-registration-performance";
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
 // ══════════════════════════════════════
@@ -12137,6 +12236,332 @@ window.addEventListener('DOMContentLoaded', () => {
 
   installNavigation();installTabs();simplifyCopy();installDashboardWelcome();updateWelcome();updateTabs(document.querySelector('.page.active')?.id?.replace('page-','')||'dashboard');updateMobileNav();
   setTimeout(()=>{installNavigation();installTabs();simplifyCopy();if((typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student')enhanceStudentPage()},500);
+})();
+</script>
+
+
+<script id="edh-v71-script">
+/* ══════════════════════════════════════
+   V71 — inscriptions autonomes, notifications et rendu différé
+══════════════════════════════════════ */
+(function(){
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const roleOf=()=>typeof normalizeRoleValue==='function'?normalizeRoleValue(S?.role):String(S?.role||'');
+  const isStudent=()=>roleOf()==='student';
+  const allPages=['dashboard','listing','calendrier','students','registrations','users','reporting','leads','leadsall','actions','myactions','terrain','performance','inscriptions','resources'];
+  const renderedPages=new Set();
+  const dirtyPages=new Set(allPages);
+  const scrollPositions=new Map();
+  let currentPage=document.querySelector('.page.active')?.id?.replace('page-','')||'dashboard';
+  let navToken=0;
+
+  /* Supprime définitivement les boutons Calendrier/Lycées/Équipe/Préparation en haut des pages. */
+  function removeContextTabs(root=document){ root.querySelectorAll?.('.context-tabs').forEach(el=>el.remove()); }
+  removeContextTabs();
+  const tabObserver=new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1){if(n.matches?.('.context-tabs'))n.remove();else removeContextTabs(n)}})));
+  tabObserver.observe(document.body,{childList:true,subtree:true});
+
+  /* Activités d'inscription stockées dans registrations_json, sans nouvelle table SQL. */
+  try{window.REGISTRATION_ACTIVITY=JSON.parse(localStorage.getItem('edh_registration_activity_v1')||'[]');if(!Array.isArray(window.REGISTRATION_ACTIVITY))window.REGISTRATION_ACTIVITY=[];}catch(_){window.REGISTRATION_ACTIVITY=[];}
+  const activityStore=()=>window.REGISTRATION_ACTIVITY||(window.REGISTRATION_ACTIVITY=[]);
+  function saveActivityCache(){try{localStorage.setItem('edh_registration_activity_v1',JSON.stringify(activityStore().slice(0,1000)));}catch(_){}}
+  function activityBelongsToEvent(a,ev){
+    if(!a||!ev)return false;
+    const ids=typeof eventIdSetFor==='function'?eventIdSetFor(ev):new Set([String(ev.id||'')]);
+    return ids.has(String(a.eventId||''))||((a.eventName||'')&&typeof normalizeLyceeName==='function'&&normalizeLyceeName(a.eventName)===normalizeLyceeName(ev.nom));
+  }
+
+  const originalRegistrationsForSupabaseEvent=window.registrationsForSupabaseEvent;
+  if(typeof originalRegistrationsForSupabaseEvent==='function'){
+    window.registrationsForSupabaseEvent=function(ev){
+      const regs=originalRegistrationsForSupabaseEvent.apply(this,arguments)||[];
+      const canonical=typeof canonicalEventId==='function'?(canonicalEventId(ev)||ev?.id||''):(ev?.id||'');
+      const acts=activityStore().filter(a=>activityBelongsToEvent(a,ev)).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0)).slice(0,150).map(a=>({...a,__kind:'registration_activity',eventId:canonical,eventName:a.eventName||ev?.nom||''}));
+      return [...regs,...acts];
+    };
+  }
+
+  const originalClearLocalExtras=window.clearLocalExtrasForEvent;
+  if(typeof originalClearLocalExtras==='function'){
+    window.clearLocalExtrasForEvent=function(ev){
+      const result=originalClearLocalExtras.apply(this,arguments);
+      window.REGISTRATION_ACTIVITY=activityStore().filter(a=>!activityBelongsToEvent(a,ev));
+      return result;
+    };
+  }
+
+  const originalApplyEventExtras=window.applyEventExtrasFromSupabaseRow;
+  if(typeof originalApplyEventExtras==='function'){
+    window.applyEventExtrasFromSupabaseRow=function(row,ev){
+      const parsed=typeof parseSupabaseJson==='function'?parseSupabaseJson(row?.registrations_json??row?.inscriptions_json??row?.registrations,[]):[];
+      const activities=Array.isArray(parsed)?parsed.filter(r=>r&&r.__kind==='registration_activity'):[];
+      const registrations=Array.isArray(parsed)?parsed.filter(r=>!r||r.__kind!=='registration_activity'):[];
+      const cleanRow={...(row||{}),registrations_json:registrations};
+      const result=originalApplyEventExtras.call(this,cleanRow,ev);
+      const existing=new Set(activityStore().map(a=>String(a.id)));
+      activities.forEach(a=>{if(a?.id&&!existing.has(String(a.id))){activityStore().push({...a});existing.add(String(a.id));}});
+      activityStore().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+      saveActivityCache();
+      queueMicrotask(()=>updateNotificationCenter(true));
+      return result;
+    };
+  }
+
+  function userKeys(user){return [...new Set([user?.id,user?.supabase_id,user?.app_id,user?.email].filter(Boolean).map(v=>String(v).toLowerCase()))];}
+  function notificationRecipients(ev){
+    let list=typeof eventCollaboratorUsers==='function'?eventCollaboratorUsers(ev):[];
+    if(!list.length){
+      const eventSchools=typeof getSchoolsArray==='function'?getSchoolsArray(ev?.ecoles):[];
+      const eventCampus=typeof normalizeCampusCity==='function'?normalizeCampusCity(ev?.campus||ev?.ville||''):String(ev?.campus||ev?.ville||'').toLowerCase();
+      list=(window.USERS||USERS||[]).filter(u=>{
+        if(typeof roleIsInternal==='function'&&!roleIsInternal(u.role))return false;
+        const schools=typeof userSchoolAccess==='function'?userSchoolAccess(u):[];
+        const schoolOk=!schools.length||!eventSchools.length||eventSchools.some(s=>schools.includes(s));
+        const campuses=typeof userCampusAccess==='function'?userCampusAccess(u).map(c=>typeof normalizeCampusCity==='function'?normalizeCampusCity(c):String(c).toLowerCase()):[];
+        const campusOk=!campuses.length||!eventCampus||campuses.includes(eventCampus);
+        return schoolOk&&campusOk;
+      });
+    }
+    const seen=new Set();
+    return list.filter(u=>{const key=String(u.id||u.email||'').toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true;});
+  }
+  function addRegistrationActivity(action,reg,ev){
+    if(!reg||!ev)return null;
+    const cu=typeof currentUser==='function'?currentUser():null;
+    const recipients=notificationRecipients(ev);
+    const activity={
+      __kind:'registration_activity',id:'RA_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+      action,eventId:typeof canonicalEventId==='function'?(canonicalEventId(ev)||ev.id):ev.id,eventName:ev.nom||reg.eventName||'Forum lycée',
+      eventDate:ev.date||'',eventTime:ev.heure||'',eventCity:ev.ville||'',school:reg.school||'',
+      studentId:reg.studentId||null,userId:reg.userId||cu?.id||null,studentEmail:reg.email||cu?.email||'',
+      studentName:`${reg.firstName||cu?.firstName||''} ${reg.lastName||cu?.lastName||''}`.trim(),
+      recipientKeys:[...new Set(recipients.flatMap(userKeys))],readBy:[],createdAt:new Date().toISOString()
+    };
+    activityStore().unshift(activity);saveActivityCache();dirtyPages.add('registrations');dirtyPages.add('inscriptions');dirtyPages.add('calendrier');
+    return activity;
+  }
+  function activityVisibleToCurrent(a){
+    const cu=typeof currentUser==='function'?currentUser():null;
+    if(!cu||!(typeof roleIsInternal==='function'&&roleIsInternal(cu.role)))return false;
+    if(roleOf()==='admin_global'||String(cu.email||'').toLowerCase()==='admin')return true;
+    const keys=userKeys(cu);const recipients=(a.recipientKeys||[]).map(v=>String(v).toLowerCase());
+    if(recipients.length)return keys.some(k=>recipients.includes(k));
+    const ev=typeof findCalendarEventById==='function'?findCalendarEventById(a.eventId):null;
+    return ev&&typeof canSeeRecord==='function'?canSeeRecord(ev):true;
+  }
+  function readKey(){const cu=typeof currentUser==='function'?currentUser():null;return String(cu?.id||cu?.email||'user').toLowerCase();}
+  function pendingRegistrationActivities(includeRead=false){const k=readKey();return activityStore().filter(activityVisibleToCurrent).filter(a=>includeRead||!(a.readBy||[]).map(String).map(x=>x.toLowerCase()).includes(k)).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));}
+
+  window.markRegistrationActivityRead=function(id){
+    const a=activityStore().find(x=>String(x.id)===String(id));if(!a)return;
+    a.readBy=[...new Set([...(a.readBy||[]),readKey()])];saveActivityCache();
+    const ev=typeof findCalendarEventById==='function'?findCalendarEventById(a.eventId):null;
+    if(ev&&typeof saveEventExtrasToSupabase==='function')saveEventExtrasToSupabase(ev).catch(()=>{});
+    renderRegistrationNotifications();updateNotificationCenter(true);
+  };
+  window.markAllRegistrationActivitiesRead=function(){
+    const key=readKey();const touched=new Set();pendingRegistrationActivities(false).forEach(a=>{a.readBy=[...new Set([...(a.readBy||[]),key])];touched.add(a.eventId)});saveActivityCache();
+    touched.forEach(id=>{const ev=typeof findCalendarEventById==='function'?findCalendarEventById(id):null;if(ev&&typeof saveEventExtrasToSupabase==='function')saveEventExtrasToSupabase(ev).catch(()=>{});});
+    renderRegistrationNotifications();updateNotificationCenter(true);
+  };
+  function renderRegistrationNotifications(){
+    installNotificationUI();const host=$('registration-activity-list');if(!host)return;
+    const rows=pendingRegistrationActivities(false);
+    host.innerHTML=rows.length?rows.map(a=>`<div class="registration-activity-card"><div class="registration-activity-icon ${a.action==='unregistered'?'leave':'join'}">${a.action==='unregistered'?'−':'+'}</div><div><div class="registration-activity-title">${esc(a.studentName||'Un étudiant')} ${a.action==='unregistered'?'s’est désinscrit(e)':'s’est inscrit(e)'}</div><div class="registration-activity-meta">${esc(a.eventName||'Forum')}${a.eventDate?' · '+(typeof fmtDate==='function'?fmtDate(a.eventDate):esc(a.eventDate)):''}${a.eventTime?' · '+esc(a.eventTime):''}${a.eventCity?' · '+esc(a.eventCity):''}${a.school?' · '+esc(a.school):''}</div></div><button class="btn btn-ghost" type="button" onclick="markRegistrationActivityRead('${esc(a.id)}')">Marquer comme lu</button></div>`).join(''):'<div class="muted-box">Aucune nouvelle inscription ou désinscription.</div>';
+  }
+  function installNotificationUI(){
+    const btn=$('post-forum-notification-btn');if(btn)btn.querySelector('span:first-child').textContent='🔔 Notifications';
+    const modal=$('modal-post-forum');if(!modal)return;
+    const title=modal.querySelector('.modal-title');const sub=modal.querySelector('.modal-subtitle');if(title)title.textContent='Notifications';if(sub)sub.textContent='Inscriptions étudiantes et récapitulatifs des forums terminés.';
+    const body=modal.querySelector('.modal-body');if(body&&!$('registration-activity-section')){
+      const section=document.createElement('section');section.id='registration-activity-section';section.className='registration-activity-section';section.innerHTML='<div class="registration-activity-heading"><h3>Inscriptions étudiantes</h3><button class="btn btn-ghost" type="button" onclick="markAllRegistrationActivitiesRead()">Tout marquer comme lu</button></div><div class="registration-activity-list" id="registration-activity-list"></div><div class="divider"></div><div class="registration-activity-heading"><h3>Forums terminés</h3></div>';
+      const post=$('post-forum-notification-list');body.insertBefore(section,post);
+    }
+  }
+  function updateNotificationCenter(silent=true){
+    installNotificationUI();
+    const registrationRows=pendingRegistrationActivities(false);
+    const postRows=typeof pendingPostForumEvents==='function'?pendingPostForumEvents(false):[];
+    const count=$('post-forum-notification-count');if(count)count.textContent=String(registrationRows.length+postRows.length);
+    const btn=$('post-forum-notification-btn');if(btn)btn.style.display=(typeof roleIsInternal==='function'&&roleIsInternal(S.role))?'':'none';
+    if(!silent&&registrationRows.length&&typeof showToast==='function')showToast(`${registrationRows.length} nouvelle(s) inscription(s) étudiante(s)`,'success');
+    if(registrationRows.length&&'Notification'in window&&Notification.permission==='granted'){
+      const latest=registrationRows[0];const key='edh_registration_browser_notice_'+readKey();
+      try{if(sessionStorage.getItem(key)!==latest.id){new Notification('EDH Forums — inscription étudiante',{body:`${latest.studentName||'Un étudiant'} ${latest.action==='unregistered'?'s’est désinscrit(e)':'s’est inscrit(e)'} de ${latest.eventName||'un forum'}.`});sessionStorage.setItem(key,latest.id);}}catch(_){}
+    }
+    return registrationRows;
+  }
+  window.renderRegistrationNotifications=renderRegistrationNotifications;
+  window.updateRegistrationNotificationCenter=updateNotificationCenter;
+
+  const originalOpenNotifications=window.openPostForumNotifications;
+  window.openPostForumNotifications=function(){installNotificationUI();renderRegistrationNotifications();if(typeof renderPostForumNotifications==='function')renderPostForumNotifications();$('modal-post-forum')?.classList.add('open');};
+  const originalCheckPost=window.checkPostForumNotifications;
+  if(typeof originalCheckPost==='function')window.checkPostForumNotifications=function(silent=true){const result=originalCheckPost.apply(this,arguments);setTimeout(()=>updateNotificationCenter(silent),0);return result;};
+
+  /* L'étudiant peut s'inscrire lui-même à tout forum futur visible dans son périmètre. */
+  window.openRegistrationModal=function(eventId){
+    if(!isStudent())return typeof showToast==='function'?showToast('Cette inscription est réservée aux étudiants','error'):null;
+    const ev=typeof findCalendarEventById==='function'?findCalendarEventById(eventId):null;if(!ev)return showToast('Évènement introuvable','error');
+    const end=typeof parseEventEndDateTime==='function'?parseEventEndDateTime(ev):null;if(end&&end<new Date())return showToast('Ce forum est déjà terminé','error');
+    const existing=(typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[]).find(r=>typeof registrationBelongsToEvent==='function'?registrationBelongsToEvent(r,ev):String(r.eventId)===String(eventId));
+    if(existing)return showToast('Tu es déjà inscrit(e) à ce forum. Utilise « Se désinscrire » pour annuler ta participation.','error');
+    const cu=typeof currentUser==='function'?currentUser():null;
+    const profile=S.studentProfile||{};
+    const student=(window.STUDENTS||STUDENTS||[]).find(st=>(cu?.email&&String(st.email||'').toLowerCase()===String(cu.email).toLowerCase())||String(st.id||'')===String(cu?.id||''));
+    S.selectedEventId=typeof canonicalEventId==='function'?(canonicalEventId(ev)||eventId):eventId;
+    const eventSchools=typeof getSchoolsArray==='function'?getSchoolsArray(ev.ecoles):[];
+    const userSchools=typeof userSchoolAccess==='function'?userSchoolAccess(cu):[];
+    const preferred=student?.school||profile.school||userSchools[0]||eventSchools[0]||'EFAP';
+    const allowed=(eventSchools.length?eventSchools:[preferred]).filter(s=>!userSchools.length||userSchools.includes(s));
+    const schools=allowed.length?allowed:[preferred];
+    const schoolSelect=$('modal-reg-school');if(schoolSelect){schoolSelect.innerHTML=schools.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');schoolSelect.value=schools.includes(preferred)?preferred:schools[0];}
+    $('registration-modal-title').textContent="Je m'inscris";
+    $('registration-modal-subtitle').textContent=`${ev.nom||'Forum'} · ${typeof fmtDate==='function'?fmtDate(ev.date):ev.date||''}${ev.heure?' · '+ev.heure:''}${ev.ville?' · '+ev.ville:''}`;
+    $('modal-reg-firstname').value=student?.firstName||profile.firstName||cu?.firstName||'';
+    $('modal-reg-lastname').value=student?.lastName||profile.lastName||cu?.lastName||'';
+    $('modal-reg-email').value=student?.email||profile.email||cu?.email||'';
+    $('modal-reg-phone').value=student?.phone||profile.phone||cu?.phone||'';
+    $('modal-reg-notes').value='';
+    const lookup=$('admin-student-lookup-wrap');if(lookup)lookup.style.display='none';
+    const mailBtn=$('registration-save-mail-btn');if(mailBtn)mailBtn.style.display='none';
+    $('modal-registration')?.classList.add('open');
+  };
+
+  const originalSaveRegistration=window.saveRegistration;
+  if(typeof originalSaveRegistration==='function')window.saveRegistration=function(sendMailAfter=false){
+    if(!isStudent())return originalSaveRegistration.apply(this,arguments);
+    const ev=typeof findCalendarEventById==='function'?findCalendarEventById(S.selectedEventId):null;
+    const before=new Set((typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[]).map(r=>String(r.id)));
+    const realSaveExtras=window.saveEventExtrasToSupabase;
+    if(typeof realSaveExtras==='function')window.saveEventExtrasToSupabase=async()=>({ok:true,queued:true});
+    let result;
+    try{result=originalSaveRegistration.call(this,false);}finally{if(typeof realSaveExtras==='function')window.saveEventExtrasToSupabase=realSaveExtras;}
+    setTimeout(()=>{
+      if(!ev)return;
+      const reg=(typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[]).find(r=>!before.has(String(r.id))&&(typeof registrationBelongsToEvent==='function'?registrationBelongsToEvent(r,ev):String(r.eventId)===String(S.selectedEventId)));
+      if(!reg)return;
+      addRegistrationActivity('registered',reg,ev);saveActivityCache();
+      if(typeof realSaveExtras==='function')realSaveExtras(ev).catch(err=>showToast('Inscription enregistrée, mais notification non synchronisée : '+(typeof getSupabaseErrorMessage==='function'?getSupabaseErrorMessage(err):err?.message||'erreur'),'error'));
+      updateNotificationCenter(true);markAllPagesDirty();
+    },0);
+    return result;
+  };
+
+  const originalUnregisterCurrent=window.unregisterCurrentStudent;
+  if(typeof originalUnregisterCurrent==='function')window.unregisterCurrentStudent=function(regId){
+    const reg=(window.REGISTRATIONS||REGISTRATIONS||[]).find(r=>String(r.id)===String(regId));
+    const ev=reg&&typeof findCalendarEventById==='function'?findCalendarEventById(reg.eventId):null;
+    const realSaveExtras=window.saveEventExtrasToSupabase;
+    if(typeof realSaveExtras==='function')window.saveEventExtrasToSupabase=async()=>({ok:true,queued:true});
+    let result;
+    try{result=originalUnregisterCurrent.apply(this,arguments);}finally{if(typeof realSaveExtras==='function')window.saveEventExtrasToSupabase=realSaveExtras;}
+    setTimeout(()=>{
+      if(!reg||!ev||(window.REGISTRATIONS||REGISTRATIONS||[]).some(r=>String(r.id)===String(regId)))return;
+      addRegistrationActivity('unregistered',reg,ev);saveActivityCache();
+      if(typeof realSaveExtras==='function')realSaveExtras(ev).catch(()=>{});
+      updateNotificationCenter(true);markAllPagesDirty();
+    },0);
+    return result;
+  };
+
+  /* Transforme le bouton d'inscription du calendrier en bouton à état. */
+  function enhanceCalendarRegistrationButtons(){
+    if(!isStudent())return;
+    const mine=typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[];
+    document.querySelectorAll('#cal-list-view .cal-list-actions button').forEach(btn=>{
+      const raw=btn.getAttribute('onclick')||'';const match=raw.match(/openRegistrationModal\('([^']+)'\)/);if(!match)return;
+      const eventId=match[1];const ev=typeof findCalendarEventById==='function'?findCalendarEventById(eventId):null;
+      const reg=mine.find(r=>ev&&typeof registrationBelongsToEvent==='function'?registrationBelongsToEvent(r,ev):String(r.eventId)===String(eventId));
+      btn.classList.add('student-event-toggle');
+      if(reg){btn.textContent='Se désinscrire';btn.className='btn btn-danger student-event-toggle';btn.setAttribute('onclick',`unregisterCurrentStudent('${String(reg.id).replace(/'/g,"\\'")}')`);}
+      else{btn.textContent="Je m'inscris";btn.className='btn btn-primary student-event-toggle';}
+    });
+  }
+  const originalRenderCalList=window.renderCalList;
+  if(typeof originalRenderCalList==='function')window.renderCalList=function(){const result=originalRenderCalList.apply(this,arguments);enhanceCalendarRegistrationButtons();return result;};
+
+  /* Textes du parcours étudiant adaptés à l'inscription autonome. */
+  function updateStudentCopy(){
+    const page=$('page-inscriptions');if(!page)return;
+    const sub=page.querySelector('.page-subtitle');if(sub)sub.textContent='Retrouvez les forums auxquels vous vous êtes inscrit(e) et accédez aux outils terrain.';
+    page.querySelectorAll('.muted-box').forEach(box=>{
+      box.innerHTML=box.innerHTML.replace(/Un collaborateur doit[^<.]*(?:\.|$)/gi,'Inscris-toi directement depuis l’onglet Forums.').replace(/attribu[ée]s? par un collaborateur/gi,'choisis depuis le calendrier');
+    });
+  }
+
+  function renderPage(page){
+    if(page==='dashboard'&&typeof renderDashboard==='function')renderDashboard();
+    else if(page==='listing'&&typeof renderListing==='function')renderListing();
+    else if(page==='calendrier'){
+      S.calView='list';const lb=$('vtb-list'),gb=$('vtb-grid'),lv=$('cal-list-view'),gv=$('cal-grid-view');if(lb)lb.className='vtb active';if(gb)gb.className='vtb';if(lv)lv.style.display='block';if(gv)gv.style.display='none';if(typeof renderCalList==='function')renderCalList();
+    }
+    else if(page==='students'&&typeof renderStudentsPage==='function')renderStudentsPage();
+    else if(page==='registrations'&&typeof renderRegistrationsPage==='function')renderRegistrationsPage();
+    else if(page==='users'&&typeof renderUsersPage==='function')renderUsersPage();
+    else if(page==='reporting'&&typeof renderReportingPage==='function')renderReportingPage();
+    else if(page==='leads'&&typeof renderLeadsPage==='function')renderLeadsPage();
+    else if(page==='leadsall'&&typeof renderAllLeadsPage==='function')renderAllLeadsPage();
+    else if(page==='actions'&&typeof renderActionsStructurePage==='function')renderActionsStructurePage();
+    else if(page==='myactions'&&typeof renderMyActionsPage==='function')renderMyActionsPage();
+    else if(page==='terrain'&&typeof renderTerrainPage==='function')renderTerrainPage();
+    else if(page==='performance'&&typeof renderPerformancePage==='function')renderPerformancePage();
+    else if(page==='inscriptions'&&typeof renderInscriptionPage==='function'){renderInscriptionPage();setTimeout(()=>{if(typeof enhanceStudentPage==='function')enhanceStudentPage();updateStudentCopy();},0);}
+    else if(page==='resources'){if(typeof renderResourcesPage==='function')renderResourcesPage();if(typeof loadResourcesFromSupabase==='function')loadResourcesFromSupabase(false);}
+  }
+  function markAllPagesDirty(){allPages.forEach(p=>dirtyPages.add(p));}
+  window.edhMarkPagesDirtyV71=markAllPagesDirty;
+
+  const originalSaveLocal=window.saveLocalData;
+  if(typeof originalSaveLocal==='function')window.saveLocalData=function(){markAllPagesDirty();return originalSaveLocal.apply(this,arguments);};
+  const originalRefreshSupabase=window.refreshFromSupabaseAndRender;
+  if(typeof originalRefreshSupabase==='function')window.refreshFromSupabaseAndRender=async function(){const result=await originalRefreshSupabase.apply(this,arguments);markAllPagesDirty();updateNotificationCenter(true);return result;};
+
+  function mobilePageLabel(page){return({dashboard:'Accueil',calendrier:'Forums',inscriptions:'Mes forums',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',listing:'Lycées',registrations:'Équipe étudiante',reporting:'Reporting',performance:'Conversion',users:'Administration',resources:'Ressources',terrain:'Préparation',actions:'Pipeline',myactions:'Mes actions'}[page]||'EDH Forums');}
+  function updateMobileNavV71(page=currentPage){
+    const nav=document.querySelector('.mobile-bottom-nav');const buttons=[...document.querySelectorAll('.mobile-nav-btn')];if(!nav||!buttons.length)return;
+    if(isStudent()){
+      const configs=[['calendrier','◷','Forums'],['inscriptions','✓','Mes forums'],['leads','◎','Leads']];
+      buttons.forEach((b,i)=>{if(i<configs.length){const [p,ico,label]=configs[i];b.style.display=(p==='leads'&&typeof studentHasAssignedForums==='function'&&!studentHasAssignedForums())?'none':'flex';b.dataset.mobilePage=p;b.setAttribute('onclick',`showPage('${p}')`);b.innerHTML=`<span>${ico}</span><span>${label}</span>`;}else b.style.display='none';});
+    }else buttons.forEach(b=>b.style.display='flex');
+    const visible=buttons.filter(b=>b.style.display!=='none');nav.style.gridTemplateColumns=`repeat(${Math.max(1,visible.length)},1fr)`;visible.forEach(b=>b.classList.toggle('active',b.dataset.mobilePage===page));
+  }
+
+  /* Navigation instantanée : affichage de la page avant son rendu lourd, puis cache. */
+  window.showPage=function(page){
+    const role=roleOf();
+    if(role==='student'){
+      const allowed=['calendrier','inscriptions','leads','leadsall'];if(!allowed.includes(page))page='calendrier';
+      if(['leads','leadsall'].includes(page)&&typeof studentHasAssignedForums==='function'&&!studentHasAssignedForums()){showToast("Inscris-toi d’abord à un forum pour accéder à ses leads.",'error');page='calendrier';}
+    }
+    if(page==='users'&&typeof canManageUserAccounts==='function'&&!canManageUserAccounts()){showToast('Accès non autorisé','error');page=role==='student'?'calendrier':'dashboard';}
+    scrollPositions.set(currentPage,window.scrollY);currentPage=page;const token=++navToken;
+    try{if(typeof updateTopbarForPage==='function')updateTopbarForPage(page);}catch(_){}
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const target=$('page-'+page);if(target)target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const labels={dashboard:'Accueil',calendrier:'Forums',listing:'Lycées',registrations:'Équipe étudiante',terrain:'Préparation',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',reporting:'Pilotage',myactions:'Mes actions',actions:'Pipeline',performance:'Conversion',users:'Administration',inscriptions:'Mes forums',resources:'Ressources'};
+    document.querySelectorAll('.nav-item').forEach(btn=>{if(btn.textContent.trim()===labels[page])btn.classList.add('active');});
+    const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'CRM forums lycées';
+    updateMobileNavV71(page);removeContextTabs();document.body.classList.remove('mobile-sidebar-open');
+    const needRender=!renderedPages.has(page)||dirtyPages.has(page);
+    if(needRender&&target)target.classList.add('is-rendering');
+    requestAnimationFrame(()=>{
+      if(token!==navToken)return;
+      if(needRender){try{renderPage(page);renderedPages.add(page);dirtyPages.delete(page);}catch(err){console.error('[EDH V71 render]',err);showToast('Impossible d’afficher complètement cette page.','error');}finally{target?.classList.remove('is-rendering');}}
+      enhanceCalendarRegistrationButtons();removeContextTabs();updateMobileNavV71(page);updateStudentCopy();
+      requestAnimationFrame(()=>window.scrollTo({top:scrollPositions.get(page)||0,left:0,behavior:'auto'}));
+    });
+  };
+  window.refreshCurrentPage=function(){dirtyPages.add(currentPage);renderedPages.delete(currentPage);window.showPage(currentPage);};
+
+  const originalSetRoleV71=window.setRole;
+  if(typeof originalSetRoleV71==='function')window.setRole=function(){const result=originalSetRoleV71.apply(this,arguments);setTimeout(()=>{markAllPagesDirty();updateMobileNavV71(currentPage);updateNotificationCenter(true);removeContextTabs();},20);return result;};
+
+  installNotificationUI();updateNotificationCenter(true);updateStudentCopy();updateMobileNavV71(currentPage);enhanceCalendarRegistrationButtons();
+  setTimeout(()=>{removeContextTabs();updateNotificationCenter(true);updateMobileNavV71(currentPage);},600);
 })();
 </script>
 
