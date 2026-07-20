@@ -6,18 +6,18 @@
 
 <meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="EDH Forums">
+<meta name="apple-mobile-web-app-title" content="EDH Gestion Event">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=yes">
 <link rel="manifest" href="manifest.webmanifest">
 
 <meta name="description" content="Plateforme interne EDH pour piloter les forums lycées, les leads QR et le reporting de conversion.">
-<meta property="og:title" content="EDH — Forums Lycées">
+<meta property="og:title" content="EDH Gestion Event">
 <meta property="og:description" content="Pilotage des forums lycées, ambassadeurs, leads et reporting opérationnel.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='800' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232563eb'/%3E%3Ctext x='90' y='108' text-anchor='middle' font-family='Arial,sans-serif' font-size='52' font-weight='900' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
-<title>EDH Forum Ops — Version 72</title>
+<title>EDH Gestion Event</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 
@@ -1611,7 +1611,7 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
     <button class="mobile-menu-btn" type="button" aria-label="Ouvrir le menu" onclick="document.body.classList.toggle('mobile-sidebar-open')">☰</button>
     <div class="mobile-brand">
       <div class="mobile-brand-title" id="mobile-page-title">Tableau de bord</div>
-      <div class="mobile-brand-sub" id="mobile-page-subtitle">Forum Ops · terrain & recrutement</div>
+      <div class="mobile-brand-sub" id="mobile-page-subtitle">EDH Gestion Event · terrain & recrutement</div>
     </div>
   </div>
   <div class="mobile-pill">EDH</div>
@@ -3236,6 +3236,15 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
         <div class="form-field"><label class="form-label">Niveau d’étude *</label><select class="form-select" id="public-lead-level" onchange="updateLeadProgramOptions('public')" required><option value="">Sélectionner votre niveau d’étude</option><option value="Terminale">Terminale</option><option value="1ère">1ère</option><option value="2nde">2nde</option><option value="Bac+1">Bac+1</option><option value="Bac+2">Bac+2</option><option value="Autre">Autre</option></select></div>
         <div class="form-field"><label class="form-label">Cursus souhaité *</label><select class="form-select" id="public-lead-program" required><option value="">Sélectionner le cursus souhaité</option></select></div>
         <div class="form-field full"><label class="form-label">Prise de notes *</label><textarea class="form-textarea" id="public-lead-notes" rows="3" placeholder="Projet d’orientation, question, préférence campus..." required></textarea></div>
+        <div class="form-field full public-consent-field">
+          <label class="form-label" for="public-lead-consent">J’autorise l’établissement à me recontacter au sujet de mon orientation et des formations présentées *</label>
+          <select class="form-select" id="public-lead-consent" required>
+            <option value="">Sélectionner une réponse</option>
+            <option value="oui">Oui, j’autorise l’établissement à me recontacter</option>
+            <option value="non">Non, je ne souhaite pas être recontacté(e)</option>
+          </select>
+          <div class="public-consent-help">Votre réponse est enregistrée avec le formulaire. Vous pouvez demander la modification ou la suppression de vos données auprès de l’établissement.</div>
+        </div>
       </div>
       <button class="btn btn-primary" id="public-lead-submit-btn" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicLead()">Valider le formulaire</button>
       <div class="public-lead-success" id="public-lead-success">Merci, tes coordonnées ont bien été enregistrées.</div>
@@ -3841,6 +3850,7 @@ function mapAppLeadToSupabase(l){
     cursus_souhaite: normalizeSupabaseText(l.program || l.cursus),
     niveau_etude: normalizeSupabaseText(l.level),
     notes: normalizeSupabaseText(l.notes),
+    autorisation_recontact: normalizeSupabaseText(l.consentRecontact || l.autorisation_recontact),
     source: normalizeSupabaseText(l.source || 'Saisie plateforme'),
     created_at: normalizeSupabaseText(l.createdAt || new Date().toISOString())
   };
@@ -7435,7 +7445,7 @@ async function submitPublicLead(){
   if(!firstName || !lastName || !email) return showToast('Prénom, nom et email sont requis','error');
   const submitBtn = document.getElementById('public-lead-submit-btn');
   if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Enregistrement…'; }
-  const lead={id:'LEAD'+Date.now(), season:S.season || DEFAULT_SEASON, eventId:eventToken, eventName:ev?.nom||'', lycee:ev?.nom||'', ville:ev?.ville||'', firstName,lastName,email, phone:(document.getElementById('public-lead-phone')?.value||'').trim(), school:document.getElementById('public-lead-school')?.value||'', program:(document.getElementById('public-lead-program')?.value||'').trim(), level:document.getElementById('public-lead-level')?.value||'', notes:(document.getElementById('public-lead-notes')?.value||'').trim(), source:'QR public', createdAt:new Date().toISOString()};
+  const lead={id:'LEAD'+Date.now(), season:S.season || DEFAULT_SEASON, eventId:eventToken, eventName:ev?.nom||'', lycee:ev?.nom||'', ville:ev?.ville||'', firstName,lastName,email, phone:(document.getElementById('public-lead-phone')?.value||'').trim(), school:document.getElementById('public-lead-school')?.value||'', program:(document.getElementById('public-lead-program')?.value||'').trim(), level:document.getElementById('public-lead-level')?.value||'', notes:(document.getElementById('public-lead-notes')?.value||'').trim(), consentRecontact:(document.getElementById('public-lead-consent')?.value||'').trim(), source:'QR public', createdAt:new Date().toISOString()};
   const saved = await saveLeadDirectToSupabase(lead);
   if(!saved.ok && !saved.skipped){
     const error = document.getElementById('public-lead-error');
@@ -7447,7 +7457,7 @@ async function submitPublicLead(){
   saveLocalData();
   const success = document.getElementById('public-lead-success'); if(success) success.classList.add('show');
   const error = document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
-  ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes','public-lead-consent'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Valider le formulaire'; }
 }
 
@@ -9373,7 +9383,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(season && window.S){ S.season=season; try{ initSeasonSelect(); }catch(_){} }
     const login=document.getElementById('login-modal'); if(login) login.classList.remove('open');
     const overlay=document.getElementById('public-lead-overlay'); if(overlay){ overlay.classList.add('open'); document.body.classList.add('public-lead-mode'); overlay.scrollTop = 0; }
-    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes','public-lead-consent'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const success=document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
     const error=document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
     window.loadPublicLeadEventContext(eventToken, season).catch(()=>{});
@@ -9399,10 +9409,11 @@ window.addEventListener('DOMContentLoaded', () => {
       program:val('public-lead-program'),
       level:val('public-lead-level'),
       notes:val('public-lead-notes'),
+      consentRecontact:val('public-lead-consent'),
       source:'QR public',
       createdAt:new Date().toISOString()
     };
-    const required = [['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École intéressée',lead.school],['Cursus souhaité',lead.program],['Niveau d’étude',lead.level],['Prise de notes',lead.notes]];
+    const required = [['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École intéressée',lead.school],['Cursus souhaité',lead.program],['Niveau d’étude',lead.level],['Prise de notes',lead.notes],['Autorisation de recontact',lead.consentRecontact]];
     const missing = required.filter(x=>!x[1]).map(x=>x[0]);
     const error=document.getElementById('public-lead-error');
     const success=document.getElementById('public-lead-success');
@@ -9429,7 +9440,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try { if(typeof syncReportingFromLeadsV41==='function') syncReportingFromLeadsV41(); } catch(_) {}
       if(success) success.classList.add('show');
       if(error) error.classList.remove('show');
-      ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes','public-lead-consent'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
       preparePublicLeadSelects(ev);
       if(btn){btn.disabled=false;btn.textContent='Valider le formulaire';}
     } catch(err){
@@ -9742,7 +9753,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function activePageId(){ const active = document.querySelector('.page.active'); return active ? (active.id || '').replace(/^page-/, '') : 'dashboard'; }
   function syncMobileChrome(){
     const page = activePageId();
-    const title = document.querySelector('.page.active .page-title')?.textContent?.trim() || 'Forum Ops · terrain & recrutement';
+    const title = document.querySelector('.page.active .page-title')?.textContent?.trim() || 'EDH Gestion Event · terrain & recrutement';
     const subtitle = document.querySelector('.page.active .page-subtitle')?.textContent?.trim() || 'Mode terrain';
     const titleEl = document.getElementById('mobile-page-title');
     const subEl = document.getElementById('mobile-page-subtitle');
@@ -10053,7 +10064,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(season){ try { S.season = season; if(typeof initSeasonSelect === 'function') initSeasonSelect(); } catch(_) {} }
     const login=document.getElementById('login-modal'); if(login) login.classList.remove('open');
     const overlay=document.getElementById('public-lead-overlay'); if(overlay){ overlay.classList.add('open'); document.body.classList.add('public-lead-mode'); overlay.scrollTop = 0; }
-    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes','public-lead-consent'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const success=document.getElementById('public-lead-success'); if(success) success.classList.remove('show');
     const error=document.getElementById('public-lead-error'); if(error) error.classList.remove('show');
     window.loadPublicLeadEventContext(eventToken, season).catch(()=>{});
@@ -10063,8 +10074,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const eventToken = window.CURRENT_PUBLIC_LEAD_EVENT_ID || (typeof CURRENT_PUBLIC_LEAD_EVENT_ID !== 'undefined' ? CURRENT_PUBLIC_LEAD_EVENT_ID : '');
     const ev = window.CURRENT_PUBLIC_LEAD_EVENT || (typeof findCalendarEventById === 'function' ? findCalendarEventById(eventToken) : null) || {};
     const val=id=>(document.getElementById(id)?.value||'').trim();
-    const lead = {id:'LEAD'+Date.now(), season:S.season || DEFAULT_SEASON, eventId:eventToken, eventName:ev.nom||'', lycee:ev.nom||'', ville:ev.ville||'', firstName:val('public-lead-firstname'), lastName:val('public-lead-lastname'), email:val('public-lead-email').toLowerCase(), phone:val('public-lead-phone'), school:val('public-lead-school'), program:val('public-lead-program'), level:val('public-lead-level'), notes:val('public-lead-notes'), source:'QR public', createdAt:new Date().toISOString()};
-    const required = [['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École intéressée',lead.school],['Cursus souhaité',lead.program],['Niveau d’étude',lead.level],['Prise de notes',lead.notes]];
+    const lead = {id:'LEAD'+Date.now(), season:S.season || DEFAULT_SEASON, eventId:eventToken, eventName:ev.nom||'', lycee:ev.nom||'', ville:ev.ville||'', firstName:val('public-lead-firstname'), lastName:val('public-lead-lastname'), email:val('public-lead-email').toLowerCase(), phone:val('public-lead-phone'), school:val('public-lead-school'), program:val('public-lead-program'), level:val('public-lead-level'), notes:val('public-lead-notes'), consentRecontact:val('public-lead-consent'), source:'QR public', createdAt:new Date().toISOString()};
+    const required = [['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École intéressée',lead.school],['Cursus souhaité',lead.program],['Niveau d’étude',lead.level],['Prise de notes',lead.notes],['Autorisation de recontact',lead.consentRecontact]];
     const error=document.getElementById('public-lead-error'); const success=document.getElementById('public-lead-success');
     if(error) error.classList.remove('show'); if(success) success.classList.remove('show');
     const missing = required.filter(x=>!x[1]).map(x=>x[0]);
@@ -10078,7 +10089,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try { saveLocalData(); } catch(_) {}
       window.syncReportingFromLeadsV46();
       if(success) success.classList.add('show');
-      ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes','public-lead-consent'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
       preparePublicLeadSelectsV46(ev);
       if(btn){ btn.disabled=false; btn.textContent='Valider le formulaire'; }
     } catch(err){ if(error){ error.textContent='Erreur d’enregistrement : '+(err?.message||'merci de réessayer.'); error.classList.add('show'); } if(btn){ btn.disabled=false; btn.textContent='Valider le formulaire'; } }
@@ -12543,7 +12554,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     const labels={dashboard:'Accueil',calendrier:'Forums',listing:'Lycées',registrations:'Équipe étudiante',terrain:'Préparation',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',reporting:'Pilotage',myactions:'Mes actions',actions:'Pipeline',performance:'Conversion',users:'Administration',inscriptions:'Mes forums',resources:'Ressources'};
     document.querySelectorAll('.nav-item').forEach(btn=>{if(btn.textContent.trim()===labels[page])btn.classList.add('active');});
-    const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'Forum Ops · terrain & recrutement';
+    const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'EDH Gestion Event · terrain & recrutement';
     updateMobileNavV71(page);removeContextTabs();document.body.classList.remove('mobile-sidebar-open');
     const needRender=!renderedPages.has(page)||dirtyPages.has(page);
     if(needRender&&target)target.classList.add('is-rendering');
@@ -12823,7 +12834,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   function operationalPanel(ev){
     const m=eventMeta(ev),regs=activeRegs(ev),r=readiness(ev),key=eventKey(ev),internal=typeof isAdminMode==='function'&&isAdminMode();
     const rows=regs.map(reg=>`<div class="v72-staff-row"><div><div class="v72-staff-name">${esc(`${reg.firstName||''} ${reg.lastName||''}`.trim()||reg.email||'Étudiant')}</div><div class="v72-staff-sub">${esc(reg.school||'')} · ${esc(reg.email||'Email non renseigné')}</div></div>${internal?`<select class="form-select v72-compact-select" onchange="setRegistrationStatusV72('${esc(reg.id)}',this.value)">${['en_attente','inscrit','confirme','liste_attente','desiste','refuse'].map(s=>`<option value="${s}" ${registrationStatus(reg)===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select><select class="form-select v72-compact-select" onchange="setAttendanceStatusV72('${esc(reg.id)}',this.value)">${['a_confirmer','present','absent','retard','remplace'].map(s=>`<option value="${s}" ${attendanceStatus(reg)===s?'selected':''}>${attendanceLabel(s)}</option>`).join('')}</select>`:`<span class="badge b-blue">${esc(statusLabel(registrationStatus(reg)))}</span>`}</div>`).join('');
-    return `<section class="v72-operational-panel"><div class="v72-operational-head"><div><div class="v72-operational-title">Pilotage de l’événement</div><div class="v72-operational-meta"><span class="v72-event-type">${esc(m.type)}</span> <span class="v72-event-source">Plateforme Forum Ops</span> · Responsable : ${esc(ownerName(m))}</div></div>${internal?`<button class="btn btn-outline" type="button" onclick="closeModal('modal-detail');openEventModalV72('${esc(key)}')">Modifier l’événement</button>`:''}</div><div class="v72-operational-body"><div class="v72-meta-grid"><div class="v72-meta-card"><strong>${regs.length}</strong><span>Inscrits actifs</span></div><div class="v72-meta-card"><strong>${m.staffMin}</strong><span>Minimum requis</span></div><div class="v72-meta-card"><strong>${m.staffIdeal}</strong><span>Effectif idéal</span></div><div class="v72-meta-card"><strong>${m.staffMax}</strong><span>Capacité maximale</span></div></div><div class="v72-readiness"><div class="v72-readiness-track"><div class="v72-readiness-fill ${r.cls}" style="width:${r.score}%"></div></div><div class="v72-readiness-label">${r.score}%</div></div>${m.instructions?`<div class="muted-box" style="margin-top:12px"><strong>Consignes terrain</strong><br>${esc(m.instructions).replace(/\n/g,'<br>')}</div>`:''}<div class="v72-staff-list">${rows||'<div class="muted-box">Aucun ambassadeur inscrit pour le moment.</div>'}</div></div></section>`;
+    return `<section class="v72-operational-panel"><div class="v72-operational-head"><div><div class="v72-operational-title">Pilotage de l’événement</div><div class="v72-operational-meta"><span class="v72-event-type">${esc(m.type)}</span> <span class="v72-event-source">EDH Gestion Event</span> · Responsable : ${esc(ownerName(m))}</div></div>${internal?`<button class="btn btn-outline" type="button" onclick="closeModal('modal-detail');openEventModalV72('${esc(key)}')">Modifier l’événement</button>`:''}</div><div class="v72-operational-body"><div class="v72-meta-grid"><div class="v72-meta-card"><strong>${regs.length}</strong><span>Inscrits actifs</span></div><div class="v72-meta-card"><strong>${m.staffMin}</strong><span>Minimum requis</span></div><div class="v72-meta-card"><strong>${m.staffIdeal}</strong><span>Effectif idéal</span></div><div class="v72-meta-card"><strong>${m.staffMax}</strong><span>Capacité maximale</span></div></div><div class="v72-readiness"><div class="v72-readiness-track"><div class="v72-readiness-fill ${r.cls}" style="width:${r.score}%"></div></div><div class="v72-readiness-label">${r.score}%</div></div>${m.instructions?`<div class="muted-box" style="margin-top:12px"><strong>Consignes terrain</strong><br>${esc(m.instructions).replace(/\n/g,'<br>')}</div>`:''}<div class="v72-staff-list">${rows||'<div class="muted-box">Aucun ambassadeur inscrit pour le moment.</div>'}</div></div></section>`;
   }
   const originalOpenDetail=window.openDetail;
   if(typeof originalOpenDetail==='function')window.openDetail=function(id){const result=originalOpenDetail.apply(this,arguments);setTimeout(()=>{const ev=typeof findCalendarEventById==='function'?findCalendarEventById(id):null;const body=$('detail-body');if(ev&&ev.date&&body&&!body.querySelector('.v72-operational-panel')){body.insertAdjacentHTML('afterbegin',operationalPanel(ev));const edit=$('detail-edit-btn');if(edit)edit.style.display='none'}},0);return result};
@@ -12866,7 +12877,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
 
   function applyStudentPrivacy(){
     const student=(typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student';const page=$('page-leads');if(!page)return;
-    const allNav=[...document.querySelectorAll("[onclick=\"showPage('leadsall')\"]")];allNav.forEach(x=>x.style.display=student?'none':'');
+    const allNav=[...document.querySelectorAll("[onclick=\"showPage('leadsall')\"]")];allNav.forEach(x=>{ const mode=String(x.getAttribute('data-role')||''); x.style.display=student?'none':(mode==='student-assigned'?'none':''); });
     let summary=$('v72-student-leads-summary');if(!student){summary?.remove();page.querySelectorAll('.v72-hidden-student').forEach(x=>{x.style.display='';x.classList.remove('v72-hidden-student')});return}
     const allowedEvents=new Set((typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[]).map(r=>String(r.eventId)));const count=(window.LEADS||LEADS||[]).filter(l=>allowedEvents.has(String(l.eventId))).length;
     const cards=[...page.querySelectorAll(':scope > .card')];const leadsCard=cards[cards.length-1];if(leadsCard){leadsCard.classList.add('v72-hidden-student');leadsCard.style.display='none'}
@@ -12878,9 +12889,48 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   const previousShowPage=window.showPage;
   if(typeof previousShowPage==='function')window.showPage=function(page){const student=(typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student';if(student&&page==='leadsall')page='leads';const result=previousShowPage.call(this,page);setTimeout(()=>{patchEventButtons();applyStudentPrivacy();decorateCalendar()},0);return result};
 
-  function addIndependentCopy(){const cal=$('page-calendrier');if(cal){const sub=cal.querySelector('.page-subtitle');if(sub)sub.textContent='Forums, salons, JPO et opérations de recrutement gérés uniquement dans Forum Ops.';if(!cal.querySelector('.v72-independent-note'))sub?.insertAdjacentHTML('afterend','<div class="v72-independent-note">Cette plateforme ne communique pas avec GEDH.</div>')}const logo=document.querySelector('.sidebar-logo');if(logo&&!logo.querySelector('.v72-product-name'))logo.insertAdjacentHTML('beforeend','<span class="v72-product-name" style="font-size:11px;color:var(--text3);font-weight:700">Forum Ops</span>')}
+  function addIndependentCopy(){const cal=$('page-calendrier');if(cal){const sub=cal.querySelector('.page-subtitle');if(sub)sub.textContent='Forums, salons, JPO et opérations de recrutement gérés uniquement dans EDH Gestion Event.';if(!cal.querySelector('.v72-independent-note'))sub?.insertAdjacentHTML('afterend','<div class="v72-independent-note">Cette plateforme ne communique pas avec GEDH.</div>')}const logo=document.querySelector('.sidebar-logo');if(logo&&!logo.querySelector('.v72-product-name'))logo.insertAdjacentHTML('beforeend','<span class="v72-product-name" style="font-size:11px;color:var(--text3);font-weight:700">EDH Gestion Event</span>')}
 
   patchEventButtons();addIndependentCopy();normaliseAllEventMeta();loadStructuredV72().then(()=>{applyStudentPrivacy();if($('page-dashboard')?.classList.contains('active'))renderRiskPanel()});setTimeout(()=>{patchEventButtons();addIndependentCopy();applyStudentPrivacy();decorateCalendar()},600);
+})();
+</script>
+
+<style id="edh-v73-fixes">
+/* V73 — navigation, formulaire prospect et alignement */
+.public-lead-overlay.crm-public .public-lead-card{width:min(100%,720px);max-width:720px}
+.public-lead-overlay.crm-public .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.public-lead-overlay.crm-public .form-field{min-width:0;width:100%}
+.public-lead-overlay.crm-public :is(.form-input,.form-select,.form-textarea){display:block;width:100%;max-width:100%;min-width:0}
+.public-lead-overlay.crm-public .form-field.full{grid-column:1/-1}
+.public-consent-field{padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+.public-consent-field .form-label{line-height:1.45;text-transform:none;font-size:12px;letter-spacing:0}
+.public-consent-help{margin-top:6px;color:var(--text3);font-size:11px;line-height:1.45}
+@media(max-width:700px){.public-lead-overlay.crm-public .form-grid{grid-template-columns:1fr}.public-lead-overlay.crm-public .form-field.full{grid-column:auto}}
+</style>
+<script id="edh-v73-fixes">
+(function(){
+  function enforceInternalNavigation(){
+    const role=typeof normalizeRoleValue==='function'?normalizeRoleValue(window.S?.role):String(window.S?.role||'');
+    const internal=role!=='student';
+    document.querySelectorAll('.nav-item[data-role="collaborateur"][onclick*="showPage(\'listing\')"]').forEach(el=>el.style.display=internal?'':'none');
+    document.querySelectorAll('.nav-item[data-role="student-assigned"][onclick*="showPage(\'leadsall\')"]').forEach(el=>el.style.display='none');
+    const collaboratorLeads=[...document.querySelectorAll('.nav-item[data-role="collaborateur"][onclick*="showPage(\'leadsall\')"]')];
+    collaboratorLeads.forEach((el,i)=>el.style.display=internal&&i===0?'':'none');
+  }
+  const previousSetRole=window.setRole;
+  if(typeof previousSetRole==='function'){window.setRole=function(){const result=previousSetRole.apply(this,arguments);setTimeout(enforceInternalNavigation,0);return result;};}
+  const previousShowPageV73=window.showPage;
+  if(typeof previousShowPageV73==='function'){window.showPage=function(){const result=previousShowPageV73.apply(this,arguments);setTimeout(enforceInternalNavigation,0);return result;};}
+  const title='EDH Gestion Event';
+  document.title=title;
+  document.querySelectorAll('.sidebar-logo').forEach(el=>{
+    const textNodes=[...el.childNodes].filter(n=>n.nodeType===3);
+    textNodes.forEach(n=>{if((n.textContent||'').includes('Groupe EDH')) n.textContent=' '+title+' ';});
+  });
+  const consent=document.getElementById('public-lead-consent');
+  if(consent) consent.addEventListener('change',()=>consent.setAttribute('aria-invalid',consent.value?'false':'true'));
+  enforceInternalNavigation();
+  setTimeout(enforceInternalNavigation,800);
 })();
 </script>
 
