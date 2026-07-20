@@ -17,7 +17,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='800' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232563eb'/%3E%3Ctext x='90' y='108' text-anchor='middle' font-family='Arial,sans-serif' font-size='52' font-weight='900' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
-<title>EDH Forums — Version 2</title>
+<title>EDH Forum Ops — Version 72</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 
@@ -1600,7 +1600,6 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
   </div>
 </div>
 
-<a class="skip-link" href="#main-content">Aller au contenu principal</a>
 <div class="app-network-banner" id="app-network-banner" role="status" aria-live="polite">Connexion internet interrompue — les modifications seront à réessayer après reconnexion.</div>
 <div id="edh-global-syncbar" aria-hidden="true"></div>
 
@@ -1612,7 +1611,7 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
     <button class="mobile-menu-btn" type="button" aria-label="Ouvrir le menu" onclick="document.body.classList.toggle('mobile-sidebar-open')">☰</button>
     <div class="mobile-brand">
       <div class="mobile-brand-title" id="mobile-page-title">Tableau de bord</div>
-      <div class="mobile-brand-sub" id="mobile-page-subtitle">CRM forums lycées</div>
+      <div class="mobile-brand-sub" id="mobile-page-subtitle">Forum Ops · terrain & recrutement</div>
     </div>
   </div>
   <div class="mobile-pill">EDH</div>
@@ -1962,7 +1961,7 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-primary" data-role="collaborateur" onclick="openAddEventModal()">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Créer un événement lycée
+            Créer un événement
           </button>
           <button class="btn btn-outline" onclick="exportAllICS()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -4215,7 +4214,7 @@ function allCalendarEvents(){
 }
 function openAddEventModal(){
   openAddModal();
-  document.getElementById('edit-modal-title').textContent = 'Créer un évènement lycée';
+  document.getElementById('edit-modal-title').textContent = 'Créer un événement';
   document.getElementById('f-statut').value = 'Participation Validée';
 }
 function appLyceeKey(l){ return `${normalizeLyceeName(l.nom)}__${(l.ville||'').toString().trim().toLowerCase()}`; }
@@ -9743,7 +9742,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function activePageId(){ const active = document.querySelector('.page.active'); return active ? (active.id || '').replace(/^page-/, '') : 'dashboard'; }
   function syncMobileChrome(){
     const page = activePageId();
-    const title = document.querySelector('.page.active .page-title')?.textContent?.trim() || 'CRM forums lycées';
+    const title = document.querySelector('.page.active .page-title')?.textContent?.trim() || 'Forum Ops · terrain & recrutement';
     const subtitle = document.querySelector('.page.active .page-subtitle')?.textContent?.trim() || 'Mode terrain';
     const titleEl = document.getElementById('mobile-page-title');
     const subEl = document.getElementById('mobile-page-subtitle');
@@ -12544,7 +12543,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     const labels={dashboard:'Accueil',calendrier:'Forums',listing:'Lycées',registrations:'Équipe étudiante',terrain:'Préparation',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',reporting:'Pilotage',myactions:'Mes actions',actions:'Pipeline',performance:'Conversion',users:'Administration',inscriptions:'Mes forums',resources:'Ressources'};
     document.querySelectorAll('.nav-item').forEach(btn=>{if(btn.textContent.trim()===labels[page])btn.classList.add('active');});
-    const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'CRM forums lycées';
+    const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'Forum Ops · terrain & recrutement';
     updateMobileNavV71(page);removeContextTabs();document.body.classList.remove('mobile-sidebar-open');
     const needRender=!renderedPages.has(page)||dirtyPages.has(page);
     if(needRender&&target)target.classList.add('is-rendering');
@@ -12562,6 +12561,326 @@ window.addEventListener('DOMContentLoaded', () => {
 
   installNotificationUI();updateNotificationCenter(true);updateStudentCopy();updateMobileNavV71(currentPage);enhanceCalendarRegistrationButtons();
   setTimeout(()=>{removeContextTabs();updateNotificationCenter(true);updateMobileNavV71(currentPage);},600);
+})();
+</script>
+
+
+<!-- ═══ V72 — MODAL ÉVÉNEMENT INDÉPENDANT ═══ -->
+<div class="modal-overlay" id="modal-event-v72" aria-hidden="true" onclick="closeModalIf(event,'modal-event-v72')">
+  <div class="modal v72-event-modal" role="dialog" aria-modal="true" aria-labelledby="v72-event-modal-title">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="v72-event-modal-title">Créer un événement</div>
+        <div class="modal-subtitle">Événement opérationnel indépendant de la fiche du lycée</div>
+      </div>
+      <button class="modal-close" type="button" onclick="closeEventModalV72()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="v72-info-banner">
+        Cette plateforme reste indépendante de GEDH. Aucun échange, import ou synchronisation avec GEDH n’est activé.
+      </div>
+      <form id="v72-event-form" onsubmit="return false">
+        <input type="hidden" id="v72-event-id">
+        <div class="form-section">
+          <div class="form-section-title">Événement</div>
+          <div class="form-grid">
+            <div class="form-field full">
+              <label class="form-label" for="v72-event-title">Nom de l’événement *</label>
+              <input class="form-input" id="v72-event-title" required placeholder="Ex. Forum des métiers — Lycée Faidherbe">
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="v72-event-type">Type d’événement *</label>
+              <select class="form-select" id="v72-event-type" required>
+                <option value="Forum lycée">Forum lycée</option>
+                <option value="Salon étudiant">Salon étudiant</option>
+                <option value="Journée portes ouvertes">Journée portes ouvertes</option>
+                <option value="Intervention en classe">Intervention en classe</option>
+                <option value="Présentation établissement">Présentation établissement</option>
+                <option value="Visite de campus">Visite de campus</option>
+                <option value="Rencontre orientation">Rencontre orientation</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="v72-event-status">Statut opérationnel</label>
+              <select class="form-select" id="v72-event-status">
+                <option value="brouillon">Brouillon</option>
+                <option value="a_preparer">À préparer</option>
+                <option value="ouvert">Inscriptions ouvertes</option>
+                <option value="complet">Complet</option>
+                <option value="confirme">Confirmé</option>
+                <option value="termine">Terminé</option>
+                <option value="annule">Annulé</option>
+              </select>
+            </div>
+            <div class="form-field full">
+              <label class="form-label" for="v72-linked-school">Lycée lié <span class="v72-optional">facultatif</span></label>
+              <select class="form-select" id="v72-linked-school"></select>
+              <div class="v72-field-help">Le lycée sert de référence CRM. L’événement reste une ligne distincte et peut exister sans lycée.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Date et lieu</div>
+          <div class="form-grid">
+            <div class="form-field"><label class="form-label" for="v72-event-date">Date *</label><input class="form-input" type="date" id="v72-event-date" required></div>
+            <div class="form-field"><label class="form-label" for="v72-event-deadline">Fin des inscriptions</label><input class="form-input" type="datetime-local" id="v72-event-deadline"></div>
+            <div class="form-field"><label class="form-label" for="v72-event-start">Heure de début</label><input class="form-input" type="time" id="v72-event-start"></div>
+            <div class="form-field"><label class="form-label" for="v72-event-end">Heure de fin</label><input class="form-input" type="time" id="v72-event-end"></div>
+            <div class="form-field"><label class="form-label" for="v72-event-city">Ville *</label><input class="form-input" id="v72-event-city" required placeholder="Lille"></div>
+            <div class="form-field"><label class="form-label" for="v72-event-campus">Campus organisateur</label><input class="form-input" id="v72-event-campus" placeholder="Lille"></div>
+            <div class="form-field full"><label class="form-label" for="v72-event-address">Adresse</label><input class="form-input" id="v72-event-address" placeholder="Adresse complète"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Écoles et responsable</div>
+          <div class="form-grid">
+            <div class="form-field full">
+              <label class="form-label">Écoles concernées *</label>
+              <div class="v72-school-checks" id="v72-event-schools"></div>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="v72-event-owner">Responsable principal</label>
+              <select class="form-select" id="v72-event-owner"></select>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="v72-event-visibility">Visibilité étudiante</label>
+              <select class="form-select" id="v72-event-visibility">
+                <option value="true">Visible</option>
+                <option value="false">Masqué</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Mobilisation des ambassadeurs</div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label" for="v72-registration-mode">Mode d’inscription</label>
+              <select class="form-select" id="v72-registration-mode">
+                <option value="libre">Inscription libre</option>
+                <option value="validation">Inscription soumise à validation</option>
+                <option value="attribution">Attribution par un collaborateur</option>
+                <option value="limitee">Libre avec capacité maximale</option>
+              </select>
+            </div>
+            <div class="form-field"><label class="form-label" for="v72-staff-min">Minimum</label><input class="form-input" type="number" min="0" id="v72-staff-min" value="1"></div>
+            <div class="form-field"><label class="form-label" for="v72-staff-ideal">Idéal</label><input class="form-input" type="number" min="0" id="v72-staff-ideal" value="2"></div>
+            <div class="form-field"><label class="form-label" for="v72-staff-max">Maximum</label><input class="form-input" type="number" min="0" id="v72-staff-max" value="4"></div>
+            <div class="form-field full">
+              <label class="form-label" for="v72-event-instructions">Consignes terrain</label>
+              <textarea class="form-textarea" id="v72-event-instructions" rows="4" placeholder="Tenue, heure de rendez-vous, matériel, transport, contact sur place…"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="v2-error-summary" id="v72-event-errors" role="alert"></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" type="button" id="v72-event-delete" style="display:none;margin-right:auto" onclick="deleteEventV72()">Supprimer l’événement</button>
+      <button class="btn btn-outline" type="button" onclick="closeEventModalV72()">Annuler</button>
+      <button class="btn btn-primary" type="button" id="v72-event-save" onclick="saveEventV72()">Enregistrer l’événement</button>
+    </div>
+  </div>
+</div>
+
+<style id="edh-v72-style">
+/* ══════════════════════════════════════
+   V72 — événements séparés, mobilisation, confidentialité et plateforme autonome
+══════════════════════════════════════ */
+.v72-info-banner{padding:11px 13px;margin-bottom:14px;border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:11px;background:var(--primary-light);color:var(--text2);font-size:12px;line-height:1.55}
+.v72-event-modal{max-width:850px}.v72-optional{font-size:10px;color:var(--text3);font-weight:600;text-transform:none;letter-spacing:0}.v72-field-help{font-size:11px;color:var(--text3);line-height:1.45;margin-top:3px}
+.v72-school-checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.v72-school-check{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font-size:12px;font-weight:750;color:var(--text2);cursor:pointer}.v72-school-check:has(input:checked){border-color:var(--primary);background:var(--primary-light);color:var(--primary)}.v72-school-check input{accent-color:var(--primary)}
+.v72-event-type{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-size:10px;font-weight:850;white-space:nowrap}.v72-event-source{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);font-size:10px;font-weight:850;white-space:nowrap}
+.v72-readiness{display:flex;align-items:center;gap:8px;margin-top:9px}.v72-readiness-track{height:7px;flex:1;border-radius:999px;background:var(--bg2);overflow:hidden}.v72-readiness-fill{height:100%;border-radius:999px;background:var(--red);transition:width .2s}.v72-readiness-fill.mid{background:var(--orange)}.v72-readiness-fill.high{background:var(--green)}.v72-readiness-label{font-size:10px;font-weight:850;color:var(--text3);min-width:38px;text-align:right}
+.v72-operational-panel{margin-bottom:14px;border:1px solid var(--border);border-radius:13px;background:var(--surface);overflow:hidden}.v72-operational-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);background:var(--bg)}.v72-operational-title{font-size:13px;font-weight:900;color:var(--text)}.v72-operational-meta{font-size:11px;color:var(--text3);margin-top:3px}.v72-operational-body{padding:14px}.v72-meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.v72-meta-card{padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg)}.v72-meta-card strong{display:block;font-size:16px;color:var(--text)}.v72-meta-card span{font-size:10px;color:var(--text3);font-weight:800;text-transform:uppercase;letter-spacing:.35px}.v72-staff-list{display:flex;flex-direction:column;gap:7px;margin-top:12px}.v72-staff-row{display:grid;grid-template-columns:minmax(0,1.2fr) 145px 145px;gap:8px;align-items:center;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.v72-staff-name{font-size:12px;font-weight:800;color:var(--text)}.v72-staff-sub{font-size:10px;color:var(--text3);margin-top:2px}.v72-compact-select{min-height:34px;padding:6px 25px 6px 8px;font-size:11px}
+.v72-risk-card{border:1px solid var(--border);border-left:4px solid var(--orange);border-radius:12px;padding:12px 13px;background:var(--surface);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.v72-risk-card.high{border-left-color:var(--red)}.v72-risk-title{font-size:13px;font-weight:850;color:var(--text)}.v72-risk-meta{font-size:11px;color:var(--text3);margin-top:3px}.v72-risk-list{display:flex;flex-direction:column;gap:8px;padding:14px}.v72-independent-note{font-size:11px;color:var(--text3);margin-top:6px}
+.v72-privacy-card{padding:24px;text-align:center;border:1px dashed var(--border2);border-radius:13px;background:var(--bg)}.v72-privacy-card strong{display:block;color:var(--text);font-size:15px;margin-bottom:5px}.v72-privacy-card p{color:var(--text3);font-size:12px;line-height:1.55;max-width:520px;margin:0 auto}.v72-lead-count{font-size:28px;font-weight:900;color:var(--primary);margin:12px 0 2px}
+html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operational-panel,html[data-theme="dark"] .v72-staff-row,html[data-theme="dark"] .v72-risk-card{background:#111!important;border-color:#2b2b2b!important}html[data-theme="dark"] .v72-operational-head,html[data-theme="dark"] .v72-meta-card,html[data-theme="dark"] .v72-privacy-card{background:#090909!important;border-color:#2b2b2b!important}
+@media(max-width:900px){.v72-school-checks{grid-template-columns:repeat(2,minmax(0,1fr))}.v72-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.v72-staff-row{grid-template-columns:1fr 1fr}.v72-staff-row>div:first-child{grid-column:1/-1}}
+@media(max-width:600px){.v72-school-checks,.v72-meta-grid{grid-template-columns:1fr}.v72-staff-row{grid-template-columns:1fr}.v72-staff-row>div:first-child{grid-column:auto}.v72-event-modal{max-height:96dvh!important}}
+</style>
+
+<script id="edh-v72-script">
+/* ══════════════════════════════════════
+   V72 — couche consolidée. Aucune connexion avec GEDH.
+══════════════════════════════════════ */
+(function(){
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
+  const bool=v=>v===true||v==='true'||v===1||v==='1';
+  const nowIso=()=>new Date().toISOString();
+  const PLATFORM_SOURCE='github_forum_ops';
+  const META_CACHE_KEY='edh_event_operational_meta_v72';
+  let META_CACHE={};
+  let STRUCTURED_TABLES={registrations:null,notifications:null,history:null};
+  let PENDING_REG_STATUS='inscrit';
+  try{META_CACHE=JSON.parse(localStorage.getItem(META_CACHE_KEY)||'{}')||{}}catch(_){META_CACHE={}}
+  function saveMetaCache(){try{localStorage.setItem(META_CACHE_KEY,JSON.stringify(META_CACHE))}catch(_){}}
+  function eventKey(ev){return String((typeof canonicalEventId==='function'&&canonicalEventId(ev))||ev?.supabase_event_id||ev?.id||'')}
+  function parseObj(v){if(!v)return{};if(typeof v==='object'&&!Array.isArray(v))return v;try{return JSON.parse(v)||{}}catch(_){return{}}}
+  function eventMeta(ev){
+    if(!ev)return{};
+    const key=eventKey(ev);
+    const raw={...parseObj(ev.operationnel_json),...parseObj(ev.operational_json),...parseObj(ev.eventMeta),...(META_CACHE[key]||{})};
+    return {
+      source:raw.source||ev.source_evenement||PLATFORM_SOURCE,
+      title:raw.title||ev.titre_evenement||ev.titre||ev.nom||'',
+      type:raw.type||ev.type_evenement||'Forum lycée',
+      linkedLyceeId:raw.linkedLyceeId||'',
+      linkedLyceeSupabaseId:raw.linkedLyceeSupabaseId||raw.lycee_id||ev.lycee_id||'',
+      linkedLyceeName:raw.linkedLyceeName||raw.lycee_nom||ev.lyceeNom||ev.lycee_nom||'',
+      status:raw.status||ev.statut_operationnel||'a_preparer',
+      start:raw.start||ev.heure_debut||String(ev.heure||'').split(/\s*[-–]\s*/)[0]||'',
+      end:raw.end||ev.heure_fin||String(ev.heure||'').split(/\s*[-–]\s*/)[1]||'',
+      deadline:raw.deadline||ev.date_limite_inscription||'',
+      registrationMode:raw.registrationMode||ev.mode_inscription||'libre',
+      staffMin:num(raw.staffMin??ev.ambassadeurs_min,1),
+      staffIdeal:num(raw.staffIdeal??ev.ambassadeurs_ideal,2),
+      staffMax:num(raw.staffMax??ev.ambassadeurs_max,4),
+      visible:raw.visible!==undefined?bool(raw.visible):(ev.visibilite_etudiant!==undefined?bool(ev.visibilite_etudiant):true),
+      ownerId:raw.ownerId||ev.responsable_id||'',
+      instructions:raw.instructions||ev.consigne_terrain||'',
+      campus:raw.campus||ev.campus||'',
+      createdAt:raw.createdAt||ev.created_at||'',
+      updatedAt:raw.updatedAt||ev.updated_at||''
+    };
+  }
+  window.edhEventMetaV72=eventMeta;
+  function setEventMeta(ev,meta){
+    if(!ev)return;
+    const clean={...eventMeta(ev),...meta,source:PLATFORM_SOURCE,updatedAt:nowIso()};
+    ev.eventMeta=clean;ev.operationnel_json=clean;ev.type_evenement=clean.type;ev.titre_evenement=clean.title;ev.lycee_id=clean.linkedLyceeSupabaseId||null;ev.lyceeNom=clean.linkedLyceeName||'';ev.statut_operationnel=clean.status;ev.heure_debut=clean.start;ev.heure_fin=clean.end;ev.date_limite_inscription=clean.deadline||null;ev.mode_inscription=clean.registrationMode;ev.ambassadeurs_min=clean.staffMin;ev.ambassadeurs_ideal=clean.staffIdeal;ev.ambassadeurs_max=clean.staffMax;ev.visibilite_etudiant=clean.visible;ev.responsable_id=clean.ownerId||null;ev.consigne_terrain=clean.instructions;ev.source_evenement=PLATFORM_SOURCE;ev.isStandaloneEvent=true;
+    META_CACHE[eventKey(ev)]=clean;saveMetaCache();
+  }
+  function normaliseAllEventMeta(){
+    try{(typeof allCalendarEvents==='function'?allCalendarEvents():[]).forEach(ev=>{const m=eventMeta(ev);if(!m.source||m.source!==PLATFORM_SOURCE)setEventMeta(ev,{...m,source:PLATFORM_SOURCE})})}catch(_){ }
+  }
+
+  /* Enrichit les mappings Supabase tout en gardant la compatibilité avec les anciennes colonnes. */
+  const originalMapFrom=window.mapSupabaseEventToSeasonRow;
+  if(typeof originalMapFrom==='function')window.mapSupabaseEventToSeasonRow=function(row){
+    const base=originalMapFrom(row);const op=parseObj(row.operationnel_json||row.operational_json);const title=row.titre_evenement||row.titre||op.title||base.nom||row.lycee||'Événement';
+    return {...base,nom:title,lyceeNom:row.lycee_nom||op.linkedLyceeName||row.lycee||'',type_evenement:row.type_evenement||op.type||'Forum lycée',eventMeta:{...op,title,type:row.type_evenement||op.type||'Forum lycée',linkedLyceeId:op.linkedLyceeId||'',linkedLyceeSupabaseId:row.lycee_id||op.linkedLyceeSupabaseId||'',linkedLyceeName:row.lycee_nom||op.linkedLyceeName||row.lycee||'',status:row.statut_operationnel||op.status||'a_preparer',start:row.heure_debut||op.start||'',end:row.heure_fin||op.end||'',deadline:row.date_limite_inscription||op.deadline||'',registrationMode:row.mode_inscription||op.registrationMode||'libre',staffMin:num(row.ambassadeurs_min??op.staffMin,1),staffIdeal:num(row.ambassadeurs_ideal??op.staffIdeal,2),staffMax:num(row.ambassadeurs_max??op.staffMax,4),visible:row.visibilite_etudiant!==undefined?bool(row.visibilite_etudiant):(op.visible!==false),ownerId:row.responsable_id||op.ownerId||'',instructions:row.consigne_terrain||op.instructions||'',source:PLATFORM_SOURCE},isStandaloneEvent:true};
+  };
+  const originalMapTo=window.mapAppEventToSupabase;
+  if(typeof originalMapTo==='function')window.mapAppEventToSupabase=function(ev){
+    const base=originalMapTo(ev);const m=eventMeta(ev);const linked=m.linkedLyceeName||ev.lyceeNom||base.lycee||ev.nom||m.title;
+    return {...base,lycee:linked,titre_evenement:m.title||ev.nom,type_evenement:m.type,lycee_id:m.linkedLyceeSupabaseId||(/^[0-9]+$/.test(String(m.linkedLyceeId||''))?Number(m.linkedLyceeId):null),lycee_nom:m.linkedLyceeName||null,heure_debut:m.start||null,heure_fin:m.end||null,date_limite_inscription:m.deadline||null,mode_inscription:m.registrationMode,ambassadeurs_min:m.staffMin,ambassadeurs_ideal:m.staffIdeal,ambassadeurs_max:m.staffMax,visibilite_etudiant:m.visible,statut_operationnel:m.status,responsable_id:m.ownerId||null,consigne_terrain:m.instructions||null,source_evenement:PLATFORM_SOURCE,operationnel_json:m,heure:(m.start&&m.end)?`${m.start} - ${m.end}`:(m.start||base.heure)};
+  };
+
+  function eventSchoolsHtml(selected=[]){const set=new Set(selected);return (window.SCHOOLS||SCHOOLS||[]).map(s=>`<label class="v72-school-check"><input type="checkbox" value="${esc(s)}" ${set.has(s)?'checked':''}> ${esc(s)}</label>`).join('')}
+  function internalUsers(){return (window.USERS||USERS||[]).filter(u=>typeof roleIsInternal==='function'?roleIsInternal(u.role):String(u.role||'').includes('admin')||String(u.role||'').includes('collab'))}
+  function populateEventModalV72(ev=null){
+    const m=eventMeta(ev||{});const linked=$('v72-linked-school');const lycees=(window.LYCEES||LYCEES||[]).filter(x=>x.supabase_id&&!x.isStandaloneEvent).sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||'')));
+    linked.innerHTML='<option value="">Aucun lycée — événement autonome</option>'+lycees.map(l=>`<option value="${esc(l.id)}">${esc(l.nom)} — ${esc(l.ville||'')}</option>`).join('');
+    const users=internalUsers();$('v72-event-owner').innerHTML='<option value="">À définir</option>'+users.map(u=>`<option value="${esc(u.id||u.email)}">${esc(`${u.firstName||''} ${u.lastName||''}`.trim()||u.email)}</option>`).join('');
+    $('v72-event-schools').innerHTML=eventSchoolsHtml(ev?getSchoolsArray(ev.ecoles):[]);
+    $('v72-event-id').value=ev?eventKey(ev):'';$('v72-event-title').value=m.title||'';$('v72-event-type').value=m.type||'Forum lycée';$('v72-event-status').value=m.status||'a_preparer';const linkedOption=lycees.find(l=>String(l.id)===String(m.linkedLyceeId)||String(l.supabase_id||'')===String(m.linkedLyceeSupabaseId||'')||(m.linkedLyceeName&&String(l.nom||'').toLowerCase()===String(m.linkedLyceeName).toLowerCase()));$('v72-linked-school').value=linkedOption?.id||'';$('v72-event-date').value=ev?.date||'';$('v72-event-deadline').value=m.deadline?String(m.deadline).slice(0,16):'';$('v72-event-start').value=String(m.start||'').slice(0,5);$('v72-event-end').value=String(m.end||'').slice(0,5);$('v72-event-city').value=ev?.ville||'';$('v72-event-campus').value=m.campus||ev?.campus||'';$('v72-event-address').value=ev?.adresse||'';$('v72-event-owner').value=m.ownerId||'';$('v72-event-visibility').value=String(m.visible!==false);$('v72-registration-mode').value=m.registrationMode||'libre';$('v72-staff-min').value=m.staffMin;$('v72-staff-ideal').value=m.staffIdeal;$('v72-staff-max').value=m.staffMax;$('v72-event-instructions').value=m.instructions||'';
+    $('v72-event-delete').style.display=ev?'':'none';$('v72-event-modal-title').textContent=ev?'Modifier l’événement':'Créer un événement';$('v72-event-errors').classList.remove('show');$('v72-event-errors').textContent='';
+  }
+  window.openEventModalV72=function(id=''){
+    if(typeof isAdminMode==='function'&&!isAdminMode())return showToast('Accès réservé aux collaborateurs','error');
+    const ev=id&&typeof findCalendarEventById==='function'?findCalendarEventById(id):null;populateEventModalV72(ev);const modal=$('modal-event-v72');modal.classList.add('open');modal.setAttribute('aria-hidden','false');setTimeout(()=>$('v72-event-title')?.focus(),50);
+  };
+  window.closeEventModalV72=function(){const modal=$('modal-event-v72');modal.classList.remove('open');modal.setAttribute('aria-hidden','true')};
+  function checkedSchools(){return [...$('v72-event-schools').querySelectorAll('input:checked')].map(x=>x.value)}
+  function validateEventForm(){
+    const errors=[];if(!$('v72-event-title').value.trim())errors.push('Le nom de l’événement est obligatoire.');if(!$('v72-event-date').value)errors.push('La date est obligatoire.');if(!$('v72-event-city').value.trim())errors.push('La ville est obligatoire.');if(!checkedSchools().length)errors.push('Sélectionnez au moins une école.');const min=num($('v72-staff-min').value),ideal=num($('v72-staff-ideal').value),max=num($('v72-staff-max').value);if(min>ideal||ideal>max)errors.push('La capacité doit respecter Minimum ≤ Idéal ≤ Maximum.');if($('v72-event-start').value&&$('v72-event-end').value&&$('v72-event-start').value>=$('v72-event-end').value)errors.push('L’heure de fin doit être postérieure à l’heure de début.');
+    const box=$('v72-event-errors');box.textContent=errors.join(' ');box.classList.toggle('show',!!errors.length);return !errors.length;
+  }
+  window.saveEventV72=async function(){
+    if(!validateEventForm())return;const button=$('v72-event-save');button.classList.add('is-loading');
+    try{
+      const id=$('v72-event-id').value;let ev=id&&typeof findCalendarEventById==='function'?findCalendarEventById(id):null;const linkedId=$('v72-linked-school').value;const linked=(window.LYCEES||LYCEES||[]).find(l=>String(l.id)===String(linkedId));const title=$('v72-event-title').value.trim();const schools=checkedSchools();
+      if(!ev){ev={id:'EVT_LOCAL_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),supabase_event_id:null,supabase_id:null,isStandaloneEvent:true};(window.LYCEES||LYCEES).unshift(ev)}
+      Object.assign(ev,{nom:title,ville:$('v72-event-city').value.trim(),date:$('v72-event-date').value,adresse:$('v72-event-address').value.trim()||null,campus:$('v72-event-campus').value.trim()||null,region:$('v72-event-campus').value.trim()||null,ecoles:schools.length===(window.SCHOOLS||SCHOOLS).length?'tout le monde':schools.join(', '),statut:$('v72-event-status').value==='annule'?"Annulation pas d'étudiant":'Participation Validée',collaboratorIds:$('v72-event-owner').value?[$('v72-event-owner').value]:[],heure:($('v72-event-start').value&&$('v72-event-end').value)?`${$('v72-event-start').value} - ${$('v72-event-end').value}`:($('v72-event-start').value||null)});
+      setEventMeta(ev,{title,type:$('v72-event-type').value,linkedLyceeId:linked?.id||'',linkedLyceeSupabaseId:linked?.supabase_id||'',linkedLyceeName:linked?.nom||'',status:$('v72-event-status').value,start:$('v72-event-start').value,end:$('v72-event-end').value,deadline:$('v72-event-deadline').value,registrationMode:$('v72-registration-mode').value,staffMin:num($('v72-staff-min').value),staffIdeal:num($('v72-staff-ideal').value),staffMax:num($('v72-staff-max').value),visible:$('v72-event-visibility').value==='true',ownerId:$('v72-event-owner').value,instructions:$('v72-event-instructions').value.trim(),campus:$('v72-event-campus').value.trim()});
+      if(typeof markEventAsNotDeleted==='function')markEventAsNotDeleted(ev);if(typeof saveLocalData==='function')saveLocalData();const res=typeof saveEventDirectToSupabase==='function'?await saveEventDirectToSupabase(ev):{ok:false,skipped:true};if(res?.id&&!META_CACHE[String(res.id)]){META_CACHE[String(res.id)]=eventMeta(ev);saveMetaCache()}
+      await logHistoryV72('event_saved',ev,{title:eventMeta(ev).title});closeEventModalV72();if(typeof edhMarkPagesDirtyV71==='function')edhMarkPagesDirtyV71();if(typeof refreshCurrentPage==='function')refreshCurrentPage();showToast(res.ok||res.skipped?'Événement enregistré':'Événement enregistré localement, mais non synchronisé : '+(res.message||'erreur'),res.ok||res.skipped?'success':'error');
+    }catch(err){console.error('[V72 save event]',err);showToast('Erreur lors de l’enregistrement : '+(err?.message||err),'error')}finally{button.classList.remove('is-loading')}
+  };
+  window.deleteEventV72=async function(){const id=$('v72-event-id').value;const ev=typeof findCalendarEventById==='function'?findCalendarEventById(id):null;if(!ev)return;if(!confirm(`Supprimer définitivement l’événement « ${eventMeta(ev).title||ev.nom} » ?`))return;try{if(typeof deleteEventDirectFromSupabase==='function')await deleteEventDirectFromSupabase(ev);if(typeof addDeletedEventMarker==='function')addDeletedEventMarker(ev);const idx=(window.LYCEES||LYCEES).indexOf(ev);if(idx>=0)(window.LYCEES||LYCEES).splice(idx,1);delete META_CACHE[eventKey(ev)];saveMetaCache();if(typeof saveLocalData==='function')saveLocalData();await logHistoryV72('event_deleted',ev,{});closeEventModalV72();if(typeof edhMarkPagesDirtyV71==='function')edhMarkPagesDirtyV71();showPage('calendrier');showToast('Événement supprimé','success')}catch(err){showToast('Suppression impossible : '+(err?.message||err),'error')}};
+
+  /* Remplace uniquement la création d’événement. Le bouton d’ajout de lycée reste inchangé. */
+  window.openAddEventModal=function(){openEventModalV72('')};
+  function patchEventButtons(){document.querySelectorAll("button[onclick='openAddEventModal()']").forEach(b=>{b.innerHTML=b.innerHTML.replace(/Créer un événement|Créer un événement/g,'Créer un événement');b.setAttribute('onclick',"openEventModalV72('')")})}
+
+  function registrationStatus(reg){return reg?.status||reg?.statut_inscription||'inscrit'}
+  function attendanceStatus(reg){return reg?.attendanceStatus||reg?.statut_presence||'a_confirmer'}
+  function activeRegs(ev){return (window.REGISTRATIONS||REGISTRATIONS||[]).filter(r=>(typeof registrationBelongsToEvent==='function'?registrationBelongsToEvent(r,ev):String(r.eventId)===eventKey(ev))&&!['desiste','refuse','annule'].includes(registrationStatus(r)))}
+  function confirmedRegs(ev){return activeRegs(ev).filter(r=>['confirme','present','inscrit'].includes(registrationStatus(r)))}
+  function readiness(ev){const m=eventMeta(ev);const regs=confirmedRegs(ev);const checks=[!!ev.date,!!ev.ville,!!ev.adresse,!!m.ownerId,(m.staffMin===0||regs.length>=m.staffMin),!!(m.start||ev.heure),!!getSchoolsArray(ev.ecoles).length,!!m.instructions];const score=Math.round(checks.filter(Boolean).length/checks.length*100);return{score,missing:checks.length-checks.filter(Boolean).length,cls:score>=80?'high':score>=50?'mid':''}}
+  window.edhEventReadinessV72=readiness;
+  function ownerName(m){const u=internalUsers().find(x=>String(x.id||x.email)===String(m.ownerId));return u?`${u.firstName||''} ${u.lastName||''}`.trim()||u.email:'À définir'}
+  function statusLabel(s){return({en_attente:'En attente',inscrit:'Inscrit',confirme:'Confirmé',liste_attente:'Liste d’attente',desiste:'Désisté',refuse:'Refusé',present:'Présent',absent:'Absent'}[s]||s||'Inscrit')}
+  function attendanceLabel(s){return({a_confirmer:'À confirmer',present:'Présent',absent:'Absent',retard:'Retard',remplace:'Remplacé'}[s]||s||'À confirmer')}
+  function operationalPanel(ev){
+    const m=eventMeta(ev),regs=activeRegs(ev),r=readiness(ev),key=eventKey(ev),internal=typeof isAdminMode==='function'&&isAdminMode();
+    const rows=regs.map(reg=>`<div class="v72-staff-row"><div><div class="v72-staff-name">${esc(`${reg.firstName||''} ${reg.lastName||''}`.trim()||reg.email||'Étudiant')}</div><div class="v72-staff-sub">${esc(reg.school||'')} · ${esc(reg.email||'Email non renseigné')}</div></div>${internal?`<select class="form-select v72-compact-select" onchange="setRegistrationStatusV72('${esc(reg.id)}',this.value)">${['en_attente','inscrit','confirme','liste_attente','desiste','refuse'].map(s=>`<option value="${s}" ${registrationStatus(reg)===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select><select class="form-select v72-compact-select" onchange="setAttendanceStatusV72('${esc(reg.id)}',this.value)">${['a_confirmer','present','absent','retard','remplace'].map(s=>`<option value="${s}" ${attendanceStatus(reg)===s?'selected':''}>${attendanceLabel(s)}</option>`).join('')}</select>`:`<span class="badge b-blue">${esc(statusLabel(registrationStatus(reg)))}</span>`}</div>`).join('');
+    return `<section class="v72-operational-panel"><div class="v72-operational-head"><div><div class="v72-operational-title">Pilotage de l’événement</div><div class="v72-operational-meta"><span class="v72-event-type">${esc(m.type)}</span> <span class="v72-event-source">Plateforme Forum Ops</span> · Responsable : ${esc(ownerName(m))}</div></div>${internal?`<button class="btn btn-outline" type="button" onclick="closeModal('modal-detail');openEventModalV72('${esc(key)}')">Modifier l’événement</button>`:''}</div><div class="v72-operational-body"><div class="v72-meta-grid"><div class="v72-meta-card"><strong>${regs.length}</strong><span>Inscrits actifs</span></div><div class="v72-meta-card"><strong>${m.staffMin}</strong><span>Minimum requis</span></div><div class="v72-meta-card"><strong>${m.staffIdeal}</strong><span>Effectif idéal</span></div><div class="v72-meta-card"><strong>${m.staffMax}</strong><span>Capacité maximale</span></div></div><div class="v72-readiness"><div class="v72-readiness-track"><div class="v72-readiness-fill ${r.cls}" style="width:${r.score}%"></div></div><div class="v72-readiness-label">${r.score}%</div></div>${m.instructions?`<div class="muted-box" style="margin-top:12px"><strong>Consignes terrain</strong><br>${esc(m.instructions).replace(/\n/g,'<br>')}</div>`:''}<div class="v72-staff-list">${rows||'<div class="muted-box">Aucun ambassadeur inscrit pour le moment.</div>'}</div></div></section>`;
+  }
+  const originalOpenDetail=window.openDetail;
+  if(typeof originalOpenDetail==='function')window.openDetail=function(id){const result=originalOpenDetail.apply(this,arguments);setTimeout(()=>{const ev=typeof findCalendarEventById==='function'?findCalendarEventById(id):null;const body=$('detail-body');if(ev&&ev.date&&body&&!body.querySelector('.v72-operational-panel')){body.insertAdjacentHTML('afterbegin',operationalPanel(ev));const edit=$('detail-edit-btn');if(edit)edit.style.display='none'}},0);return result};
+
+  const originalRegistrationObject=window.registrationObjectForStudent;
+  if(typeof originalRegistrationObject==='function')window.registrationObjectForStudent=function(){const reg=originalRegistrationObject.apply(this,arguments);reg.status=reg.status||PENDING_REG_STATUS||'inscrit';reg.attendanceStatus=reg.attendanceStatus||'a_confirmer';reg.updatedAt=nowIso();return reg};
+  const previousOpenRegistration=window.openRegistrationModal;
+  if(typeof previousOpenRegistration==='function')window.openRegistrationModal=function(eventId){const ev=typeof findCalendarEventById==='function'?findCalendarEventById(eventId):null;if(!ev)return previousOpenRegistration.apply(this,arguments);const m=eventMeta(ev);if(!m.visible)return showToast('Cet événement n’est pas ouvert aux étudiants','error');if(m.registrationMode==='attribution')return showToast('L’inscription à cet événement est réalisée par un collaborateur','error');if(m.deadline&&new Date(m.deadline)<new Date())return showToast('La date limite d’inscription est dépassée','error');const count=activeRegs(ev).filter(r=>registrationStatus(r)!=='liste_attente').length;PENDING_REG_STATUS=m.registrationMode==='validation'?'en_attente':(m.staffMax>0&&count>=m.staffMax?'liste_attente':'inscrit');const result=previousOpenRegistration.apply(this,arguments);setTimeout(()=>{const sub=$('registration-modal-subtitle');if(sub&&PENDING_REG_STATUS==='liste_attente')sub.textContent+=' · Capacité atteinte : inscription sur liste d’attente';else if(sub&&PENDING_REG_STATUS==='en_attente')sub.textContent+=' · Validation collaborateur requise'},0);return result};
+
+  async function tableExists(name){try{const r=await supabaseClient.from(name).select('id').limit(1);return !r.error}catch(_){return false}}
+  function currentRecipientIds(ev){const m=eventMeta(ev);const ids=new Set([m.ownerId,...(ev.collaboratorIds||[])]);if(!ids.size)internalUsers().filter(u=>String(u.role||'').includes('admin')).forEach(u=>ids.add(u.id||u.email));return [...ids].filter(Boolean)}
+  async function upsertStructuredRegistration(reg,ev){if(!supabaseClient||STRUCTURED_TABLES.registrations===false)return;const payload={app_id:String(reg.id),event_key:eventKey(ev),event_supabase_id:ev.supabase_event_id||null,event_name:eventMeta(ev).title||ev.nom,user_app_id:reg.userId||null,student_app_id:reg.studentId||null,school:reg.school||null,first_name:reg.firstName||null,last_name:reg.lastName||null,email:reg.email||null,phone:reg.phone||null,notes:reg.notes||null,status:registrationStatus(reg),attendance_status:attendanceStatus(reg),forced_by_admin:!!reg.forcedByAdmin,created_at:reg.createdAt||nowIso(),updated_at:nowIso()};try{const r=await supabaseClient.from('inscriptions_evenements').upsert([payload],{onConflict:'app_id'});if(r.error){if(/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.registrations=false;else console.warn('[V72 inscriptions]',r.error)}else STRUCTURED_TABLES.registrations=true}catch(e){console.warn(e)}}
+  async function deleteStructuredRegistration(reg){if(!supabaseClient||STRUCTURED_TABLES.registrations===false||!reg)return;try{const r=await supabaseClient.from('inscriptions_evenements').delete().eq('app_id',String(reg.id));if(r.error&&/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.registrations=false}catch(_){}}
+  async function createNotificationV72(type,ev,reg,message){if(!supabaseClient||STRUCTURED_TABLES.notifications===false)return;const recipients=currentRecipientIds(ev);for(const recipient of recipients){const payload={app_id:'NOTIF_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),recipient_id:String(recipient),type,event_key:eventKey(ev),registration_app_id:reg?.id?String(reg.id):null,title:type==='registration_removed'?'Désinscription étudiante':'Nouvelle inscription étudiante',message,link_target:'event:'+eventKey(ev),is_read:false,created_at:nowIso()};try{const r=await supabaseClient.from('notifications').insert([payload]);if(r.error){if(/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.notifications=false;else console.warn('[V72 notifications]',r.error)}else STRUCTURED_TABLES.notifications=true}catch(_){}}}
+  async function logHistoryV72(action,ev,details={}){if(!supabaseClient||STRUCTURED_TABLES.history===false)return;const u=typeof currentUser==='function'?currentUser():null;try{const r=await supabaseClient.from('historique_actions').insert([{action,event_key:eventKey(ev),actor_id:String(u?.id||u?.email||'system'),actor_name:`${u?.firstName||''} ${u?.lastName||''}`.trim()||u?.email||'Système',details,created_at:nowIso()}]);if(r.error&&/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.history=false;else if(!r.error)STRUCTURED_TABLES.history=true}catch(_){}}
+  window.logHistoryV72=logHistoryV72;
+
+  const previousSaveReg=window.saveRegistration;
+  if(typeof previousSaveReg==='function')window.saveRegistration=function(){const before=new Set((window.REGISTRATIONS||REGISTRATIONS||[]).map(r=>String(r.id)));const ev=typeof findCalendarEventById==='function'?findCalendarEventById(S.selectedEventId):null;const result=previousSaveReg.apply(this,arguments);setTimeout(async()=>{if(!ev)return;const created=(window.REGISTRATIONS||REGISTRATIONS||[]).filter(r=>!before.has(String(r.id))&&(typeof registrationBelongsToEvent==='function'?registrationBelongsToEvent(r,ev):true));for(const reg of created){reg.status=reg.status||PENDING_REG_STATUS;reg.attendanceStatus=reg.attendanceStatus||'a_confirmer';await upsertStructuredRegistration(reg,ev);await createNotificationV72('registration_created',ev,reg,`${reg.firstName||''} ${reg.lastName||''}`.trim()+` s’est inscrit(e) à ${eventMeta(ev).title||ev.nom}.`);await logHistoryV72('registration_created',ev,{registrationId:reg.id,status:reg.status})}PENDING_REG_STATUS='inscrit';if(typeof saveLocalData==='function')saveLocalData()},80);return result};
+  const previousUnregister=window.unregisterRegistration;
+  if(typeof previousUnregister==='function')window.unregisterRegistration=function(regId){const reg=(window.REGISTRATIONS||REGISTRATIONS||[]).find(r=>String(r.id)===String(regId));const ev=reg&&typeof findCalendarEventById==='function'?findCalendarEventById(reg.eventId):null;const result=previousUnregister.apply(this,arguments);setTimeout(async()=>{if(reg&&!(window.REGISTRATIONS||REGISTRATIONS||[]).some(r=>String(r.id)===String(regId))){await deleteStructuredRegistration(reg);if(ev){await createNotificationV72('registration_removed',ev,reg,`${reg.firstName||''} ${reg.lastName||''}`.trim()+` s’est désinscrit(e) de ${eventMeta(ev).title||ev.nom}.`);await logHistoryV72('registration_removed',ev,{registrationId:reg.id})}}},80);return result};
+  window.setRegistrationStatusV72=async function(regId,status){const reg=(window.REGISTRATIONS||REGISTRATIONS||[]).find(r=>String(r.id)===String(regId));if(!reg)return;reg.status=status;reg.updatedAt=nowIso();const ev=typeof findCalendarEventById==='function'?findCalendarEventById(reg.eventId):null;if(typeof saveLocalData==='function')saveLocalData();if(ev){await upsertStructuredRegistration(reg,ev);await logHistoryV72('registration_status_changed',ev,{registrationId:reg.id,status})}showToast('Statut d’inscription mis à jour','success')};
+  window.setAttendanceStatusV72=async function(regId,status){const reg=(window.REGISTRATIONS||REGISTRATIONS||[]).find(r=>String(r.id)===String(regId));if(!reg)return;reg.attendanceStatus=status;reg.updatedAt=nowIso();const ev=typeof findCalendarEventById==='function'?findCalendarEventById(reg.eventId):null;if(typeof saveLocalData==='function')saveLocalData();if(ev){await upsertStructuredRegistration(reg,ev);await logHistoryV72('attendance_changed',ev,{registrationId:reg.id,status})}showToast('Présence mise à jour','success')};
+
+  async function loadStructuredV72(){
+    if(!supabaseClient)return;try{const r=await supabaseClient.from('inscriptions_evenements').select('*');if(!r.error&&Array.isArray(r.data)){STRUCTURED_TABLES.registrations=true;const byId=new Map((window.REGISTRATIONS||REGISTRATIONS||[]).map(x=>[String(x.id),x]));r.data.forEach(row=>{const existing=byId.get(String(row.app_id));const obj={id:String(row.app_id),eventId:String(row.event_key||''),eventName:row.event_name||'',school:row.school||'',firstName:row.first_name||'',lastName:row.last_name||'',email:row.email||'',phone:row.phone||'',notes:row.notes||'',userId:row.user_app_id||null,studentId:row.student_app_id||null,status:row.status||'inscrit',attendanceStatus:row.attendance_status||'a_confirmer',forcedByAdmin:!!row.forced_by_admin,createdAt:row.created_at||nowIso(),updatedAt:row.updated_at||nowIso()};if(existing)Object.assign(existing,obj);else(window.REGISTRATIONS||REGISTRATIONS).push(obj)});}else if(r.error&&/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.registrations=false}catch(_){ }
+    try{const u=typeof currentUser==='function'?currentUser():null;const ids=[u?.id,u?.email,'admins'].filter(Boolean).map(String);let q=supabaseClient.from('notifications').select('*').order('created_at',{ascending:false}).limit(200);const r=ids.length?await q.in('recipient_id',ids):await q;if(!r.error&&Array.isArray(r.data)){STRUCTURED_TABLES.notifications=true;const store=window.REGISTRATION_ACTIVITY||(window.REGISTRATION_ACTIVITY=[]);const seen=new Set(store.map(x=>String(x.id)));r.data.forEach(n=>{if(seen.has(String(n.app_id)))return;store.push({id:String(n.app_id),action:n.type==='registration_removed'?'unregistered':'registered',eventId:n.event_key,eventName:n.title,studentName:n.message,createdAt:n.created_at,read:!!n.is_read})})}else if(r.error&&/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.notifications=false}catch(_){ }
+  }
+  const previousRefresh=window.refreshFromSupabaseAndRender;
+  if(typeof previousRefresh==='function')window.refreshFromSupabaseAndRender=async function(){const result=await previousRefresh.apply(this,arguments);normaliseAllEventMeta();await loadStructuredV72();applyStudentPrivacy();patchEventButtons();return result};
+
+  function riskyEvents(){const today=new Date();return (typeof allCalendarEvents==='function'?allCalendarEvents():[]).filter(ev=>{const d=new Date(ev.date+'T23:59:59');return d>=today&&readiness(ev).score<80}).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,6)}
+  function renderRiskPanel(){const page=$('page-dashboard');if(!page||$('v72-risk-panel'))return;const rows=riskyEvents();const panel=document.createElement('div');panel.id='v72-risk-panel';panel.className='card';panel.style.marginBottom='20px';panel.innerHTML=`<div class="card-header"><div><div class="card-title">Événements à sécuriser</div><div class="card-count">Préparation inférieure à 80 %</div></div><button class="btn btn-outline" onclick="showPage('calendrier')">Voir le calendrier</button></div><div class="v72-risk-list">${rows.length?rows.map(ev=>{const r=readiness(ev),m=eventMeta(ev);return `<div class="v72-risk-card ${r.score<50?'high':''}"><div><div class="v72-risk-title">${esc(m.title||ev.nom)}</div><div class="v72-risk-meta">${typeof fmtDate==='function'?fmtDate(ev.date):esc(ev.date)} · ${esc(ev.ville||'')} · ${activeRegs(ev).length}/${m.staffMin} ambassadeur(s) minimum</div><div class="v72-readiness"><div class="v72-readiness-track"><div class="v72-readiness-fill ${r.cls}" style="width:${r.score}%"></div></div><div class="v72-readiness-label">${r.score}%</div></div></div><button class="btn btn-outline" onclick="openDetail('${esc(eventKey(ev))}')">Ouvrir</button></div>`}).join(''):'<div class="muted-box">Tous les événements à venir sont suffisamment préparés.</div>'}</div>`;const welcome=$('v3-dashboard-welcome');(welcome||page.querySelector('.page-header'))?.insertAdjacentElement('afterend',panel)}
+  const previousDashboard=window.renderDashboard;
+  if(typeof previousDashboard==='function')window.renderDashboard=function(){const result=previousDashboard.apply(this,arguments);$('v72-risk-panel')?.remove();renderRiskPanel();return result};
+
+  function decorateCalendar(){document.querySelectorAll('#cal-list-view .cal-list-item').forEach(item=>{if(item.querySelector('.v72-event-type'))return;const onclick=item.getAttribute('onclick')||'';const id=(onclick.match(/openDetail\('([^']+)'\)/)||[])[1];const ev=id&&typeof findCalendarEventById==='function'?findCalendarEventById(id):null;if(!ev)return;const info=item.querySelector('.cal-list-info');if(info)info.insertAdjacentHTML('beforeend',`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px"><span class="v72-event-type">${esc(eventMeta(ev).type)}</span><span class="v72-event-source">Indépendant de GEDH</span></div>`)})}
+  const previousCal=window.renderCalList;
+  if(typeof previousCal==='function')window.renderCalList=function(){const result=previousCal.apply(this,arguments);decorateCalendar();return result};
+
+  function applyStudentPrivacy(){
+    const student=(typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student';const page=$('page-leads');if(!page)return;
+    const allNav=[...document.querySelectorAll("[onclick=\"showPage('leadsall')\"]")];allNav.forEach(x=>x.style.display=student?'none':'');
+    let summary=$('v72-student-leads-summary');if(!student){summary?.remove();page.querySelectorAll('.v72-hidden-student').forEach(x=>{x.style.display='';x.classList.remove('v72-hidden-student')});return}
+    const allowedEvents=new Set((typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[]).map(r=>String(r.eventId)));const count=(window.LEADS||LEADS||[]).filter(l=>allowedEvents.has(String(l.eventId))).length;
+    const cards=[...page.querySelectorAll(':scope > .card')];const leadsCard=cards[cards.length-1];if(leadsCard){leadsCard.classList.add('v72-hidden-student');leadsCard.style.display='none'}
+    page.querySelectorAll('.page-header .small-actions .btn').forEach(b=>{if(!/Ajouter le lead/i.test(b.textContent)){b.classList.add('v72-hidden-student');b.style.display='none'}});
+    if(!summary){summary=document.createElement('div');summary.id='v72-student-leads-summary';summary.className='v72-privacy-card';const grid=page.querySelector('.lead-crm-grid');grid?.insertAdjacentElement('afterend',summary)}summary.innerHTML=`<strong>Collecte terrain sécurisée</strong><div class="v72-lead-count">${count}</div><p>Tu peux afficher le QR code et saisir un prospect sur les forums auxquels tu es inscrit(e). Les coordonnées et notes commerciales restent visibles uniquement par les collaborateurs.</p>`;
+  }
+  const previousRenderLeads=window.renderLeadsPage;
+  if(typeof previousRenderLeads==='function')window.renderLeadsPage=function(){const result=previousRenderLeads.apply(this,arguments);setTimeout(applyStudentPrivacy,0);return result};
+  const previousShowPage=window.showPage;
+  if(typeof previousShowPage==='function')window.showPage=function(page){const student=(typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student';if(student&&page==='leadsall')page='leads';const result=previousShowPage.call(this,page);setTimeout(()=>{patchEventButtons();applyStudentPrivacy();decorateCalendar()},0);return result};
+
+  function addIndependentCopy(){const cal=$('page-calendrier');if(cal){const sub=cal.querySelector('.page-subtitle');if(sub)sub.textContent='Forums, salons, JPO et opérations de recrutement gérés uniquement dans Forum Ops.';if(!cal.querySelector('.v72-independent-note'))sub?.insertAdjacentHTML('afterend','<div class="v72-independent-note">Cette plateforme ne communique pas avec GEDH.</div>')}const logo=document.querySelector('.sidebar-logo');if(logo&&!logo.querySelector('.v72-product-name'))logo.insertAdjacentHTML('beforeend','<span class="v72-product-name" style="font-size:11px;color:var(--text3);font-weight:700">Forum Ops</span>')}
+
+  patchEventButtons();addIndependentCopy();normaliseAllEventMeta();loadStructuredV72().then(()=>{applyStudentPrivacy();if($('page-dashboard')?.classList.contains('active'))renderRiskPanel()});setTimeout(()=>{patchEventButtons();addIndependentCopy();applyStudentPrivacy();decorateCalendar()},600);
 })();
 </script>
 
