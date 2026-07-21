@@ -1828,7 +1828,11 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
       <div class="theme-hint" id="theme-hint">Automatique suit le réglage clair/sombre de l’appareil.</div>
       <div class="divider" style="margin:10px 0"></div>
       <div class="role-box-label">Connexion</div>
-      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="openLoginModal()">Se connecter</button>
+      <button class="btn btn-outline" id="sidebar-login-btn" type="button" style="width:100%;justify-content:center" onclick="openLoginModal()">Se connecter</button>
+      <button class="btn btn-outline sidebar-logout-btn" id="sidebar-logout-btn" type="button" style="width:100%;justify-content:center;display:none" onclick="logoutPlatform()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg>
+        <span>Se déconnecter</span>
+      </button>
       <select id="role-switch" class="role-box-select" style="margin-top:8px" disabled>
         <option value="collaborateur">Espace collaborateur</option>
         <option value="student">Espace étudiant</option>
@@ -13259,6 +13263,85 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
     if(nav){
       new MutationObserver(()=>ensureDatabaseLink()).observe(nav,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});
     }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})();
+</script>
+
+<style id="edh-v78-logout-style">
+/* V78 — bouton de déconnexion disponible lorsqu’un compte est actif */
+.sidebar-logout-btn{gap:8px;margin-top:0;color:var(--red,#dc2626);border-color:color-mix(in srgb,var(--red,#dc2626) 35%,var(--border))}
+.sidebar-logout-btn:hover{background:var(--red-bg,#fef2f2);border-color:var(--red,#dc2626)}
+.sidebar-logout-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<script id="edh-v78-logout-script">
+(function(){
+  'use strict';
+  if(window.__EDH_V78_LOGOUT__) return;
+  window.__EDH_V78_LOGOUT__=true;
+
+  function updateConnectionButtons(){
+    const connected=Boolean(typeof currentUser==='function' && currentUser());
+    const loginButton=document.getElementById('sidebar-login-btn');
+    const logoutButton=document.getElementById('sidebar-logout-btn');
+    if(loginButton) loginButton.style.setProperty('display',connected?'none':'flex','important');
+    if(logoutButton) logoutButton.style.setProperty('display',connected?'flex':'none','important');
+  }
+
+  window.logoutPlatform=async function(){
+    try{
+      if(typeof supabaseClient!=='undefined' && supabaseClient?.auth?.signOut){
+        await supabaseClient.auth.signOut().catch(()=>{});
+      }
+    }catch(_){}
+
+    try{ sessionStorage.removeItem('edh_current_user_v3'); }catch(_){}
+    try{
+      localStorage.removeItem('edh_current_user_v3');
+      localStorage.removeItem('edh_current_user_persistent_v1');
+      localStorage.removeItem('edh_remember_login_v1');
+      localStorage.removeItem('edh_remembered_username_v1');
+    }catch(_){}
+
+    if(typeof S!=='undefined'){
+      S.currentUserId=null;
+      S.studentProfile=null;
+    }
+    if(typeof EDH_LOGIN_CONFIRMED!=='undefined') EDH_LOGIN_CONFIRMED=false;
+    if(typeof EDH_LOGIN_IN_PROGRESS!=='undefined') EDH_LOGIN_IN_PROGRESS=false;
+
+    const username=document.getElementById('login-username');
+    const password=document.getElementById('login-password');
+    const remember=document.getElementById('login-remember');
+    if(username) username.value='';
+    if(password) password.value='';
+    if(remember) remember.checked=false;
+
+    const label=document.getElementById('current-user-label');
+    if(label) label.textContent='Aucun utilisateur connecté';
+    const roleSwitch=document.getElementById('role-switch');
+    if(roleSwitch){ roleSwitch.value='collaborateur'; roleSwitch.disabled=true; }
+
+    updateConnectionButtons();
+    document.body.classList.remove('mobile-sidebar-open');
+    if(typeof showToast==='function') showToast('Vous êtes déconnecté');
+    if(typeof openLoginModal==='function') setTimeout(openLoginModal,60);
+  };
+
+  const previousSetRole=window.setRole;
+  if(typeof previousSetRole==='function'){
+    window.setRole=function(){
+      const result=previousSetRole.apply(this,arguments);
+      setTimeout(updateConnectionButtons,0);
+      return result;
+    };
+  }
+
+  function boot(){
+    updateConnectionButtons();
+    setTimeout(updateConnectionButtons,150);
+    setTimeout(updateConnectionButtons,900);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
