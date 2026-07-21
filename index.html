@@ -1582,11 +1582,6 @@ html[data-theme="dark"] .mobile-menu-btn{background:#111!important;color:#fff!im
   .registration-activity-card{display:grid;grid-template-columns:34px minmax(0,1fr);padding:11px}.registration-activity-card>.btn{grid-column:1/-1;width:100%}
   .page.is-rendering::after{right:12px;bottom:calc(92px + env(safe-area-inset-bottom))}
 }
-
-.login-remember-row{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;user-select:none}
-.login-remember-row input{width:17px;height:17px;accent-color:var(--primary);flex:0 0 auto}
-.login-remember-note{margin-top:6px;font-size:11px;line-height:1.45;color:var(--text3)}
-html[data-theme="dark"] .login-remember-note{color:#b8b8b8!important}
 </style>
 
 
@@ -1626,6 +1621,16 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
   .login-overlay{padding:12px!important;align-items:center!important}
   .login-shell{max-height:calc(100dvh - 24px);overflow:auto}
 }
+
+/* V76 — sous-menus fiables pour les comptes internes */
+.nav-group.open > .nav-submenu{display:block!important;grid-template-rows:none!important}
+.nav-group.open > .nav-submenu > .nav-submenu-inner{overflow:visible!important}
+body.edh-internal-mode .nav-group[data-role="collaborateur"]{display:block!important}
+body.edh-internal-mode .nav-direct-item[data-role="collaborateur"]{display:flex!important}
+body.edh-internal-mode .nav-group[data-role="collaborateur"] .nav-item[data-role="collaborateur"],
+body.edh-internal-mode .nav-group[data-role="collaborateur"] .nav-item:not([data-role]){display:flex!important}
+body.edh-student-mode .nav-group[data-role="collaborateur"],
+body.edh-student-mode .nav-direct-item[data-role="collaborateur"]{display:none!important}
 </style>
 </head>
 <body>
@@ -1702,7 +1707,7 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
     <div class="nav-group open" data-nav-group="forums" data-role="collaborateur">
       <button class="nav-group-toggle" type="button" aria-expanded="true" aria-controls="nav-submenu-forums">
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>
-        <span class="nav-group-label">Forums &amp; lycées</span>
+        <span class="nav-group-label">Forums</span>
         <span class="nav-group-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
       </button>
       <div class="nav-submenu" id="nav-submenu-forums"><div class="nav-submenu-inner">
@@ -3053,13 +3058,6 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
             <label class="form-label">Mot de passe</label>
             <input class="form-input" id="login-password" type="password" placeholder="Mot de passe" autocomplete="current-password">
           </div>
-          <div class="form-field full">
-            <label class="login-remember-row">
-              <input type="checkbox" id="login-remember">
-              <span>Se souvenir de moi sur cet appareil</span>
-            </label>
-            <div class="login-remember-note">La session et l’identifiant sont mémorisés. Le mot de passe n’est jamais enregistré par la plateforme.</div>
-          </div>
         </div>
         <div class="login-actions">
           <button class="btn btn-primary btn-login" onclick="submitLogin()">Se connecter</button>
@@ -3108,7 +3106,7 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
           </div>
           <div class="form-field full" id="uf-credentials-note" style="display:none">
             <div class="login-footer-note" style="margin-top:0">
-              Modifie ou génère le mot de passe, puis clique sur <strong>Enregistrer + envoyer les identifiants</strong>. Le nouveau mot de passe sera enregistré dans Supabase et ajouté au mail.
+              Modifie ou génère le mot de passe, puis clique sur <strong>Enregistrer + envoyer les identifiants</strong>. Le nouveau mot de passe sera chiffré côté Supabase. Il ne sera jamais ajouté à l’email : transmettez-le séparément.
             </div>
           </div>
           <div class="form-field full">
@@ -3424,7 +3422,7 @@ let SUPABASE_SYNC_READY = false;
 let SUPABASE_SYNC_TIMER = null;
 let SUPABASE_IS_PUSHING = false;
 let SUPABASE_LAST_LOAD_AT = 0;
-const USER_SELECT_COLUMNS = 'id,app_id,first_name,last_name,email,password,role,school,phone,locked,regions_autorisees,schools_autorisees,region,campus,updated_at';
+const USER_SELECT_COLUMNS = 'id,app_id,first_name,last_name,email,role,school,phone,locked,regions_autorisees,schools_autorisees,region,campus,updated_at';
 const USER_LIGHT_SELECT_COLUMNS = 'id,app_id,first_name,last_name,email,role,school,phone,locked,regions_autorisees,schools_autorisees,region,campus,updated_at';
 let SUPABASE_IS_LOADING = false;
 let SUPABASE_LOAD_SEQ = 0;
@@ -3683,7 +3681,7 @@ function mapSupabaseUserToApp(row){
     firstName,
     lastName,
     email,
-    password: (pickField(row, ['password','mot_de_passe','mot de passe','mdp','Mot de passe']) || '').toString(),
+    password: '', // Les secrets ne sont jamais renvoyés par Supabase ni conservés dans le navigateur.
     role: normalizeRoleValue(pickField(row, ['role','rôle','profil','type_compte','type de compte']) || 'student'),
     school: supabaseSchoolsToText(rawSchools),
     campus: splitAccessValues(rawCampus).join(', '),
@@ -3782,7 +3780,7 @@ function userSupabaseFailureAdvice(err){
 
 async function fetchUserRowByEmail(email){
   if(!supabaseClient || !email) return null;
-  const { data, error } = await supabaseClient.from('utilisateurs').select('*').eq('email', String(email).toLowerCase()).limit(1);
+  const { data, error } = await supabaseClient.from('utilisateurs').select(USER_LIGHT_SELECT_COLUMNS).eq('email', String(email).toLowerCase()).limit(1);
   if(error) throw error;
   return Array.isArray(data) && data.length ? data[0] : null;
 }
@@ -5279,17 +5277,6 @@ function saveSessionOnly(){
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
   try { sessionStorage.setItem('edh_current_user_v3', JSON.stringify(S.currentUserId || null)); } catch(_) {}
-  const remember = Boolean(document.getElementById('login-remember')?.checked);
-  const username = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
-  if(remember){
-    safeLocalStorageSet('edh_remember_login_v1', '1');
-    safeLocalStorageSet('edh_current_user_persistent_v1', JSON.stringify(S.currentUserId || null));
-    if(username) safeLocalStorageSet('edh_remembered_username_v1', username);
-  } else {
-    safeLocalStorageRemove('edh_remember_login_v1');
-    safeLocalStorageRemove('edh_current_user_persistent_v1');
-    safeLocalStorageRemove('edh_remembered_username_v1');
-  }
   safeLocalStorageRemove('edh_current_user_v3');
   safeLocalStorageSet('edh_archived_forums_v1', JSON.stringify(ARCHIVED_FORUM_IDS || []));
 }
@@ -5372,15 +5359,11 @@ function loadLocalData(){
     ensureDefaultUsers();
     safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
     safeLocalStorageSet('edh_deleted_default_user_ids_v1', JSON.stringify(DELETED_DEFAULT_USER_IDS || []));
-    const rememberLogin = localStorage.getItem('edh_remember_login_v1') === '1';
-    const sessionUserId = JSON.parse(sessionStorage.getItem('edh_current_user_v3') || 'null');
-    const persistentUserId = rememberLogin ? JSON.parse(localStorage.getItem('edh_current_user_persistent_v1') || 'null') : null;
-    S.currentUserId = sessionUserId || persistentUserId || null;
+    S.currentUserId = JSON.parse(sessionStorage.getItem('edh_current_user_v3') || 'null');
     const savedProfile = JSON.parse(localStorage.getItem('edh_student_profile_v2') || 'null');
     S.studentProfile = savedProfile;
     if(S.currentUserId){
       const cu = currentUser();
-      if(cu && typeof EDH_LOGIN_CONFIRMED !== 'undefined') EDH_LOGIN_CONFIRMED = true;
       if(cu){
         S.role = cu.role || 'student';
         if(cu.role === 'student'){
@@ -5753,7 +5736,7 @@ function renderCalList(){
 
   document.getElementById('cal-list-view').innerHTML=Object.entries(byMonth).map(([m,evs])=>{
     const [y,mo]=m.split('-');
-    const label=MONTHS[parseInt(mo)-1]+' '+y;
+    const label=MONTHS[parseInt(mo, 10)-1]+' '+y;
     return `<div class="cal-list-month">
       <div class="cal-list-month-header">
         <span>${label} <span style="font-size:12px;font-weight:400;color:var(--text3)">(${evs.length} forum${evs.length>1?'s':''})</span></span>
@@ -6065,53 +6048,55 @@ function openMapsRoute(eventId){
 }
 function canManageUserAccounts(){
   const cu = currentUser();
-  return Boolean(cu && roleIsInternal(cu.role));
+  const role = normalizeRoleValue(cu?.role || '');
+  return Boolean(cu && ['admin_global','admin_campus','admin'].includes(role));
 }
 function userPasswordSessionKey(user){
   const token = String(user?.id || user?.email || '').toLowerCase().replace(/[^a-z0-9@._-]+/g, '_');
   return token ? `edh_user_password_${token}` : '';
 }
 function rememberUserPassword(user){
-  if(!user?.password) return;
+  // Sécurité : aucun mot de passe n'est conservé dans sessionStorage.
+  // On supprime aussi une éventuelle valeur laissée par une ancienne version.
   const key = userPasswordSessionKey(user);
   if(!key) return;
-  try { sessionStorage.setItem(key, user.password); } catch(_) {}
+  try { sessionStorage.removeItem(key); } catch(_) {}
 }
 function getRememberedUserPassword(user){
+  // Compatibilité avec les anciens appels : purge la valeur historique et ne renvoie aucun secret.
   const key = userPasswordSessionKey(user);
-  if(!key) return '';
-  try { return sessionStorage.getItem(key) || ''; } catch(_) { return ''; }
+  if(key){ try { sessionStorage.removeItem(key); } catch(_) {} }
+  return '';
 }
 function sendUserCredentialsEmail(user){
   const platformLink = window.location.href.split('#')[0];
-  const subject = 'Vos identifiants — Plateforme EDH Forums Lycées';
-  const password = user.password || getRememberedUserPassword(user) || '';
+  const subject = 'Votre accès — EDH Gestion Event';
   const body = `Bonjour ${user.firstName || ''},
 
-Votre compte sur la plateforme EDH Forums Lycées est disponible.
+Votre compte EDH Gestion Event est disponible.
 
 Lien de la plateforme : ${platformLink}
 Identifiant : ${user.email || '—'}
-Mot de passe : ${password || '—'}
+Mot de passe : transmis séparément par votre administrateur.
 
 Rôle : ${roleLabel(user.role || 'student')}
 Écoles associées : ${user.school || 'Non renseignée'}
 Campus associé(s) : ${user.campus || user.region || 'Non renseigné'}
 
-Conservez ces identifiants de manière confidentielle et ne transférez pas ce message.
+Pour votre sécurité, le mot de passe n'est jamais inclus dans cet email. Merci de ne pas partager vos accès.
 
 À bientôt,
 Groupe EDH`;
   return `mailto:${encodeURIComponent(user.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 function openCredentialsEmail(userId){
-  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux administrateurs', 'error');
   const user = USERS.find(u => u.id === userId);
   if(!user) return showToast('Utilisateur introuvable', 'error');
   openUserCredentialsModal(userId);
 }
 function openUserCredentialsModal(userId){
-  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux administrateurs', 'error');
   openUserModal(userId, true);
   showToast('Génère ou saisis le nouveau mot de passe, puis enregistre et envoie les identifiants.');
 }
@@ -6900,72 +6885,6 @@ html[data-theme="dark"] table td strong,html[data-theme="dark"] .advanced-title,
 @media(max-width:768px){.content{padding-top:13px}.context-tabs{width:100%;border-radius:11px}.context-tab{flex:0 0 auto}.v3-dashboard-welcome{display:block}.v3-quick-actions{margin-top:10px}.v3-quick-grid{grid-template-columns:1fr 1fr}.v3-hero{padding:19px;min-height:135px}.v3-hero-title{font-size:20px}.v3-student-top{display:block}.v3-student-stats{grid-template-columns:1fr}.v3-student-actions{display:grid;grid-template-columns:1fr}.v3-student-actions .btn{width:100%}}
 </style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div>
 
-<style id="edh-v76-navigation-fix-style">
-/* V76 — accès permanent à la base de données et à tous les leads */
-.nav-group[data-nav-group="leads"] .nav-submenu{grid-template-rows:1fr!important}
-.nav-group[data-nav-group="leads"] .nav-group-chevron{transform:rotate(90deg)!important}
-.nav-group[data-nav-group="leads"] .nav-submenu-inner{overflow:visible}
-.nav-group[data-nav-group="leads"] [data-page="leadsall"]{
-  display:flex!important;
-  visibility:visible!important;
-  opacity:1!important;
-}
-</style>
-<script id="edh-v76-navigation-fix-script">
-(function(){
-  'use strict';
-  if(window.__EDH_V76_NAV_FIX__) return;
-  window.__EDH_V76_NAV_FIX__=true;
-
-  function navButton(page,label,svg){
-    const button=document.createElement('button');
-    button.className='nav-item nav-subitem';
-    button.dataset.page=page;
-    button.dataset.role='collaborateur';
-    button.type='button';
-    button.setAttribute('onclick',"showPage('"+page+"')");
-    button.innerHTML=svg+'<span>'+label+'</span>';
-    return button;
-  }
-
-  function ensureNavigationLinks(){
-    const forumsInner=document.querySelector('.nav-group[data-nav-group="forums"] .nav-submenu-inner');
-    if(forumsInner && !forumsInner.querySelector('[data-page="listing"]')){
-      forumsInner.prepend(navButton('listing','Base de données','<svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>'));
-    }
-
-    const leadsGroup=document.querySelector('.nav-group[data-nav-group="leads"]');
-    const leadsInner=leadsGroup?.querySelector('.nav-submenu-inner');
-    if(leadsInner && !leadsInner.querySelector('[data-page="leadsall"]')){
-      leadsInner.append(navButton('leadsall','Tous les leads','<svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg>'));
-    }
-    if(leadsGroup){
-      leadsGroup.classList.add('open');
-      const toggle=leadsGroup.querySelector(':scope > .nav-group-toggle');
-      if(toggle){
-        toggle.setAttribute('aria-expanded','true');
-        if(toggle.dataset.v76Pinned !== '1'){
-          toggle.dataset.v76Pinned='1';
-          toggle.addEventListener('click',()=>setTimeout(()=>{
-          leadsGroup.classList.add('open');
-            toggle.setAttribute('aria-expanded','true');
-          },0));
-        }
-      }
-    }
-  }
-
-  const observer=new MutationObserver(ensureNavigationLinks);
-  function boot(){
-    ensureNavigationLinks();
-    const nav=document.querySelector('.sidebar .nav');
-    if(nav) observer.observe(nav,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
-  else boot();
-})();
-</script>
-
 </body></html>`;
 }
 function printForumFieldSheet(eventId){
@@ -7658,27 +7577,8 @@ function updateLoginHelp(){
 }
 
 
-let EDH_LOGIN_CONFIRMED = false;
-let EDH_LOGIN_IN_PROGRESS = false;
-Object.defineProperty(window,'EDH_LOGIN_CONFIRMED',{get:()=>EDH_LOGIN_CONFIRMED});
-Object.defineProperty(window,'EDH_LOGIN_IN_PROGRESS',{get:()=>EDH_LOGIN_IN_PROGRESS});
-
-function restoreRememberedLoginFields(){
-  const remember = localStorage.getItem('edh_remember_login_v1') === '1';
-  const username = localStorage.getItem('edh_remembered_username_v1') || '';
-  const checkbox = document.getElementById('login-remember');
-  const usernameInput = document.getElementById('login-username');
-  if(checkbox) checkbox.checked = remember;
-  if(usernameInput && remember && !usernameInput.value) usernameInput.value = username;
-}
-
 function openLoginModal(){
-  if(EDH_LOGIN_CONFIRMED || currentUser()) return;
-  const modal = document.getElementById('login-modal');
-  if(!modal) return;
-  modal.style.removeProperty('display');
-  modal.classList.add('open');
-  restoreRememberedLoginFields();
+  document.getElementById('login-modal').classList.add('open');
   updateLoginHelp();
 }
 
@@ -7686,14 +7586,10 @@ function closeLoginModal(){
   const el = document.getElementById('login-modal');
   if(!el) return;
   el.classList.remove('open');
-  el.setAttribute('aria-hidden','true');
-  el.style.setProperty('display','none','important');
-}
-
-function resetLoginModalDisplay(){
-  const el = document.getElementById('login-modal');
-  if(!el || el.classList.contains('open')) return;
-  el.style.removeProperty('display');
+  // Sécurité anti-blocage : si une promesse Supabase ou une erreur JS garde la classe ouverte,
+  // on force quand même la disparition visuelle du pop-up.
+  el.style.display = 'none';
+  setTimeout(() => { el.style.display = ''; }, 80);
 }
 
 async function syncAfterLoginInBackground(){
@@ -7720,43 +7616,35 @@ async function syncAfterLoginInBackground(){
 }
 
 async function submitLogin(){
-  if(EDH_LOGIN_IN_PROGRESS) return;
   const requestedRole = document.getElementById('login-role')?.value || 'collaborateur';
   const user = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
   const pass = (document.getElementById('login-password')?.value || '').trim();
-  const button = document.querySelector('.btn-login');
-
-  if(!user || !pass) return showToast('Renseigne ton identifiant et ton mot de passe', 'error');
-
-  EDH_LOGIN_IN_PROGRESS = true;
-  if(button){ button.disabled = true; button.textContent = 'Connexion…'; }
 
   try {
-    const found = await findUserForLogin(user, pass);
-    if(!found){
-      showToast('Identifiants incorrects ou compte non synchronisé', 'error');
-      return;
-    }
+    let found = await findUserForLogin(user, pass);
+
+    if(!found) return showToast("Identifiants incorrects ou compte non synchronisé", 'error');
 
     const normalizedRole = normalizeRoleValue(found.role || requestedRole);
-    S.currentUserId = found.id;
-    EDH_LOGIN_CONFIRMED = true;
 
-    saveSessionOnly();
-    closeLoginModal();
+    S.currentUserId = found.id;
     setRole(normalizedRole);
+
+    // On ferme immédiatement le pop-up. Supabase ne doit jamais bloquer l'interface.
+    closeLoginModal();
     showToast(normalizedRole === 'student' ? 'Connexion étudiant réussie' : 'Connexion espace collaborateur réussie');
 
+    saveSessionOnly();
     populateStaticSelects();
     updateSchoolFilterCounts();
     refreshCurrentPage();
+
+    // Rechargement Supabase en arrière-plan pour afficher les données partagées.
     syncAfterLoginInBackground();
   } catch(err){
     console.error('Erreur connexion:', err);
+    closeLoginModal();
     showToast('Erreur connexion : ' + getSupabaseErrorMessage(err), 'error');
-  } finally {
-    EDH_LOGIN_IN_PROGRESS = false;
-    if(button){ button.disabled = false; button.textContent = 'Se connecter'; }
   }
 }
 
@@ -7806,7 +7694,7 @@ async function reloadUsersFromSupabaseAndRender(){
 
 function renderUsersPage(autoRefresh=true){
   if(!canManageUserAccounts()){
-    showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
+    showToast('Accès réservé aux administrateurs', 'error');
     return showPage('inscriptions');
   }
   if(autoRefresh && supabaseClient && canManageUserAccounts() && !SUPABASE_USERS_PAGE_REFRESHING && (!SUPABASE_USERS_LAST_LOAD_AT || Date.now() - SUPABASE_USERS_LAST_LOAD_AT > 15000)){
@@ -7863,7 +7751,7 @@ function onUserSchoolCheckbox(clicked){ updateUserSchoolMode(); }
 
 
 function openUserModal(id='', credentialsMode=false){
-  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux administrateurs', 'error');
   S.editingUserId = id || null;
   S.userCredentialsMode = Boolean(credentialsMode);
   const u = USERS.find(x=>x.id===id);
@@ -7881,7 +7769,7 @@ function openUserModal(id='', credentialsMode=false){
     document.getElementById('uf-email').value = u.email || '';
     const availablePassword = u.password || getRememberedUserPassword(u) || '';
     passwordInput.value = credentialsMode ? (availablePassword || randomPassword()) : '';
-    passwordInput.placeholder = credentialsMode ? 'Mot de passe envoyé dans le mail' : 'Laisser vide pour conserver le mot de passe actuel';
+    passwordInput.placeholder = credentialsMode ? 'Mot de passe à transmettre séparément' : 'Laisser vide pour conserver le mot de passe actuel';
     document.getElementById('uf-phone').value = u.phone || '';
     setCheckedValues('uf-campus', u.campus || u.region || u.regions_autorisees || '');
     document.getElementById('uf-role').value = u.role || 'student';
@@ -7903,7 +7791,7 @@ function openUserModal(id='', credentialsMode=false){
 }
 
 async function saveUser(sendCredentials=false){
-  if(!canManageUserAccounts()) return showToast('Accès réservé aux collaborateurs et administrateurs', 'error');
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux administrateurs', 'error');
   const firstName = document.getElementById('uf-firstname').value.trim();
   const lastName = document.getElementById('uf-lastname').value.trim();
   const email = document.getElementById('uf-email').value.trim().toLowerCase();
@@ -7948,14 +7836,15 @@ async function saveUser(sendCredentials=false){
     return showToast('Utilisateur non enregistré : Supabase a refusé l’écriture', 'error');
   }
 
-  if(idx > -1) USERS[idx] = obj;
-  else USERS.unshift(obj);
-  rememberUserPassword(obj);
+  const safeUserObj = {...obj, password:''};
+  if(idx > -1) USERS[idx] = safeUserObj;
+  else USERS.unshift(safeUserObj);
+  rememberUserPassword(safeUserObj);
 
   try { await refreshUsersFromSupabase(); }
   catch(e){ console.warn('Rechargement utilisateurs après sauvegarde impossible', e); }
   const refreshedUser = USERS.find(u => u.id === obj.id || (u.email || '').toLowerCase() === obj.email);
-  if(refreshedUser && !refreshedUser.password) refreshedUser.password = obj.password;
+  if(refreshedUser) refreshedUser.password = '';
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   setSupabaseStatus('ok', 'Supabase : utilisateur enregistré');
   document.getElementById('user-search').value = '';
@@ -7965,8 +7854,11 @@ async function saveUser(sendCredentials=false){
   renderUsersPage();
   showToast(idx > -1 ? 'Compte utilisateur mis à jour dans Supabase' : 'Compte utilisateur créé dans Supabase');
   if(sendCredentials){
+    if(navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
+      navigator.clipboard.writeText(password).catch(err => console.warn('[Copie mot de passe]', err));
+    }
     window.location.href = sendUserCredentialsEmail(obj);
-    showToast('Mot de passe enregistré. Le mail d’identifiants est prêt à être envoyé.');
+    showToast('Email préparé sans mot de passe. Le mot de passe a été copié pour être transmis séparément.');
   } else if(idx === -1 && email !== 'admin') {
     showToast('Compte créé. Utilise “Mot de passe / Email” pour envoyer les identifiants.');
   }
@@ -8911,12 +8803,43 @@ function handleUsersFile(event){
   const reader=new FileReader(); reader.onload=e=>{ try{ const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}); IMPORT_USER_ROWS=rows; IMPORT_USER_HEADERS=rows.length?Object.keys(rows[0]):[]; document.getElementById('import-users-box').innerHTML=`${rows.length} ligne(s) détectée(s). Les colonnes sont reconnues automatiquement si elles contiennent prénom, nom, email, rôle, école, téléphone, mot de passe.`; }catch(err){ document.getElementById('import-users-box').innerHTML='<span style="color:var(--red)">Impossible de lire ce fichier.</span>'; }}; reader.readAsArrayBuffer(file);
 }
 function findCol(headers, words){ return headers.find(h=>words.some(w=>h.toString().toLowerCase().includes(w))) || ''; }
-function importUsersFromFile(){
+async function importUsersFromFile(){
   if(!IMPORT_USER_ROWS.length) return showToast('Aucun fichier utilisateur à importer','error');
-  const h=IMPORT_USER_HEADERS; const cFirst=findCol(h,['prénom','prenom','first']); const cLast=findCol(h,['nom','last']); const cEmail=findCol(h,['mail','email']); const cPhone=findCol(h,['tel','phone']); const cRole=findCol(h,['rôle','role']); const cSchool=findCol(h,['école','ecole','school']); const cPwd=findCol(h,['mot de passe','password','passe']);
-  let imported=0;
-  IMPORT_USER_ROWS.forEach(row=>{ const email=(row[cEmail]||'').toString().trim().toLowerCase(); if(!email) return; const obj={id:nextUserId(), firstName:(row[cFirst]||'').toString().trim(), lastName:(row[cLast]||'').toString().trim(), email, phone:(row[cPhone]||'').toString().trim(), role:((row[cRole]||'student').toString().toLowerCase().includes('admin') || (row[cRole]||'').toString().toLowerCase().includes('collab'))?'collaborateur':'student', school:(row[cSchool]||'').toString().split(/[,;/|]+/).map(x=>normalizeSchoolName(x)).filter(Boolean).join(', '), password:(row[cPwd]||randomPassword()).toString().trim()}; if(!obj.firstName) obj.firstName='Utilisateur'; if(!obj.lastName) obj.lastName=String(imported+1); const idx=USERS.findIndex(u=>(u.email||'').toLowerCase()===email); if(idx>-1) USERS[idx]={...USERS[idx],...obj,id:USERS[idx].id}; else USERS.unshift(obj); imported++; });
-  saveLocalData(); closeModal('modal-import-users'); renderUsersPage(); showToast(`${imported} utilisateur(s) importé(s)`);
+  if(!canManageUserAccounts()) return showToast('Accès réservé aux administrateurs','error');
+  const h=IMPORT_USER_HEADERS;
+  const cFirst=findCol(h,['prénom','prenom','first']); const cLast=findCol(h,['nom','last']);
+  const cEmail=findCol(h,['mail','email']); const cPhone=findCol(h,['tel','phone']);
+  const cRole=findCol(h,['rôle','role']); const cSchool=findCol(h,['école','ecole','school']);
+  const cPwd=findCol(h,['mot de passe','password','passe']); const cCampus=findCol(h,['campus','région','region']);
+  const candidates=[];
+  IMPORT_USER_ROWS.forEach((row,index)=>{
+    const email=(row[cEmail]||'').toString().trim().toLowerCase(); if(!email) return;
+    const rawRole=(row[cRole]||'student').toString().toLowerCase();
+    const role=rawRole.includes('global')?'admin_global':rawRole.includes('campus')?'admin_campus':rawRole.includes('admin')?'admin_campus':rawRole.includes('collab')?'collaborateur':'student';
+    const schools=(row[cSchool]||'').toString().split(/[,;/|]+/).map(x=>normalizeSchoolName(x)).filter(Boolean);
+    const campus=(row[cCampus]||'').toString().split(/[,;/|]+/).map(x=>x.trim()).filter(Boolean);
+    candidates.push({
+      id:nextUserId(), firstName:(row[cFirst]||'Utilisateur').toString().trim()||'Utilisateur',
+      lastName:(row[cLast]||String(index+1)).toString().trim()||String(index+1), email,
+      phone:(row[cPhone]||'').toString().trim(), role, school:schools.join(', '),
+      schools_autorisees:schools, campus:campus.join(', '), region:campus.join(', '), regions_autorisees:campus,
+      password:(row[cPwd]||randomPassword()).toString().trim(), locked:false
+    });
+  });
+  if(!candidates.length) return showToast('Aucune ligne valide à importer','error');
+  const results=await Promise.allSettled(candidates.map(u=>saveUserDirectToSupabase(u)));
+  let imported=0, failed=0;
+  results.forEach((r,i)=>{
+    if(r.status==='fulfilled' && r.value?.ok){
+      const obj=candidates[i]; const idx=USERS.findIndex(u=>(u.email||'').toLowerCase()===obj.email);
+      const safeObj={...obj,password:''};
+      if(idx>-1) USERS[idx]={...USERS[idx],...safeObj,id:USERS[idx].id}; else USERS.unshift(safeObj);
+      imported++;
+    } else { failed++; console.warn('[importUsersFromFile]', candidates[i]?.email, r.status==='rejected'?r.reason:r.value?.message); }
+  });
+  saveLocalData(); closeModal('modal-import-users'); renderUsersPage();
+  if(failed) showToast(`${imported} utilisateur(s) importé(s), ${failed} échec(s) Supabase`, 'error');
+  else showToast(`${imported} utilisateur(s) importé(s) et synchronisé(s)`);
 }
 function reportingRowsForExport(){
   const rows=[];
@@ -8927,13 +8850,25 @@ function reportingRowsForExport(){
 function downloadReportingExcel(){ const ws=XLSX.utils.json_to_sheet(reportingRowsForExport()); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Reporting'); XLSX.writeFile(wb,'EDH_reporting_forums.xlsx'); }
 function openImportReportingModal(){ document.getElementById('reporting-import-file').value=''; document.getElementById('import-reporting-box').innerHTML="Sélectionne d'abord un fichier Excel."; IMPORT_REPORTING_ROWS=[]; IMPORT_REPORTING_HEADERS=[]; document.getElementById('modal-import-reporting').classList.add('open'); }
 function handleReportingFile(event){ const file=event.target.files?.[0]; if(!file)return; const reader=new FileReader(); reader.onload=e=>{ try{ const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}); IMPORT_REPORTING_ROWS=rows; IMPORT_REPORTING_HEADERS=rows.length?Object.keys(rows[0]):[]; document.getElementById('import-reporting-box').innerHTML=`${rows.length} ligne(s) détectée(s). Import automatique sur événement/lycée + école.`; }catch(err){ document.getElementById('import-reporting-box').innerHTML='<span style="color:var(--red)">Impossible de lire ce fichier.</span>'; }}; reader.readAsArrayBuffer(file); }
-function importReportingFromFile(){
+async function importReportingFromFile(){
   if(!IMPORT_REPORTING_ROWS.length) return showToast('Aucun reporting à importer','error');
   const h=IMPORT_REPORTING_HEADERS; const cEvent=findCol(h,['évènement','evenement','lycée','lycee','établissement','etablissement']); const cSchool=findCol(h,['école','ecole','school']);
   const mapping={nombreProspect:findCol(h,['nombre de prospect']), statut:findCol(h,['statuts','statut']), global:findCol(h,['global']), seconde:findCol(h,['2nd','seconde']), premiere:findCol(h,['1ere','1ère','premiere']), terminale:findCol(h,['term']), autres:findCol(h,['autres']), prospect:findCol(h,['prospect']), candidat:findCol(h,['candidat']), admis:findCol(h,['admis']), inscrit:findCol(h,['inscrit'])};
-  let imported=0;
-  IMPORT_REPORTING_ROWS.forEach(row=>{ const name=normalizeLyceeName(row[cEvent]||''); const school=normalizeSchoolName(row[cSchool]||''); if(!name||!school)return; const ev=LYCEES.find(l=>normalizeLyceeName(l.nom)===name && schoolMatches(l.ecoles,school)); if(!ev)return; const rec=getReportRecord(ev.id,school); Object.entries(mapping).forEach(([field,col])=>{ if(!col)return; rec[field]=field==='statut' ? (row[col]||rec[field]) : Number(row[col]||0); }); imported++; });
-  saveLocalData(); closeModal('modal-import-reporting'); renderReportingPage(); showToast(`${imported} ligne(s) de reporting importée(s)`);
+  let imported=0; const touchedEvents=new Map();
+  IMPORT_REPORTING_ROWS.forEach(row=>{
+    const name=normalizeLyceeName(row[cEvent]||''); const school=normalizeSchoolName(row[cSchool]||''); if(!name||!school)return;
+    const ev=LYCEES.find(l=>normalizeLyceeName(l.nom)===name&&schoolMatches(l.ecoles,school)); if(!ev)return;
+    const rec=getReportRecord(ev.id,school); let modified=false;
+    Object.entries(mapping).forEach(([field,col])=>{ if(!col)return; const nextValue=field==='statut'?(row[col]||rec[field]):Number(row[col]||0); if(rec[field]!==nextValue){rec[field]=nextValue;modified=true;} });
+    if(modified){touchedEvents.set(String(ev.id),ev);imported++;}
+  });
+  saveLocalData();
+  const results=await Promise.allSettled([...touchedEvents.values()].map(ev=>saveEventExtrasToSupabase(ev)));
+  const failed=results.filter(r=>r.status==='rejected').length;
+  results.forEach(r=>{if(r.status==='rejected')console.warn('[importReportingFromFile]',r.reason)});
+  closeModal('modal-import-reporting'); renderReportingPage();
+  if(failed) showToast(`${imported} ligne(s) importée(s), mais ${failed} événement(s) non synchronisé(s)`, 'error');
+  else showToast(`${imported} ligne(s) de reporting importée(s) et synchronisée(s)`);
 }
 
 
@@ -12074,6 +12009,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const users=JSON.parse(raw);
       if(Array.isArray(users)) localStorage.setItem('edh_users_v3',JSON.stringify(users.map(u=>{const x={...u};delete x.password;delete x.mot_de_passe;return x;})));
     }
+    localStorage.removeItem('edh_current_user_v3');
   }catch(_){}
 
   // Évite les doubles clics rapides sur les actions de sauvegarde/suppression/import.
@@ -12231,7 +12167,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Brouillons uniquement pour les formulaires non sensibles.
   const draftIds=['edit-form','student-form'];
   function saveDrafts(){draftIds.forEach(id=>{const f=$(id);if(!f||f.dataset.v2Dirty!=='1')return;const data={};f.querySelectorAll('input:not([type=password]):not([type=file]),select,textarea').forEach(el=>{if(el.id)data[el.id]=el.type==='checkbox'?el.checked:el.value});try{sessionStorage.setItem('edh_v2_draft_'+id,JSON.stringify({at:Date.now(),data}))}catch(_){}})}
-  setInterval(saveDrafts,5000);
+  setInterval(()=>{ if(!document.hidden) saveDrafts(); },15000);
 
   // Nettoyage renforcé de toute donnée d'authentification historique stockée côté navigateur.
   function purgeSecrets(storage){
@@ -12287,7 +12223,7 @@ window.addEventListener('DOMContentLoaded', () => {
     'Tableau de bord':'Accueil','Calendrier forums':'Forums','Leads & suivi':'Leads','Ambassadeurs':'Ambassadeurs',
     'Reporting opérationnel':'Pilotage','Ressources':'Ressources','Utilisateurs':'Administration','Mes évènements':'Mes forums'
   };
-  const hiddenLabels=new Set(['Listing lycées','Inscriptions étudiants','Tous les leads','Mes actions','Pipeline CRM','Préparation forums','Bilan & conversion','EFAP','ICART','CREAD','BRASSART']);
+  const hiddenLabels=new Set(); // V80 : aucun onglet métier n'est masqué selon son libellé
   const tabGroups={
     forums:[['calendrier','Calendrier'],['listing','Lycées'],['registrations','Équipe étudiante'],['terrain','Préparation']],
     leads:[['leads','Collecte & suivi'],['leadsall','Tous les leads']],
@@ -13008,9 +12944,50 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   async function tableExists(name){try{const r=await supabaseClient.from(name).select('id').limit(1);return !r.error}catch(_){return false}}
   function currentRecipientIds(ev){const m=eventMeta(ev);const ids=new Set([m.ownerId,...(ev.collaboratorIds||[])]);if(!ids.size)internalUsers().filter(u=>String(u.role||'').includes('admin')).forEach(u=>ids.add(u.id||u.email));return [...ids].filter(Boolean)}
   async function upsertStructuredRegistration(reg,ev){if(!supabaseClient||STRUCTURED_TABLES.registrations===false)return;const payload={app_id:String(reg.id),event_key:eventKey(ev),event_supabase_id:ev.supabase_event_id||null,event_name:eventMeta(ev).title||ev.nom,user_app_id:reg.userId||null,student_app_id:reg.studentId||null,school:reg.school||null,first_name:reg.firstName||null,last_name:reg.lastName||null,email:reg.email||null,phone:reg.phone||null,notes:reg.notes||null,status:registrationStatus(reg),attendance_status:attendanceStatus(reg),forced_by_admin:!!reg.forcedByAdmin,created_at:reg.createdAt||nowIso(),updated_at:nowIso()};try{const r=await supabaseClient.from('inscriptions_evenements').upsert([payload],{onConflict:'app_id'});if(r.error){if(/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.registrations=false;else console.warn('[V72 inscriptions]',r.error)}else STRUCTURED_TABLES.registrations=true}catch(e){console.warn(e)}}
-  async function deleteStructuredRegistration(reg){if(!supabaseClient||STRUCTURED_TABLES.registrations===false||!reg)return;try{const r=await supabaseClient.from('inscriptions_evenements').delete().eq('app_id',String(reg.id));if(r.error&&/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.registrations=false}catch(_){}}
-  async function createNotificationV72(type,ev,reg,message){if(!supabaseClient||STRUCTURED_TABLES.notifications===false)return;const recipients=currentRecipientIds(ev);for(const recipient of recipients){const payload={app_id:'NOTIF_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),recipient_id:String(recipient),type,event_key:eventKey(ev),registration_app_id:reg?.id?String(reg.id):null,title:type==='registration_removed'?'Désinscription étudiante':'Nouvelle inscription étudiante',message,link_target:'event:'+eventKey(ev),is_read:false,created_at:nowIso()};try{const r=await supabaseClient.from('notifications').insert([payload]);if(r.error){if(/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.notifications=false;else console.warn('[V72 notifications]',r.error)}else STRUCTURED_TABLES.notifications=true}catch(_){}}}
-  async function logHistoryV72(action,ev,details={}){if(!supabaseClient||STRUCTURED_TABLES.history===false)return;const u=typeof currentUser==='function'?currentUser():null;try{const r=await supabaseClient.from('historique_actions').insert([{action,event_key:eventKey(ev),actor_id:String(u?.id||u?.email||'system'),actor_name:`${u?.firstName||''} ${u?.lastName||''}`.trim()||u?.email||'Système',details,created_at:nowIso()}]);if(r.error&&/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.history=false;else if(!r.error)STRUCTURED_TABLES.history=true}catch(_){}}
+  async function deleteStructuredRegistration(reg){
+    if(!supabaseClient||STRUCTURED_TABLES.registrations===false||!reg) return;
+    try{
+      const r=await supabaseClient.from('inscriptions_evenements').delete().eq('app_id',String(reg.id));
+      if(r.error){
+        if(/does not exist|relation/i.test(r.error.message||'')) STRUCTURED_TABLES.registrations=false;
+        else console.warn('[deleteStructuredRegistration]', r.error);
+      }
+    }catch(err){
+      if(/does not exist|relation/i.test(err?.message||'')) STRUCTURED_TABLES.registrations=false;
+      else console.warn('[deleteStructuredRegistration]', err);
+    }
+  }
+  async function createNotificationV72(type,ev,reg,message){
+    if(!supabaseClient||STRUCTURED_TABLES.notifications===false) return;
+    const recipients=currentRecipientIds(ev);
+    for(const recipient of recipients){
+      const payload={app_id:'NOTIF_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),recipient_id:String(recipient),type,event_key:eventKey(ev),registration_app_id:reg?.id?String(reg.id):null,title:type==='registration_removed'?'Désinscription étudiante':'Nouvelle inscription étudiante',message,link_target:'event:'+eventKey(ev),is_read:false,created_at:nowIso()};
+      try{
+        const r=await supabaseClient.from('notifications').insert([payload]);
+        if(r.error){
+          if(/does not exist|relation/i.test(r.error.message||'')) STRUCTURED_TABLES.notifications=false;
+          else console.warn('[createNotificationV72]', r.error);
+        }else STRUCTURED_TABLES.notifications=true;
+      }catch(err){
+        if(/does not exist|relation/i.test(err?.message||'')) STRUCTURED_TABLES.notifications=false;
+        else console.warn('[createNotificationV72]', err);
+      }
+    }
+  }
+  async function logHistoryV72(action,ev,details={}){
+    if(!supabaseClient||STRUCTURED_TABLES.history===false) return;
+    const u=typeof currentUser==='function'?currentUser():null;
+    try{
+      const r=await supabaseClient.from('historique_actions').insert([{action,event_key:eventKey(ev),actor_id:String(u?.id||u?.email||'system'),actor_name:`${u?.firstName||''} ${u?.lastName||''}`.trim()||u?.email||'Système',details,created_at:nowIso()}]);
+      if(r.error){
+        if(/does not exist|relation/i.test(r.error.message||'')) STRUCTURED_TABLES.history=false;
+        else console.warn('[logHistoryV72]', r.error);
+      }else STRUCTURED_TABLES.history=true;
+    }catch(err){
+      if(/does not exist|relation/i.test(err?.message||'')) STRUCTURED_TABLES.history=false;
+      else console.warn('[logHistoryV72]', err);
+    }
+  }
   window.logHistoryV72=logHistoryV72;
 
   const previousSaveReg=window.saveRegistration;
@@ -13068,163 +13045,160 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
 .public-consent-help{margin-top:6px;color:var(--text3);font-size:11px;line-height:1.45}
 @media(max-width:700px){.public-lead-overlay.crm-public .form-grid{grid-template-columns:1fr}.public-lead-overlay.crm-public .form-field.full{grid-column:auto}}
 </style>
-<script id="edh-v73-fixes-script">
+\n<script id="edh-v80-stable-runtime">
 (function(){
-  function enforceInternalNavigation(){
-    const role=typeof normalizeRoleValue==='function'?normalizeRoleValue(window.S?.role):String(window.S?.role||'');
-    const internal=role!=='student';
-    document.querySelectorAll('.nav-item[data-role="collaborateur"][onclick*="showPage(\'listing\')"]').forEach(el=>el.style.display=internal?'':'none');
-    document.querySelectorAll('.nav-item[data-role="student-assigned"][onclick*="showPage(\'leadsall\')"]').forEach(el=>el.style.display='none');
-    const collaboratorLeads=[...document.querySelectorAll('.nav-item[data-role="collaborateur"][onclick*="showPage(\'leadsall\')"]')];
-    collaboratorLeads.forEach((el,i)=>el.style.display=internal&&i===0?'':'none');
-  }
-  const previousSetRole=window.setRole;
-  if(typeof previousSetRole==='function'){window.setRole=function(){const result=previousSetRole.apply(this,arguments);setTimeout(enforceInternalNavigation,0);return result;};}
-  const previousShowPageV73=window.showPage;
-  if(typeof previousShowPageV73==='function'){window.showPage=function(){const result=previousShowPageV73.apply(this,arguments);setTimeout(enforceInternalNavigation,0);return result;};}
-  const title='EDH Gestion Event';
-  document.title=title;
-  document.querySelectorAll('.sidebar-logo').forEach(el=>{
-    const textNodes=[...el.childNodes].filter(n=>n.nodeType===3);
-    textNodes.forEach(n=>{if((n.textContent||'').includes('Groupe EDH')) n.textContent=' '+title+' ';});
+'use strict';
+if(window.__EDH_V80_STABLE__) return;
+window.__EDH_V80_STABLE__=true;
+
+const INTERNAL_ROLES=new Set(['collaborateur','admin_global','admin_campus','admin']);
+const ADMIN_ROLES=new Set(['admin_global','admin_campus','admin']);
+const PAGE_GROUP={listing:'forums',calendrier:'forums',registrations:'forums',terrain:'forums',students:'administration',users:'administration',leads:'leads',leadsall:'leads',reporting:'pilotage',myactions:'pilotage',actions:'pilotage',performance:'pilotage'};
+const PAGE_RENDER={dashboard:'renderDashboard',listing:'renderListing',students:'renderStudentsPage',registrations:'renderRegistrationsPage',users:'renderUsersPage',reporting:'renderReportingPage',leads:'renderLeadsPage',leadsall:'renderAllLeadsPage',actions:'renderActionsStructurePage',myactions:'renderMyActionsPage',terrain:'renderTerrainPage',performance:'renderPerformancePage',inscriptions:'renderInscriptionPage',resources:'renderResourcesPage'};
+const PAGE_TITLES={dashboard:'Accueil',listing:'Base de données',calendrier:'Calendrier',registrations:'Affectation des étudiants',terrain:'Préparation des forums',students:'Ambassadeurs',users:'Utilisateurs',leads:'QR code & saisie',leadsall:'Tous les leads',reporting:'Reporting forums',myactions:'Actions prioritaires',actions:'Pipeline commercial',performance:'Bilan & conversion',resources:'Ressources',inscriptions:'Mes événements'};
+
+function normalizedRole(){
+  try{return typeof normalizeRoleValue==='function'?normalizeRoleValue(window.S?.role||''):String(window.S?.role||'').trim().toLowerCase();}
+  catch(_){return '';}
+}
+function isInternal(){return INTERNAL_ROLES.has(normalizedRole());}
+function isAdmin(){return ADMIN_ROLES.has(normalizedRole());}
+function activePage(){return document.querySelector('.page.active')?.id?.replace(/^page-/,'')||'dashboard';}
+function setGroup(name){
+  document.querySelectorAll('.nav-group').forEach(group=>{
+    const open=Boolean(name)&&group.dataset.navGroup===name;
+    group.classList.toggle('open',open);
+    group.classList.toggle('has-active',open);
+    group.querySelector(':scope > .nav-group-toggle')?.setAttribute('aria-expanded',open?'true':'false');
   });
-  const consent=document.getElementById('public-lead-consent');
-  if(consent) consent.addEventListener('change',()=>consent.setAttribute('aria-invalid',consent.value?'false':'true'));
-  enforceInternalNavigation();
-  setTimeout(enforceInternalNavigation,800);
-})();
-</script>
+}
+function syncRoleVisibility(){
+  const internal=isInternal(), admin=isAdmin();
+  document.body.classList.toggle('edh-internal-mode',internal);
+  document.body.classList.toggle('edh-student-mode',!internal);
+  document.querySelectorAll('.nav-group[data-role="collaborateur"],.nav-direct-item[data-role="collaborateur"]').forEach(el=>el.style.display=internal?'':'none');
+  document.querySelectorAll('.nav-group[data-role="collaborateur"] .nav-item').forEach(el=>el.style.display=internal?'flex':'none');
+  document.querySelectorAll('.nav-item[data-page="users"]').forEach(el=>el.style.display=admin?'flex':'none');
+  document.querySelectorAll('.nav-item[data-page="listing"],.nav-item[data-page="leadsall"]').forEach(el=>el.style.display=internal?'flex':'none');
+  document.querySelectorAll('.nav-item[data-role="student-assigned"][data-page="leadsall"]').forEach(el=>el.style.display='none');
+}
+window.canManageUserAccounts=function(){
+  try{return Boolean(typeof currentUser==='function'&&currentUser()&&isAdmin());}catch(_){return false;}
+};
 
-
-<script id="edh-v75-repair-script">
-(function(){
-  'use strict';
-  if(window.__EDH_V75_REPAIR__) return;
-  window.__EDH_V75_REPAIR__ = true;
-
-  const pageToGroup = {
-    listing:'forums', calendrier:'forums', registrations:'forums', terrain:'forums',
-    students:'administration', users:'administration',
-    leads:'leads', leadsall:'leads',
-    reporting:'pilotage', myactions:'pilotage', actions:'pilotage', performance:'pilotage'
-  };
-  const mobileTitles = {
-    dashboard:'Accueil', listing:'Base de données', calendrier:'Calendrier', registrations:'Affectation des étudiants',
-    terrain:'Préparation des forums', students:'Ambassadeurs', users:'Utilisateurs', leads:'QR code & saisie',
-    leadsall:'Tous les leads', reporting:'Reporting forums', myactions:'Actions prioritaires', actions:'Pipeline commercial',
-    performance:'Bilan & conversion', resources:'Ressources', inscriptions:'Mes évènements'
-  };
-
-  function setGroup(group, open){
-    if(!group) return;
-    group.classList.toggle('open', Boolean(open));
-    const toggle = group.querySelector(':scope > .nav-group-toggle');
-    if(toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+function canonicalizeNavigation(){
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    const match=(el.getAttribute('onclick')||'').match(/showPage\('([^']+)'\)/);
+    if(match&&!el.dataset.page) el.dataset.page=match[1];
+  });
+  const db=document.querySelector('.nav-item[data-page="listing"]');
+  if(db){
+    const label=db.querySelector('.nav-label');
+    if(label) label.textContent='Base de données';
+    else [...db.childNodes].filter(n=>n.nodeType===3&&n.textContent.trim()).forEach(n=>n.textContent=' Base de données');
   }
+  const allLeads=[...document.querySelectorAll('.nav-item[data-page="leadsall"]')];
+  allLeads.forEach((el,index)=>{if(index>0)el.remove();});
+}
 
-  function activePage(){
-    return document.querySelector('.page.active')?.id?.replace('page-','') || 'dashboard';
+window.showPage=function(page){
+  page=String(page||'dashboard');
+  const role=normalizedRole();
+  if(page==='users'&&!isAdmin()){
+    if(typeof showToast==='function') showToast('La gestion des utilisateurs est réservée aux administrateurs.','error');
+    page=role==='student'?'inscriptions':'dashboard';
   }
-
-  function syncNavigation(page){
-    page = page || activePage();
-    document.querySelectorAll('.sidebar .nav-item[data-page]').forEach(item => {
-      item.classList.toggle('active', item.dataset.page === page);
-    });
-    document.querySelectorAll('.nav-group').forEach(group => group.classList.remove('has-active'));
-    const wanted = pageToGroup[page];
-    if(wanted){
-      document.querySelectorAll('.nav-group').forEach(group => setGroup(group, group.dataset.navGroup === wanted));
-      const group = document.querySelector('.nav-group[data-nav-group="'+wanted+'"]');
-      if(group) group.classList.add('has-active');
-      try { localStorage.setItem('edh_sidebar_group', wanted); } catch(_) {}
-    } else if(['dashboard','resources','inscriptions'].includes(page)) {
-      document.querySelectorAll('.nav-group').forEach(group => setGroup(group, false));
-    }
-    const mobileTitle = document.getElementById('mobile-page-title');
-    if(mobileTitle && mobileTitles[page]) mobileTitle.textContent = mobileTitles[page];
-    document.body.classList.remove('mobile-sidebar-open');
-  }
-
-  function installGroupToggles(){
-    document.querySelectorAll('.nav-group-toggle').forEach(toggle => {
-      if(toggle.dataset.v75Bound === '1') return;
-      toggle.dataset.v75Bound = '1';
-      toggle.addEventListener('click', () => {
-        const current = toggle.closest('.nav-group');
-        const willOpen = !current?.classList.contains('open');
-        document.querySelectorAll('.nav-group').forEach(group => setGroup(group, false));
-        setGroup(current, willOpen);
-        try {
-          if(willOpen) localStorage.setItem('edh_sidebar_group', current?.dataset.navGroup || '');
-          else localStorage.removeItem('edh_sidebar_group');
-        } catch(_) {}
-      });
-    });
-  }
-
-  function ensureLoginAvailable(){
-    const modal = document.getElementById('login-modal');
-    if(!modal) return;
-    const publicMode = document.body.classList.contains('public-lead-mode') || document.querySelector('.public-lead-overlay.open');
-    let loggedIn = false;
-    try { loggedIn = Boolean(typeof currentUser === 'function' && currentUser()); } catch(_) {}
-    if(!publicMode && !loggedIn && !window.EDH_LOGIN_CONFIRMED && !window.EDH_LOGIN_IN_PROGRESS && !modal.classList.contains('open')){
-      if(typeof openLoginModal === 'function') openLoginModal();
-      else modal.classList.add('open');
+  if(role==='student'){
+    const allowed=new Set(['inscriptions','leads']);
+    if(!allowed.has(page)) page='inscriptions';
+    if(page==='leads'&&typeof studentHasAssignedForums==='function'&&!studentHasAssignedForums()){
+      if(typeof showToast==='function') showToast('Les leads deviennent accessibles après une affectation à un forum.','error');
+      page='inscriptions';
     }
   }
+  const target=document.getElementById('page-'+page);
+  if(!target){console.warn('[V80 showPage] page introuvable',page);return false;}
+  syncRoleVisibility();
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p===target));
+  document.querySelectorAll('.sidebar .nav-item[data-page]').forEach(item=>item.classList.toggle('active',item.dataset.page===page));
+  setGroup(PAGE_GROUP[page]||'');
+  try{if(typeof updateTopbarForPage==='function')updateTopbarForPage(page);}catch(err){console.warn('[V80 updateTopbar]',err);}
+  try{
+    if(page==='calendrier'){
+      if(window.S)S.calView='list';
+      const listTab=document.getElementById('vtb-list'),gridTab=document.getElementById('vtb-grid'),list=document.getElementById('cal-list-view'),grid=document.getElementById('cal-grid-view');
+      if(listTab)listTab.className='vtb active';if(gridTab)gridTab.className='vtb';if(list)list.style.display='block';if(grid)grid.style.display='none';
+      if(typeof renderCalList==='function')renderCalList();
+    }else{
+      const fn=window[PAGE_RENDER[page]];
+      if(typeof fn==='function')fn();
+    }
+  }catch(err){console.error('[V80 rendu page]',page,err);if(typeof showToast==='function')showToast('La page a rencontré une erreur de rendu.','error');}
+  const mobileTitle=document.getElementById('mobile-page-title');if(mobileTitle&&PAGE_TITLES[page])mobileTitle.textContent=PAGE_TITLES[page];
+  document.body.classList.remove('mobile-sidebar-open');
+  return true;
+};
 
-  function installLoginKeyboard(){
-    ['login-username','login-password'].forEach(id => {
-      const input = document.getElementById(id);
-      if(!input || input.dataset.v75Bound === '1') return;
-      input.dataset.v75Bound = '1';
-      input.addEventListener('keydown', event => {
-        if(event.key === 'Enter'){
-          event.preventDefault();
-          if(typeof submitLogin === 'function') submitLogin();
-        }
-      });
-    });
-  }
+window.submitPublicLead=async function(){
+  const value=id=>(document.getElementById(id)?.value||'').trim();
+  const token=window.CURRENT_PUBLIC_LEAD_EVENT_ID||'';
+  const ev=window.CURRENT_PUBLIC_LEAD_EVENT||(typeof findCalendarEventById==='function'?findCalendarEventById(token):null)||{};
+  const lead={id:'LEAD'+Date.now(),season:window.S?.season||window.DEFAULT_SEASON||'2025-2026',eventId:token,eventName:ev.nom||'',lycee:ev.nom||'',ville:ev.ville||'',firstName:value('public-lead-firstname'),lastName:value('public-lead-lastname'),email:value('public-lead-email').toLowerCase(),phone:value('public-lead-phone'),school:value('public-lead-school'),program:value('public-lead-program'),level:value('public-lead-level'),notes:value('public-lead-notes'),consentRecontact:value('public-lead-consent'),source:'QR public',createdAt:new Date().toISOString()};
+  const required=[['Prénom',lead.firstName],['Nom',lead.lastName],['Email',lead.email],['Téléphone',lead.phone],['École',lead.school],['Cursus',lead.program],['Niveau',lead.level],['Autorisation de recontact',lead.consentRecontact]];
+  const missing=required.filter(([,v])=>!v).map(([k])=>k);
+  const error=document.getElementById('public-lead-error'),success=document.getElementById('public-lead-success'),button=document.getElementById('public-lead-submit-btn');
+  error?.classList.remove('show');success?.classList.remove('show');
+  if(missing.length){if(error){error.textContent='Merci de compléter : '+missing.join(', ')+'.';error.classList.add('show');}return;}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lead.email)){if(error){error.textContent='Adresse email invalide.';error.classList.add('show');}return;}
+  if(button){button.disabled=true;button.textContent='Enregistrement…';}
+  try{
+    const saved=await saveLeadDirectToSupabase(lead);
+    if(!saved?.ok&&!saved?.skipped)throw new Error(saved?.message||'Erreur Supabase');
+    window.LEADS=typeof dedupeLeadsList==='function'?dedupeLeadsList([lead,...(window.LEADS||[])]):[lead,...(window.LEADS||[])];
+    if(typeof saveLocalData==='function')saveLocalData();
+    success?.classList.add('show');
+    ['public-lead-firstname','public-lead-lastname','public-lead-email','public-lead-phone','public-lead-notes','public-lead-consent'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  }catch(err){console.warn('[V80 submitPublicLead]',err);if(error){error.textContent='Enregistrement impossible : '+(err.message||'réessayez.');error.classList.add('show');}}
+  finally{if(button){button.disabled=false;button.textContent='Valider le formulaire';}}
+};
 
-  const previousShowPage = window.showPage;
-  if(typeof previousShowPage === 'function'){
-    window.showPage = function(page){
-      const result = previousShowPage.apply(this, arguments);
-      setTimeout(() => syncNavigation(activePage()), 0);
-      return result;
-    };
-  }
+window.importReportingFromFile=async function(){
+  if(!window.IMPORT_REPORTING_ROWS?.length)return showToast('Aucun reporting à importer','error');
+  const h=window.IMPORT_REPORTING_HEADERS||[];
+  const cEvent=findCol(h,['évènement','evenement','lycée','lycee','établissement','etablissement']);
+  const cSchool=findCol(h,['école','ecole','school']);
+  const mapping={nombreProspect:findCol(h,['nombre de prospect']),statut:findCol(h,['statuts','statut']),global:findCol(h,['global']),seconde:findCol(h,['2nd','seconde']),premiere:findCol(h,['1ere','1ère','premiere']),terminale:findCol(h,['term']),autres:findCol(h,['autres']),prospect:findCol(h,['prospect']),candidat:findCol(h,['candidat']),admis:findCol(h,['admis']),inscrit:findCol(h,['inscrit'])};
+  let imported=0;const touched=new Map();
+  window.IMPORT_REPORTING_ROWS.forEach(row=>{
+    const name=normalizeLyceeName(row[cEvent]||''),school=normalizeSchoolName(row[cSchool]||'');if(!name||!school)return;
+    const ev=(window.LYCEES||[]).find(l=>normalizeLyceeName(l.nom)===name&&schoolMatches(l.ecoles,school));if(!ev)return;
+    const rec=getReportRecord(ev.id,school);let modified=false;
+    Object.entries(mapping).forEach(([field,col])=>{if(!col)return;const next=field==='statut'?String(row[col]||rec[field]||''):Number(row[col]||0);if(rec[field]!==next){rec[field]=next;modified=true;}});
+    if(modified){touched.set(String(ev.id),ev);imported++;}
+  });
+  if(typeof saveLocalData==='function')saveLocalData();
+  const results=await Promise.allSettled([...touched.values()].map(ev=>saveEventExtrasToSupabase(ev)));
+  const failed=results.filter(r=>r.status==='rejected').length;
+  results.forEach(r=>{if(r.status==='rejected')console.warn('[V80 importReporting]',r.reason);});
+  closeModal('modal-import-reporting');if(typeof renderReportingPage==='function')renderReportingPage();
+  showToast(failed?`${imported} ligne(s) importée(s), ${failed} événement(s) non synchronisé(s)`:`${imported} ligne(s) importée(s) et synchronisée(s)`,failed?'error':undefined);
+};
 
-  const previousSetRole = window.setRole;
-  if(typeof previousSetRole === 'function'){
-    window.setRole = function(){
-      const result = previousSetRole.apply(this, arguments);
-      setTimeout(() => syncNavigation(activePage()), 0);
-      return result;
-    };
-  }
-
-  function boot(){
-    installGroupToggles();
-    installLoginKeyboard();
-    const page = activePage();
-    if(page === 'dashboard'){
-      let saved = 'forums';
-      try { saved = localStorage.getItem('edh_sidebar_group') || 'forums'; } catch(_) {}
-      const group = document.querySelector('.nav-group[data-nav-group="'+saved+'"]');
-      if(group) setGroup(group, true);
-    } else syncNavigation(page);
-    setTimeout(ensureLoginAvailable, 120);
-    setTimeout(ensureLoginAvailable, 900);
-  }
-
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
-  else boot();
+function ensureLogin(){
+  const modal=document.getElementById('login-modal');if(!modal)return;
+  const publicMode=document.body.classList.contains('public-lead-mode')||document.querySelector('.public-lead-overlay.open');
+  let logged=false;try{logged=Boolean(typeof currentUser==='function'&&currentUser());}catch(_){}
+  if(!publicMode&&!logged&&!modal.classList.contains('open')){if(typeof openLoginModal==='function')openLoginModal();else modal.classList.add('open');}
+}
+function boot(){
+  canonicalizeNavigation();syncRoleVisibility();
+  document.querySelectorAll('.nav-group-toggle').forEach(toggle=>{toggle.onclick=event=>{event.preventDefault();const group=toggle.closest('.nav-group');setGroup(group&&!group.classList.contains('open')?group.dataset.navGroup:'');};});
+  ['login-username','login-password'].forEach(id=>document.getElementById(id)?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();if(typeof submitLogin==='function')submitLogin();}}));
+  const page=activePage();if(PAGE_GROUP[page])setGroup(PAGE_GROUP[page]);else setGroup('forums');
+  setTimeout(ensureLogin,100);setTimeout(ensureLogin,800);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-</script>
-</body>
+</script>\n</body>
 </html>
-<!-- EDH Forums Version 2 — build production compatible Supabase historique. -->
+<!-- EDH Gestion Event — V80 stable -->
