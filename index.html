@@ -13217,11 +13217,22 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
     }
   }
 
-  const observer=new MutationObserver(ensureNavigationLinks);
+  let repairScheduled=false;
+  const observer=new MutationObserver(function(mutations){
+    // Ne réagit qu'à l'ajout/suppression réel de boutons. Observer les classes/styles
+    // créait une boucle auto-entretenue qui pouvait bloquer Safari au démarrage.
+    if(!mutations.some(m => m.type === 'childList')) return;
+    if(repairScheduled) return;
+    repairScheduled=true;
+    setTimeout(function(){
+      repairScheduled=false;
+      ensureNavigationLinks();
+    },50);
+  });
   function boot(){
     ensureNavigationLinks();
     const nav=document.querySelector('.sidebar .nav');
-    if(nav) observer.observe(nav,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+    if(nav) observer.observe(nav,{childList:true,subtree:true});
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
