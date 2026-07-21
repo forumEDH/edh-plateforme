@@ -13163,10 +13163,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
 </script>
 
 <style id="edh-v76-navigation-fix-style">
-/* V76 — accès permanent à la base de données et à tous les leads */
-.nav-group[data-nav-group="leads"] .nav-submenu{grid-template-rows:1fr!important}
-.nav-group[data-nav-group="leads"] .nav-group-chevron{transform:rotate(90deg)!important}
-.nav-group[data-nav-group="leads"] .nav-submenu-inner{overflow:visible}
+/* V76 — garantit la présence des accès sans forcer l’ouverture des sous-menus */
 .nav-group[data-nav-group="leads"] [data-page="leadsall"]{
   display:flex!important;
   visibility:visible!important;
@@ -13200,20 +13197,6 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
     const leadsInner=leadsGroup?.querySelector('.nav-submenu-inner');
     if(leadsInner && !leadsInner.querySelector('[data-page="leadsall"]')){
       leadsInner.append(navButton('leadsall','Tous les leads','<svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg>'));
-    }
-    if(leadsGroup){
-      leadsGroup.classList.add('open');
-      const toggle=leadsGroup.querySelector(':scope > .nav-group-toggle');
-      if(toggle){
-        toggle.setAttribute('aria-expanded','true');
-        if(toggle.dataset.v76Pinned !== '1'){
-          toggle.dataset.v76Pinned='1';
-          toggle.addEventListener('click',()=>setTimeout(()=>{
-          leadsGroup.classList.add('open');
-            toggle.setAttribute('aria-expanded','true');
-          },0));
-        }
-      }
     }
   }
 
