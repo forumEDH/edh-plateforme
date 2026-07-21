@@ -6871,7 +6871,75 @@ html[data-theme="dark"] .card-header{background:linear-gradient(180deg,var(--sur
 html[data-theme="dark"] table td strong,html[data-theme="dark"] .advanced-title,html[data-theme="dark"] .resource-title,html[data-theme="dark"] .crm-action-card-title,html[data-theme="dark"] .kit-card-title{color:var(--text)}
 @media(max-width:1000px){.v3-dashboard-welcome{grid-template-columns:1fr}.v3-quick-grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:768px){.content{padding-top:13px}.context-tabs{width:100%;border-radius:11px}.context-tab{flex:0 0 auto}.v3-dashboard-welcome{display:block}.v3-quick-actions{margin-top:10px}.v3-quick-grid{grid-template-columns:1fr 1fr}.v3-hero{padding:19px;min-height:135px}.v3-hero-title{font-size:20px}.v3-student-top{display:block}.v3-student-stats{grid-template-columns:1fr}.v3-student-actions{display:grid;grid-template-columns:1fr}.v3-student-actions .btn{width:100%}}
-</style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div></body></html>`;
+</style></head><body><button onclick="window.print()">Imprimer</button><h1>${escapeHtml(eventObj.nom||'Forum lycée')}</h1><div class="muted">${escapeHtml(eventObj.ville||'')} · ${fmtDate(eventObj.date)} · ${escapeHtml(eventObj.heure||'Horaire à confirmer')}</div><div class="box grid"><div><strong>Adresse</strong><br>${escapeHtml(eventObj.adresse||'À confirmer')}</div><div><strong>Contact</strong><br>${escapeHtml(eventObj.organisateur||eventObj.mail_ecole||'À confirmer')}</div><div><strong>Écoles</strong><br>${getSchoolsArray(eventObj.ecoles).join(', ')||'À préciser'}</div><div><strong>Campus départ</strong><br>EFAP ${escapeHtml(currentEfapCampus(eventObj))}</div></div><div class="box"><strong>QR leads</strong><br><span class="muted">${escapeHtml(leadsUrl)}</span><br><img style="margin-top:10px;width:160px;height:160px" src="${qrImageUrl(leadsUrl)}"></div><div class="box check"><strong>Checklist terrain</strong><div>☐ Ambassadeurs confirmés</div><div>☐ Conversation Teams créée</div><div>☐ Événement Outlook ajouté</div><div>☐ Trajet et billets préparés</div><div>☐ QR code testé</div><div>☐ Sacs forums remis</div><div>☐ Reporting à compléter après forum</div></div>
+
+<style id="edh-v76-navigation-fix-style">
+/* V76 — accès permanent à la base de données et à tous les leads */
+.nav-group[data-nav-group="leads"] .nav-submenu{grid-template-rows:1fr!important}
+.nav-group[data-nav-group="leads"] .nav-group-chevron{transform:rotate(90deg)!important}
+.nav-group[data-nav-group="leads"] .nav-submenu-inner{overflow:visible}
+.nav-group[data-nav-group="leads"] [data-page="leadsall"]{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+</style>
+<script id="edh-v76-navigation-fix-script">
+(function(){
+  'use strict';
+  if(window.__EDH_V76_NAV_FIX__) return;
+  window.__EDH_V76_NAV_FIX__=true;
+
+  function navButton(page,label,svg){
+    const button=document.createElement('button');
+    button.className='nav-item nav-subitem';
+    button.dataset.page=page;
+    button.dataset.role='collaborateur';
+    button.type='button';
+    button.setAttribute('onclick',"showPage('"+page+"')");
+    button.innerHTML=svg+'<span>'+label+'</span>';
+    return button;
+  }
+
+  function ensureNavigationLinks(){
+    const forumsInner=document.querySelector('.nav-group[data-nav-group="forums"] .nav-submenu-inner');
+    if(forumsInner && !forumsInner.querySelector('[data-page="listing"]')){
+      forumsInner.prepend(navButton('listing','Base de données','<svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>'));
+    }
+
+    const leadsGroup=document.querySelector('.nav-group[data-nav-group="leads"]');
+    const leadsInner=leadsGroup?.querySelector('.nav-submenu-inner');
+    if(leadsInner && !leadsInner.querySelector('[data-page="leadsall"]')){
+      leadsInner.append(navButton('leadsall','Tous les leads','<svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg>'));
+    }
+    if(leadsGroup){
+      leadsGroup.classList.add('open');
+      const toggle=leadsGroup.querySelector(':scope > .nav-group-toggle');
+      if(toggle){
+        toggle.setAttribute('aria-expanded','true');
+        if(toggle.dataset.v76Pinned !== '1'){
+          toggle.dataset.v76Pinned='1';
+          toggle.addEventListener('click',()=>setTimeout(()=>{
+          leadsGroup.classList.add('open');
+            toggle.setAttribute('aria-expanded','true');
+          },0));
+        }
+      }
+    }
+  }
+
+  const observer=new MutationObserver(ensureNavigationLinks);
+  function boot(){
+    ensureNavigationLinks();
+    const nav=document.querySelector('.sidebar .nav');
+    if(nav) observer.observe(nav,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})();
+</script>
+
+</body></html>`;
 }
 function printForumFieldSheet(eventId){
   const ev = findCalendarEventById(eventId);
