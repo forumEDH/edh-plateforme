@@ -2401,7 +2401,7 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
           </div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>Nom</th><th>Email / Identifiant</th><th>Rôle</th><th>École</th><th>Campus</th><th>Téléphone</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Nom</th><th>Email / Identifiant</th><th>Rôle</th><th>École</th><th>Campus</th><th>Activité</th><th>Téléphone</th><th>Actions</th></tr></thead>
               <tbody id="users-tbody"></tbody>
             </table>
           </div>
@@ -2605,12 +2605,12 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
           <div class="card-header">
             <div>
               <div class="card-title">Ajouter une ressource</div>
-              <div class="card-count">Réservé Admin Global</div>
+              <div class="card-count">Collaborateurs et administrateurs</div>
             </div>
           </div>
           <div style="padding:16px">
             <div class="muted-box" style="margin-bottom:14px">
-              Seul un compte <strong>Admin global</strong> peut ajouter ou supprimer des fichiers. Les admins campus et collaborateurs peuvent uniquement consulter et télécharger les ressources.
+              Les <strong>collaborateurs</strong> et <strong>admins campus</strong> peuvent ajouter des ressources. Ils peuvent supprimer uniquement leurs propres fichiers ; l’Admin global conserve la gestion complète.
             </div>
             <div class="form-grid">
               <div class="form-field">
@@ -3112,7 +3112,7 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
           </div>
           <div class="form-field full" id="uf-credentials-note" style="display:none">
             <div class="login-footer-note" style="margin-top:0">
-              Modifie ou génère le mot de passe, puis clique sur <strong>Enregistrer + envoyer les identifiants</strong>. Le nouveau mot de passe sera enregistré dans Supabase et ajouté au mail.
+              Un nouveau mot de passe temporaire a été généré. Clique sur <strong>Enregistrer + envoyer les identifiants</strong> pour le sauvegarder dans Supabase et l’ajouter au mail. Le mot de passe actuel ne peut pas être relu.
             </div>
           </div>
           <div class="form-field full">
@@ -3353,7 +3353,7 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V71-2026-07-20-ios-dark-self-registration-performance";
+const APP_PATCH_VERSION = "V79-2026-07-22-collaboration-activity-login-fix";
 window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
 window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
 // ══════════════════════════════════════
@@ -3422,8 +3422,64 @@ const DEFAULT_SEASON = '2025-2026';
 // URL projet Supabase : ne pas mettre /rest/v1/ ici.
 const SUPABASE_PROJECT_URL = 'https://qyeroclflrxdxjagpjtn.supabase.co';
 const SUPABASE_PUBLIC_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXJvY2xmbHJ4ZHhqYWdwanRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNzI3OTksImV4cCI6MjA5Mjk0ODc5OX0.Jh5r7BWsxgfFdRBRYGEbd310pxlXx9HtKGVaQWGD_Wk';
-const SUPABASE_ENABLED = Boolean(window.supabase && SUPABASE_PROJECT_URL && SUPABASE_PUBLIC_KEY);
-const supabaseClient = SUPABASE_ENABLED ? window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_PUBLIC_KEY) : null;
+let SUPABASE_ENABLED = Boolean(window.supabase && SUPABASE_PROJECT_URL && SUPABASE_PUBLIC_KEY);
+let supabaseClient = SUPABASE_ENABLED ? window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_PUBLIC_KEY) : null;
+let SUPABASE_SDK_LOAD_PROMISE = null;
+
+function loadSupabaseSdkSource(src, timeoutMs=8000){
+  return new Promise((resolve, reject) => {
+    if(window.supabase) return resolve(true);
+    const existing = [...document.scripts].find(s => s.src === src && s.dataset.edhRetrySdk === '1');
+    if(existing){
+      existing.addEventListener('load', () => resolve(Boolean(window.supabase)), {once:true});
+      existing.addEventListener('error', () => reject(new Error('Chargement SDK Supabase impossible')), {once:true});
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.dataset.edhRetrySdk = '1';
+    const timer = setTimeout(() => { script.remove(); reject(new Error('Délai de chargement du SDK Supabase dépassé')); }, timeoutMs);
+    script.onload = () => { clearTimeout(timer); window.supabase ? resolve(true) : reject(new Error('SDK Supabase chargé mais indisponible')); };
+    script.onerror = () => { clearTimeout(timer); script.remove(); reject(new Error('Le réseau bloque la source du SDK Supabase')); };
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureSupabaseClient({silent=false}={}){
+  if(supabaseClient) return {ok:true, client:supabaseClient};
+  if(window.supabase){
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_PUBLIC_KEY);
+      SUPABASE_ENABLED = true;
+      return {ok:true, client:supabaseClient};
+    } catch(error){ return {ok:false, reason:'client_init', error}; }
+  }
+  if(!SUPABASE_SDK_LOAD_PROMISE){
+    SUPABASE_SDK_LOAD_PROMISE = (async () => {
+      const sources = [
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+        'https://unpkg.com/@supabase/supabase-js@2'
+      ];
+      let lastError = null;
+      for(const source of sources){
+        try {
+          await loadSupabaseSdkSource(source);
+          if(window.supabase){
+            supabaseClient = window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_PUBLIC_KEY);
+            SUPABASE_ENABLED = true;
+            return {ok:true, client:supabaseClient};
+          }
+        } catch(error){ lastError = error; }
+      }
+      return {ok:false, reason:'sdk_unavailable', error:lastError || new Error('SDK Supabase indisponible')};
+    })().finally(() => { SUPABASE_SDK_LOAD_PROMISE = null; });
+  }
+  const result = await SUPABASE_SDK_LOAD_PROMISE;
+  if(!result.ok && !silent) setSupabaseStatus?.('error', 'Serveur indisponible · réessaie avec une connexion internet stable');
+  return result;
+}
+window.ensureSupabaseClient = ensureSupabaseClient;
 let SUPABASE_SYNC_READY = false;
 let SUPABASE_SYNC_TIMER = null;
 let SUPABASE_IS_PUSHING = false;
@@ -3535,7 +3591,12 @@ function minimalUserForStorage(u){
     regions_autorisees: splitAccessValues(u?.regions_autorisees || u?.campus || u?.region),
     schools_autorisees: getSchoolsArray(Array.isArray(u?.schools_autorisees) ? u.schools_autorisees.join(', ') : (u?.schools_autorisees || u?.school || '')),
     phone: u?.phone || '',
-    locked: Boolean(u?.locked)
+    locked: Boolean(u?.locked),
+    lastLoginAt: u?.lastLoginAt || '',
+    lastSeenAt: u?.lastSeenAt || '',
+    lastLogoutAt: u?.lastLogoutAt || '',
+    notificationPreferences: u?.notificationPreferences || {},
+    mustChangePassword: Boolean(u?.mustChangePassword)
   };
 }
 function usersForLocalStorage(){
@@ -3695,7 +3756,12 @@ function mapSupabaseUserToApp(row){
     regions_autorisees: splitAccessValues(row.campus_autorises || row.campus_autorisees || row.regions_autorisees || row.regions || row.campus || row.region || rawCampus),
     schools_autorisees: getSchoolsArray(Array.isArray(row.schools_autorisees) ? row.schools_autorisees.join(', ') : (row.schools_autorisees || row.school || row.ecoles || row.schools || rawSchools || '')),
     phone: pickField(row, ['phone','telephone','téléphone','tel','Téléphone','Telephone']) || '',
-    locked: Boolean(row.locked)
+    locked: Boolean(row.locked),
+    lastLoginAt: pickField(row, ['last_login_at','lastLoginAt','derniere_connexion']) || '',
+    lastSeenAt: pickField(row, ['last_seen_at','lastSeenAt','derniere_activite']) || '',
+    lastLogoutAt: pickField(row, ['last_logout_at','lastLogoutAt']) || '',
+    notificationPreferences: (() => { const raw = row.notification_preferences || row.notificationPreferences || {}; if(raw && typeof raw === 'object') return raw; try { return JSON.parse(raw || '{}') || {}; } catch(_) { return {}; } })(),
+    mustChangePassword: Boolean(row.must_change_password || row.mustChangePassword)
   };
 }
 function mapAppUserToSupabase(u){
@@ -3822,36 +3888,87 @@ async function saveUserDirectToSupabase(user){
     return { ok:false, error:err, message:userSupabaseFailureAdvice(err) };
   }
 }
+
+async function saveUserProfileWithoutPasswordToSupabase(user){
+  const ready = await ensureSupabaseClient({silent:true});
+  if(!ready.ok || !supabaseClient) return {ok:false, message:'Connexion Supabase indisponible : le compte n’a pas été modifié.'};
+  const args = {
+    p_app_id: String(user.id || ''),
+    p_first_name: user.firstName || '',
+    p_last_name: user.lastName || '',
+    p_email: String(user.email || '').toLowerCase(),
+    p_role: normalizeRoleValue(user.role || 'student'),
+    p_school: user.school || '',
+    p_phone: user.phone || '',
+    p_locked: Boolean(user.locked),
+    p_regions_autorisees: splitAccessValues(user.regions_autorisees || user.campus || user.region),
+    p_schools_autorisees: userSchoolAccess(user),
+    p_region: user.region || user.campus || '',
+    p_campus: user.campus || user.region || ''
+  };
+  try {
+    const rpc = await supabaseClient.rpc('edh_update_utilisateur_sans_mot_de_passe', args);
+    if(!rpc.error) return {ok:true};
+    if(!/function .* does not exist|could not find the function|PGRST202/i.test(rpc.error.message || '')) throw rpc.error;
+  } catch(error){
+    if(!/function .* does not exist|could not find the function|PGRST202/i.test(error?.message || '')) return {ok:false, error, message:userSupabaseFailureAdvice(error)};
+  }
+  const payload = mapAppUserToSupabase(user);
+  delete payload.password;
+  try {
+    let query = supabaseClient.from('utilisateurs').update(payload);
+    if(user.supabase_id) query = query.eq('id', user.supabase_id);
+    else query = query.eq('app_id', String(user.id));
+    const {error} = await query;
+    if(error) throw error;
+    return {ok:true};
+  } catch(error){
+    return {ok:false, error, message:userSupabaseFailureAdvice(error) + ' — Installe la migration SQL V79 pour modifier un profil sans réinitialiser son mot de passe.'};
+  }
+}
+
 async function findUserForLogin(username, password){
   const login = (username || '').toString().trim().toLowerCase();
   const pass = (password || '').toString().trim();
-  if(!login || !pass) return null;
+  if(!login || !pass) return {ok:false, reason:'missing_fields'};
 
-  // V19 : connexion via RPC. Cela évite le SELECT direct sur public.utilisateurs,
-  // qui peut partir en timeout 57014 si les policies RLS sont cassées.
-  if(supabaseClient){
-    try {
-      const { data, error } = await supabaseClient.rpc('edh_login_utilisateur', {
-        p_email: login,
-        p_password: pass
-      });
-      if(error) throw error;
-      const rows = Array.isArray(data) ? data : [];
-      if(rows.length){
-        const remoteUser = mapSupabaseUserToApp(rows[0]);
-        const idx = USERS.findIndex(u => (u.email || '').toLowerCase() === remoteUser.email || u.id === remoteUser.id);
-        if(idx > -1) USERS[idx] = remoteUser; else USERS.unshift(remoteUser);
-        safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
-        return remoteUser;
-      }
-    } catch(err){
-      console.warn('Connexion RPC utilisateurs impossible', err);
-      showToast('Connexion utilisateurs Supabase impossible : ' + getSupabaseErrorMessage(err), 'error');
-    }
+  const ready = await ensureSupabaseClient({silent:true});
+  if(!ready.ok || !supabaseClient){
+    return {
+      ok:false,
+      reason:'server_unavailable',
+      error:ready.error,
+      message:'Connexion au serveur impossible. Vérifie la connexion internet ou le filtrage du réseau, puis réessaie.'
+    };
   }
 
-  return null;
+  try {
+    const { data, error } = await supabaseClient.rpc('edh_login_utilisateur', {
+      p_email: login,
+      p_password: pass
+    });
+    if(error) throw error;
+    const rows = Array.isArray(data) ? data : (data ? [data] : []);
+    if(!rows.length) return {ok:false, reason:'invalid_credentials'};
+    const remoteUser = mapSupabaseUserToApp(rows[0]);
+    if(remoteUser.locked) return {ok:false, reason:'account_locked', user:remoteUser};
+    const idx = USERS.findIndex(u => (u.email || '').toLowerCase() === remoteUser.email || u.id === remoteUser.id);
+    if(idx > -1) USERS[idx] = {...USERS[idx], ...remoteUser}; else USERS.unshift(remoteUser);
+    safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
+    return {ok:true, user:remoteUser};
+  } catch(error){
+    console.warn('Connexion RPC utilisateurs impossible', error);
+    const msg = getSupabaseErrorMessage(error);
+    const low = msg.toLowerCase();
+    const reason = low.includes('57014') || low.includes('timeout') || low.includes('statement timeout')
+      ? 'server_timeout'
+      : (low.includes('permission') || low.includes('row-level security') || low.includes('42501'))
+        ? 'server_permissions'
+        : 'server_error';
+    return {ok:false, reason, error, message:msg};
+  }
 }
+
 function mapSupabaseRegistrationToApp(row){
   return { id: String(row.app_id || row.id || nextRegistrationId()), supabase_id: row.id || null, eventId: row.event_app_id || row.event_id || row.lycee_id || row.eventId || '', eventName: row.event_name || row.evenement || row.lycee || '', school: normalizeSchoolName(row.school || row.ecole) || row.school || row.ecole || '', firstName: row.first_name || row.firstname || row.prenom || row.firstName || '', lastName: row.last_name || row.lastname || row.nom || row.lastName || '', email: row.email || '', phone: row.phone || row.telephone || '', notes: row.notes || row.commentaire || '', userId: row.user_app_id || row.user_id || row.userId || null, studentId: row.student_app_id || row.student_id || row.studentId || null, createdAt: row.created_at || row.createdAt || new Date().toISOString() };
 }
@@ -5723,7 +5840,7 @@ function renderSchoolTable(){
         ${f.date?`<button class="btn-ics" onclick="downloadSingleICS('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Outlook / Teams</button>`:'—'}
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7"><div class="empty-state"><p>Aucun forum ne correspond aux filtres actuels.</p></div></td></tr>`;
+  }).join('') || `<tr><td colspan="8"><div class="empty-state"><p>Aucun forum ne correspond aux filtres actuels.</p></div></td></tr>`;
   renderPagination(forums.length, S.schoolPage, S.pageSize, 'school-pag', 'goSchoolPage');
 }
 
@@ -7672,12 +7789,22 @@ async function submitLogin(){
   if(button){ button.disabled = true; button.textContent = 'Connexion…'; }
 
   try {
-    const found = await findUserForLogin(user, pass);
-    if(!found){
-      showToast('Identifiants incorrects ou compte non synchronisé', 'error');
+    const result = await findUserForLogin(user, pass);
+    if(!result?.ok){
+      const messages = {
+        invalid_credentials:'Identifiant ou mot de passe incorrect.',
+        account_locked:'Ce compte est verrouillé. Contacte un administrateur.',
+        server_unavailable:'Connexion au serveur impossible. Vérifie internet puis réessaie.',
+        server_timeout:'Le serveur met trop de temps à répondre. Réessaie dans quelques instants.',
+        server_permissions:'Le service de connexion est mal configuré côté Supabase. Contacte un administrateur.',
+        server_error:'Le service de connexion rencontre une erreur. Réessaie ou contacte un administrateur.'
+      };
+      showToast(messages[result?.reason] || result?.message || 'Connexion impossible.', 'error');
+      setSupabaseStatus(result?.reason === 'invalid_credentials' ? 'ok' : 'error', result?.reason === 'invalid_credentials' ? 'Supabase accessible · identifiants refusés' : 'Supabase : connexion indisponible');
       return;
     }
 
+    const found = result.user;
     const normalizedRole = normalizeRoleValue(found.role || requestedRole);
     S.currentUserId = found.id;
     EDH_LOGIN_CONFIRMED = true;
@@ -7686,19 +7813,22 @@ async function submitLogin(){
     closeLoginModal();
     setRole(normalizedRole);
     showToast(normalizedRole === 'student' ? 'Connexion étudiant réussie' : 'Connexion espace collaborateur réussie');
+    setSupabaseStatus('ok', 'Supabase : connecté');
 
+    if(typeof window.edhPresenceTouchV79 === 'function') window.edhPresenceTouchV79('login');
     populateStaticSelects();
     updateSchoolFilterCounts();
     refreshCurrentPage();
     syncAfterLoginInBackground();
-  } catch(err){
-    console.error('Erreur connexion:', err);
-    showToast('Erreur connexion : ' + getSupabaseErrorMessage(err), 'error');
+  } catch(error){
+    console.error('Erreur connexion:', error);
+    showToast('Connexion impossible : ' + getSupabaseErrorMessage(error), 'error');
   } finally {
     EDH_LOGIN_IN_PROGRESS = false;
     if(button){ button.disabled = false; button.textContent = 'Se connecter'; }
   }
 }
+
 
 
 function getAllUsersForAdmin(){
@@ -7782,6 +7912,7 @@ function renderUsersPage(autoRefresh=true){
       <td>${roleLabel(u.role)}</td>
       <td>${schoolTags(schools.join(', ')) || '—'}</td>
       <td>${escapeHtml(campus || '—')}</td>
+      <td>${typeof userPresenceHtmlV79 === 'function' ? userPresenceHtmlV79(u) : '—'}</td>
       <td>${escapeHtml(u.phone || '—')}</td>
       <td>
         <div class="small-actions">
@@ -7807,7 +7938,7 @@ function openUserModal(id='', credentialsMode=false){
   S.editingUserId = id || null;
   S.userCredentialsMode = Boolean(credentialsMode);
   const u = USERS.find(x=>x.id===id);
-  document.getElementById('user-modal-title').textContent = credentialsMode && u ? 'Modifier le mot de passe et envoyer les identifiants' : (u ? 'Modifier un utilisateur' : 'Créer un utilisateur');
+  document.getElementById('user-modal-title').textContent = credentialsMode && u ? 'Réinitialiser le mot de passe et envoyer les accès' : (u ? 'Modifier un utilisateur' : 'Créer un utilisateur');
   document.getElementById('user-form').reset();
   setCheckedValues('uf-schools', []);
   setCheckedValues('uf-campus', []);
@@ -7820,8 +7951,8 @@ function openUserModal(id='', credentialsMode=false){
     document.getElementById('uf-lastname').value = u.lastName || '';
     document.getElementById('uf-email').value = u.email || '';
     const availablePassword = u.password || getRememberedUserPassword(u) || '';
-    passwordInput.value = credentialsMode ? (availablePassword || randomPassword()) : '';
-    passwordInput.placeholder = credentialsMode ? 'Mot de passe envoyé dans le mail' : 'Laisser vide pour conserver le mot de passe actuel';
+    passwordInput.value = credentialsMode ? randomPassword() : '';
+    passwordInput.placeholder = credentialsMode ? 'Nouveau mot de passe temporaire à envoyer' : 'Laisser vide pour conserver strictement le mot de passe actuel';
     document.getElementById('uf-phone').value = u.phone || '';
     setCheckedValues('uf-campus', u.campus || u.region || u.regions_autorisees || '');
     document.getElementById('uf-role').value = u.role || 'student';
@@ -7849,53 +7980,53 @@ async function saveUser(sendCredentials=false){
   const email = document.getElementById('uf-email').value.trim().toLowerCase();
   const idx = USERS.findIndex(u => u.id === S.editingUserId);
   const existing = idx > -1 ? USERS[idx] : null;
-  let password = document.getElementById('uf-password').value.trim();
-  if(!password && existing?.password){ password = existing.password; }
-  if(!password){ password = randomPassword(); document.getElementById('uf-password').value = password; }
+  const enteredPassword = document.getElementById('uf-password').value.trim();
+  const isReset = Boolean(existing && (S.userCredentialsMode || enteredPassword));
+  const isCreation = !existing;
+  let password = enteredPassword;
+  if(isCreation && !password){ password = randomPassword(); document.getElementById('uf-password').value = password; }
+  if(existing && !isReset) password = existing.password || getRememberedUserPassword(existing) || '';
+
   const role = normalizeRoleValue(document.getElementById('uf-role').value || 'student');
   const selectedSchools = selectedUserSchools();
-  if(role === 'student' && selectedSchools.length !== 1){
-    return showToast('Un compte étudiant doit être associé à une seule école', 'error');
-  }
-  if(roleIsInternal(role) && role !== 'admin_global' && selectedSchools.length < 1){
-    return showToast('Associe le compte collaborateur à au moins une école', 'error');
-  }
+  if(role === 'student' && selectedSchools.length !== 1) return showToast('Un compte étudiant doit être associé à une seule école', 'error');
+  if(roleIsInternal(role) && role !== 'admin_global' && selectedSchools.length < 1) return showToast('Associe le compte collaborateur à au moins une école', 'error');
   const school = role === 'student' ? selectedSchools[0] : selectedSchools.join(', ');
   const regions = checkedValues('uf-campus');
   const region = regions.join(', ');
   const phone = document.getElementById('uf-phone').value.trim();
-  if(!firstName || !lastName || !email || !password){
-    return showToast('Prénom, nom, email et mot de passe sont requis', 'error');
-  }
+  if(!firstName || !lastName || !email) return showToast('Prénom, nom et email sont requis', 'error');
+  if((isCreation || isReset) && !password) return showToast('Un nouveau mot de passe est requis', 'error');
   const duplicate = USERS.find(u => (u.email || '').toLowerCase() === email && u.id !== S.editingUserId);
   if(duplicate) return showToast('Un compte utilise déjà cette adresse mail', 'error');
 
   const obj = {
+    ...(existing || {}),
     id: S.editingUserId || nextUserId(),
     supabase_id: existing?.supabase_id || null,
     firstName, lastName, email, password, role, school,
     campus: region, region, regions_autorisees: regions, schools_autorisees: selectedSchools, phone,
-    locked: Boolean(existing?.locked)
+    locked: Boolean(existing?.locked),
+    mustChangePassword: Boolean(isCreation || isReset)
   };
 
   setSupabaseStatus('syncing', 'Supabase : sauvegarde utilisateur…');
-  const supaResult = await saveUserDirectToSupabase(obj);
-  if(!supaResult.ok){
+  const result = (existing && !isReset)
+    ? await saveUserProfileWithoutPasswordToSupabase(obj)
+    : await saveUserDirectToSupabase(obj);
+  if(!result.ok){
     setSupabaseStatus('error', 'Supabase : utilisateur non enregistré');
-    const msg = supaResult.message || 'erreur inconnue';
-    console.error('Utilisateur non enregistré dans Supabase:', msg, supaResult.error || '');
-    alert('Le compte utilisateur n’a PAS été enregistré.\n\nAucun compte n’a été ajouté dans la base partagée.\n\nErreur Supabase :\n' + msg);
+    const msg = result.message || 'erreur inconnue';
+    console.error('Utilisateur non enregistré dans Supabase:', msg, result.error || '');
+    alert('Le compte utilisateur n’a PAS été enregistré.\n\nErreur Supabase :\n' + msg);
     return showToast('Utilisateur non enregistré : Supabase a refusé l’écriture', 'error');
   }
 
-  if(idx > -1) USERS[idx] = obj;
-  else USERS.unshift(obj);
-  rememberUserPassword(obj);
-
-  try { await refreshUsersFromSupabase(); }
-  catch(e){ console.warn('Rechargement utilisateurs après sauvegarde impossible', e); }
+  if(idx > -1) USERS[idx] = obj; else USERS.unshift(obj);
+  if(password) rememberUserPassword(obj);
+  try { await refreshUsersFromSupabase(); } catch(error){ console.warn('Rechargement utilisateurs après sauvegarde impossible', error); }
   const refreshedUser = USERS.find(u => u.id === obj.id || (u.email || '').toLowerCase() === obj.email);
-  if(refreshedUser && !refreshedUser.password) refreshedUser.password = obj.password;
+  if(refreshedUser && password && !refreshedUser.password) refreshedUser.password = password;
   safeLocalStorageSet('edh_users_v3', JSON.stringify(usersForLocalStorage()));
   setSupabaseStatus('ok', 'Supabase : utilisateur enregistré');
   document.getElementById('user-search').value = '';
@@ -7903,15 +8034,17 @@ async function saveUser(sendCredentials=false){
   document.getElementById('user-school-filter').value = '';
   closeModal('modal-user'); closeModal('modal-email');
   renderUsersPage();
-  showToast(idx > -1 ? 'Compte utilisateur mis à jour dans Supabase' : 'Compte utilisateur créé dans Supabase');
+  showToast(existing ? (isReset ? 'Mot de passe réinitialisé dans Supabase' : 'Profil mis à jour sans modifier le mot de passe') : 'Compte utilisateur créé dans Supabase');
   if(sendCredentials){
-    window.location.href = sendUserCredentialsEmail(obj);
-    showToast('Mot de passe enregistré. Le mail d’identifiants est prêt à être envoyé.');
-  } else if(idx === -1 && email !== 'admin') {
-    showToast('Compte créé. Utilise “Mot de passe / Email” pour envoyer les identifiants.');
+    const mailUser = {...obj, password};
+    window.location.href = sendUserCredentialsEmail(mailUser);
+    showToast('Le mail contient le nouveau mot de passe temporaire.');
+  } else if(isCreation && email !== 'admin') {
+    showToast('Compte créé. Utilise “Mot de passe / Email” pour transmettre les accès.');
   }
   S.userCredentialsMode = false;
 }
+
 
 
 async function deleteUser(id){
@@ -10239,7 +10372,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 // ══════════════════════════════════════
-// V47 — RESSOURCES : upload Admin Global, téléchargement pour les rôles internes
+// V79 — RESSOURCES : upload pour les rôles internes, suppression limitée au propriétaire / admin global
 // ══════════════════════════════════════
 (function(){
   const RESOURCE_BUCKET = 'edh-ressources';
@@ -10253,11 +10386,22 @@ window.addEventListener('DOMContentLoaded', () => {
   function resourceCanManage(){
     try {
       const cu = typeof currentUser === 'function' ? currentUser() : null;
-      const role = typeof normalizeRoleValue === 'function' ? normalizeRoleValue(cu?.role || S.role) : String(cu?.role || S.role || '').toLowerCase();
-      return role === 'admin_global' || String(cu?.email || '').toLowerCase() === 'admin';
+      return Boolean(cu && typeof roleIsInternal === 'function' && roleIsInternal(cu.role || S.role));
+    } catch(_) { return false; }
+  }
+  function resourceCanDelete(resource){
+    try {
+      const cu = typeof currentUser === 'function' ? currentUser() : null;
+      if(!cu) return false;
+      const role = typeof normalizeRoleValue === 'function' ? normalizeRoleValue(cu.role || S.role) : String(cu.role || S.role || '').toLowerCase();
+      if(role === 'admin_global' || String(cu.email || '').toLowerCase() === 'admin') return true;
+      const keys = [cu.id, cu.supabase_id, cu.email].filter(Boolean).map(v=>String(v).toLowerCase());
+      const ownerKeys = [resource?.uploadedById, resource?.uploadedBy].filter(Boolean).map(v=>String(v).toLowerCase());
+      return ownerKeys.some(v=>keys.includes(v));
     } catch(_) { return false; }
   }
   window.resourceCanManage = resourceCanManage;
+  window.resourceCanDelete = resourceCanDelete;
 
   function populateResourceSelects(){
     const schoolOptions = ['Toutes écoles', ...(Array.isArray(SCHOOLS) ? SCHOOLS : ['EFAP','ICART','CREAD','BRASSART'])];
@@ -10283,6 +10427,8 @@ window.addEventListener('DOMContentLoaded', () => {
       mimeType: row.mime_type || '',
       sizeBytes: Number(row.size_bytes || 0),
       uploadedBy: row.uploaded_by || '',
+      uploadedById: row.uploaded_by_id || row.owner_id || '',
+      campus: row.campus || '',
       createdAt: row.created_at || '',
       updatedAt: row.updated_at || ''
     };
@@ -10299,6 +10445,8 @@ window.addEventListener('DOMContentLoaded', () => {
       mime_type: r.mimeType || '',
       size_bytes: Number(r.sizeBytes || 0),
       uploaded_by: r.uploadedBy || '',
+      uploaded_by_id: r.uploadedById || '',
+      campus: r.campus || '',
       is_active: true,
       updated_at: new Date().toISOString()
     };
@@ -10382,7 +10530,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function resourceCardHtml(r){
-    const admin = resourceCanManage();
+    const admin = resourceCanDelete(r);
     return `<div class="resource-card">
       <div class="resource-top">
         <div class="resource-icon">${escapeHtml(resourceFileExt(r.fileName))}</div>
@@ -10400,14 +10548,13 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function resourceTableHtml(rows){
-    const admin = resourceCanManage();
     return `<div class="table-scroll"><table class="feature-table crm-table"><thead><tr><th>Titre</th><th>École</th><th>Type</th><th>Fichier</th><th>Date</th><th>Actions</th></tr></thead><tbody>${rows.map(r=>`<tr>
       <td data-label="Titre"><strong>${escapeHtml(r.title || 'Ressource')}</strong><br><span style="font-size:11px;color:var(--text3)">${escapeHtml(r.description || '')}</span></td>
       <td data-label="École">${escapeHtml(r.school || 'Toutes écoles')}</td>
       <td data-label="Type"><span class="badge b-blue">${escapeHtml(r.category || 'Autre')}</span></td>
       <td data-label="Fichier">${escapeHtml(r.fileName || '—')}<br><span style="font-size:11px;color:var(--text3)">${resourceSize(r.sizeBytes)}</span></td>
       <td data-label="Date">${resourceDate(r.createdAt)}</td>
-      <td data-label="Actions"><div class="lead-table-actions"><button class="btn btn-primary" onclick="downloadResourceFile('${escapeHtml(r.id)}')">Télécharger</button>${admin ? `<button class="btn btn-danger" onclick="deleteResourceFile('${escapeHtml(r.id)}')">Supprimer</button>` : ''}</div></td>
+      <td data-label="Actions"><div class="lead-table-actions"><button class="btn btn-primary" onclick="downloadResourceFile('${escapeHtml(r.id)}')">Télécharger</button>${resourceCanDelete(r) ? `<button class="btn btn-danger" onclick="deleteResourceFile('${escapeHtml(r.id)}')">Supprimer</button>` : ''}</div></td>
     </tr>`).join('')}</tbody></table></div>`;
   }
 
@@ -10417,7 +10564,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('resources-role-badge');
     if(badge){
       badge.className = admin ? 'resource-admin-badge' : 'resource-readonly-badge';
-      badge.textContent = admin ? 'Admin global · modification autorisée' : 'Téléchargement uniquement';
+      badge.textContent = admin ? 'Ajout de ressources autorisé' : 'Téléchargement uniquement';
     }
     const panel = document.getElementById('resources-admin-panel');
     if(panel) panel.classList.toggle('open', admin);
@@ -10432,7 +10579,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const rows = filteredResources();
     if(count) count.textContent = `${rows.length} ressource(s)`;
     if(!rows.length){
-      list.innerHTML = '<div class="resource-empty"><strong>Aucune ressource disponible.</strong><br>Un Admin global peut ajouter les plaquettes, présentations et activités depuis le formulaire d’upload.</div>';
+      list.innerHTML = '<div class="resource-empty"><strong>Aucune ressource disponible.</strong><br>Un collaborateur ou un administrateur peut ajouter les plaquettes, présentations et activités depuis le formulaire d’upload.</div>';
       return;
     }
     const mode = document.getElementById('resource-view-mode')?.value || 'cards';
@@ -10448,7 +10595,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   window.uploadResourceFile = async function(){
-    if(!resourceCanManage()) return showToast('Seul un Admin global peut ajouter des ressources.', 'error');
+    if(!resourceCanManage()) return showToast('L’ajout de ressources est réservé aux collaborateurs et administrateurs.', 'error');
     if(!supabaseClient) return showToast('Upload impossible sans Supabase.', 'error');
     const title = (document.getElementById('resource-title')?.value || '').trim();
     const description = (document.getElementById('resource-description')?.value || '').trim();
@@ -10467,9 +10614,16 @@ window.addEventListener('DOMContentLoaded', () => {
       showToast('Upload de la ressource en cours…');
       const up = await supabaseClient.storage.from(RESOURCE_BUCKET).upload(filePath, file, { cacheControl:'3600', upsert:false, contentType:file.type || undefined });
       if(up.error) throw up.error;
-      const payload = mapAppResourceToSupabase({ title, description, school, category, fileName:file.name, filePath, mimeType:file.type || '', sizeBytes:file.size, uploadedBy:cu?.email || cu?.firstName || 'Admin global' });
-      const { data, error } = await supabaseClient.from('ressources').insert([payload]).select('*').single();
-      if(error) throw error;
+      let payload = mapAppResourceToSupabase({ title, description, school, category, fileName:file.name, filePath, mimeType:file.type || '', sizeBytes:file.size, uploadedBy:cu?.email || cu?.firstName || 'Collaborateur', uploadedById:cu?.id || cu?.supabase_id || cu?.email || '', campus:cu?.campus || cu?.region || '' });
+      let data = null;
+      for(let attempt=0; attempt<4; attempt++){
+        const response = await supabaseClient.from('ressources').insert([payload]).select('*').single();
+        if(!response.error){ data = response.data; break; }
+        const cleaned = typeof removeMissingColumnAndRetryPayload === 'function' ? removeMissingColumnAndRetryPayload(payload, response.error) : null;
+        if(!cleaned) throw response.error;
+        payload = cleaned;
+      }
+      if(!data) throw new Error('La ressource n’a pas pu être enregistrée dans Supabase.');
       const saved = mapSupabaseResourceToApp(data || payload);
       RESOURCE_CACHE = [saved, ...RESOURCE_CACHE];
       RESOURCE_LAST_LOAD_AT = Date.now();
@@ -10503,9 +10657,9 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   window.deleteResourceFile = async function(id){
-    if(!resourceCanManage()) return showToast('Seul un Admin global peut supprimer une ressource.', 'error');
     const r = RESOURCE_CACHE.find(x => String(x.id) === String(id));
     if(!r) return showToast('Ressource introuvable', 'error');
+    if(!resourceCanDelete(r)) return showToast('Tu peux supprimer uniquement les ressources que tu as ajoutées.', 'error');
     if(!confirm(`Supprimer définitivement la ressource : ${r.title || r.fileName} ?`)) return;
     if(!supabaseClient) return showToast('Suppression impossible sans Supabase.', 'error');
     try {
@@ -12436,7 +12590,11 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     }
     const seen=new Set();
-    return list.filter(u=>{const key=String(u.id||u.email||'').toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true;});
+    return list.filter(u=>{
+      const prefs=u?.notificationPreferences||{};
+      if(prefs.registrations===false)return false;
+      const key=String(u.id||u.email||'').toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true;
+    });
   }
   function addRegistrationActivity(action,reg,ev){
     if(!reg||!ev)return null;
@@ -12493,12 +12651,13 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   function updateNotificationCenter(silent=true){
     installNotificationUI();
-    const registrationRows=pendingRegistrationActivities(false);
-    const postRows=typeof pendingPostForumEvents==='function'?pendingPostForumEvents(false):[];
+    const currentPrefs=(typeof currentUser==='function'?currentUser():null)?.notificationPreferences||{};
+    const registrationRows=currentPrefs.registrations===false?[]:pendingRegistrationActivities(false);
+    const postRows=currentPrefs.postForum===false?[]:(typeof pendingPostForumEvents==='function'?pendingPostForumEvents(false):[]);
     const count=$('post-forum-notification-count');if(count)count.textContent=String(registrationRows.length+postRows.length);
     const btn=$('post-forum-notification-btn');if(btn)btn.style.display=(typeof roleIsInternal==='function'&&roleIsInternal(S.role))?'':'none';
     if(!silent&&registrationRows.length&&typeof showToast==='function')showToast(`${registrationRows.length} nouvelle(s) inscription(s) étudiante(s)`,'success');
-    if(registrationRows.length&&'Notification'in window&&Notification.permission==='granted'){
+    if(registrationRows.length&&currentPrefs.browser!==false&&'Notification'in window&&Notification.permission==='granted'){
       const latest=registrationRows[0];const key='edh_registration_browser_notice_'+readKey();
       try{if(sessionStorage.getItem(key)!==latest.id){new Notification('EDH Forums — inscription étudiante',{body:`${latest.studentName||'Un étudiant'} ${latest.action==='unregistered'?'s’est désinscrit(e)':'s’est inscrit(e)'} de ${latest.eventName||'un forum'}.`});sessionStorage.setItem(key,latest.id);}}catch(_){}
     }
@@ -12946,7 +13105,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   if(typeof previousOpenRegistration==='function')window.openRegistrationModal=function(eventId){const ev=typeof findCalendarEventById==='function'?findCalendarEventById(eventId):null;if(!ev)return previousOpenRegistration.apply(this,arguments);const m=eventMeta(ev);if(!m.visible)return showToast('Cet événement n’est pas ouvert aux étudiants','error');if(m.registrationMode==='attribution')return showToast('L’inscription à cet événement est réalisée par un collaborateur','error');if(m.deadline&&new Date(m.deadline)<new Date())return showToast('La date limite d’inscription est dépassée','error');const count=activeRegs(ev).filter(r=>registrationStatus(r)!=='liste_attente').length;PENDING_REG_STATUS=m.registrationMode==='validation'?'en_attente':(m.staffMax>0&&count>=m.staffMax?'liste_attente':'inscrit');const result=previousOpenRegistration.apply(this,arguments);setTimeout(()=>{const sub=$('registration-modal-subtitle');if(sub&&PENDING_REG_STATUS==='liste_attente')sub.textContent+=' · Capacité atteinte : inscription sur liste d’attente';else if(sub&&PENDING_REG_STATUS==='en_attente')sub.textContent+=' · Validation collaborateur requise'},0);return result};
 
   async function tableExists(name){try{const r=await supabaseClient.from(name).select('id').limit(1);return !r.error}catch(_){return false}}
-  function currentRecipientIds(ev){const m=eventMeta(ev);const ids=new Set([m.ownerId,...(ev.collaboratorIds||[])]);if(!ids.size)internalUsers().filter(u=>String(u.role||'').includes('admin')).forEach(u=>ids.add(u.id||u.email));return [...ids].filter(Boolean)}
+  function currentRecipientIds(ev){const m=eventMeta(ev);const ids=new Set([m.ownerId,...(ev.collaboratorIds||[])]);if(!ids.size)internalUsers().filter(u=>String(u.role||'').includes('admin')).forEach(u=>ids.add(u.id||u.email));return [...ids].filter(Boolean).filter(id=>{const u=internalUsers().find(x=>[x.id,x.supabase_id,x.email].filter(Boolean).map(String).includes(String(id)));return u?.notificationPreferences?.registrations!==false})}
   async function upsertStructuredRegistration(reg,ev){if(!supabaseClient||STRUCTURED_TABLES.registrations===false)return;const payload={app_id:String(reg.id),event_key:eventKey(ev),event_supabase_id:ev.supabase_event_id||null,event_name:eventMeta(ev).title||ev.nom,user_app_id:reg.userId||null,student_app_id:reg.studentId||null,school:reg.school||null,first_name:reg.firstName||null,last_name:reg.lastName||null,email:reg.email||null,phone:reg.phone||null,notes:reg.notes||null,status:registrationStatus(reg),attendance_status:attendanceStatus(reg),forced_by_admin:!!reg.forcedByAdmin,created_at:reg.createdAt||nowIso(),updated_at:nowIso()};try{const r=await supabaseClient.from('inscriptions_evenements').upsert([payload],{onConflict:'app_id'});if(r.error){if(/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.registrations=false;else console.warn('[V72 inscriptions]',r.error)}else STRUCTURED_TABLES.registrations=true}catch(e){console.warn(e)}}
   async function deleteStructuredRegistration(reg){if(!supabaseClient||STRUCTURED_TABLES.registrations===false||!reg)return;try{const r=await supabaseClient.from('inscriptions_evenements').delete().eq('app_id',String(reg.id));if(r.error&&/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.registrations=false}catch(_){}}
   async function createNotificationV72(type,ev,reg,message){if(!supabaseClient||STRUCTURED_TABLES.notifications===false)return;const recipients=currentRecipientIds(ev);for(const recipient of recipients){const payload={app_id:'NOTIF_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),recipient_id:String(recipient),type,event_key:eventKey(ev),registration_app_id:reg?.id?String(reg.id):null,title:type==='registration_removed'?'Désinscription étudiante':'Nouvelle inscription étudiante',message,link_target:'event:'+eventKey(ev),is_read:false,created_at:nowIso()};try{const r=await supabaseClient.from('notifications').insert([payload]);if(r.error){if(/does not exist|relation/i.test(r.error.message||''))STRUCTURED_TABLES.notifications=false;else console.warn('[V72 notifications]',r.error)}else STRUCTURED_TABLES.notifications=true}catch(_){}}}
@@ -13290,6 +13449,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   }
 
   window.logoutPlatform=async function(){
+    try{ if(typeof window.edhPresenceTouchV79==='function') await window.edhPresenceTouchV79('logout'); }catch(_){}
     try{
       if(typeof supabaseClient!=='undefined' && supabaseClient?.auth?.signOut){
         await supabaseClient.auth.signOut().catch(()=>{});
@@ -13345,6 +13505,174 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
+})();
+</script>
+
+
+<style id="edh-v79-collaboration-style">
+/* V79 — collaboration, activité et notes. Aucun changement du design global. */
+.presence-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid var(--border);white-space:nowrap}.presence-badge::before{content:'';width:7px;height:7px;border-radius:999px;background:var(--gray)}.presence-badge.online{color:var(--green);background:var(--green-bg);border-color:var(--green-border)}.presence-badge.online::before{background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 18%,transparent)}.presence-badge.away{color:var(--text3);background:var(--gray-bg)}
+.v79-student-nav-divider{height:1px;background:var(--border);margin:8px 10px}.v79-upcoming-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.v79-upcoming-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px;box-shadow:var(--shadow-sm)}.v79-upcoming-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.v79-upcoming-title{font-size:15px;font-weight:850;color:var(--text)}.v79-upcoming-meta{font-size:12px;color:var(--text3);line-height:1.55;margin-top:5px}.v79-upcoming-stats{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.v79-upcoming-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.v79-upcoming-actions .btn{flex:1;justify-content:center}.v79-note-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:13px;margin-bottom:9px}.v79-note-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.v79-note-title{font-size:13px;font-weight:850;color:var(--text)}.v79-note-meta{font-size:11px;color:var(--text3);margin-top:3px}.v79-note-body{font-size:13px;color:var(--text2);line-height:1.6;margin-top:9px;white-space:pre-wrap}.v79-student-message-banner{margin-bottom:16px;border:1px solid #bfdbfe;background:var(--primary-light);border-radius:14px;padding:14px}.v79-pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.v79-pref-item{display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);font-size:12px;color:var(--text2)}.v79-pref-item input{margin-top:2px;accent-color:var(--primary)}.v79-crm-panel{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}.v79-crm-form{display:grid;grid-template-columns:180px minmax(0,1fr) auto;gap:8px;align-items:end}.v79-crm-timeline{margin-top:12px;max-height:300px;overflow:auto}.v79-note-unread{box-shadow:inset 3px 0 0 var(--primary)}
+@media(max-width:900px){.v79-upcoming-grid{grid-template-columns:1fr}.v79-crm-form{grid-template-columns:1fr}.v79-pref-grid{grid-template-columns:1fr}}
+</style>
+<script id="edh-v79-collaboration-script">
+(function(){
+  'use strict';
+  if(window.__EDH_V79_COLLABORATION__) return;
+  window.__EDH_V79_COLLABORATION__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'');
+  const now=()=>new Date().toISOString();
+  const current=()=>typeof currentUser==='function'?currentUser():null;
+  const role=()=>typeof normalizeRoleValue==='function'?normalizeRoleValue(current()?.role||S?.role):String(S?.role||'');
+  const internal=()=>typeof roleIsInternal==='function'&&roleIsInternal(current()?.role||S?.role);
+  const userKeys=u=>[u?.id,u?.supabase_id,u?.email].filter(Boolean).map(String);
+  const localGet=(key,fallback=[])=>{try{const v=JSON.parse(localStorage.getItem(key)||'null');return v??fallback}catch(_){return fallback}};
+  const localSet=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}};
+  const PRESENCE_INTERVAL=60000;
+  let presenceTimer=null;
+  let studentNotesCache=localGet('edh_student_notes_v79',[]);
+  let forumNotesCache=localGet('edh_forum_notes_v79',[]);
+
+  function parseDate(value){const d=value?new Date(value):null;return d&&!isNaN(d)?d:null}
+  function relativeDate(value){
+    const d=parseDate(value);if(!d)return 'Jamais connecté';
+    const diff=Math.max(0,Date.now()-d.getTime());
+    if(diff<60000)return 'À l’instant';
+    if(diff<3600000)return `Vu il y a ${Math.floor(diff/60000)} min`;
+    if(diff<86400000)return `Vu il y a ${Math.floor(diff/3600000)} h`;
+    return `Dernière connexion le ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+  }
+  function isOnlineUser(u){
+    const seen=parseDate(u?.lastSeenAt);const logout=parseDate(u?.lastLogoutAt);
+    return Boolean(seen && Date.now()-seen.getTime()<130000 && (!logout || logout<seen));
+  }
+  window.userPresenceHtmlV79=function(u){return isOnlineUser(u)?'<span class="presence-badge online">En ligne</span>':`<span class="presence-badge away">${esc(relativeDate(u?.lastSeenAt||u?.lastLoginAt))}</span>`};
+
+  async function persistPresence(eventType){
+    const u=current();if(!u)return false;
+    const stamp=now();
+    if(eventType==='login'){u.lastLoginAt=stamp;u.lastSeenAt=stamp;}
+    else if(eventType==='logout'){u.lastLogoutAt=stamp;}
+    else u.lastSeenAt=stamp;
+    try{safeLocalStorageSet('edh_users_v3',JSON.stringify(usersForLocalStorage()))}catch(_){}
+    const ready=typeof ensureSupabaseClient==='function'?await ensureSupabaseClient({silent:true}):{ok:Boolean(supabaseClient)};
+    if(!ready.ok||!supabaseClient)return false;
+    try{
+      const rpc=await supabaseClient.rpc('edh_touch_user_presence',{p_app_id:String(u.id||u.email),p_event:eventType});
+      if(!rpc.error)return true;
+      if(!/function .* does not exist|could not find the function|PGRST202/i.test(rpc.error.message||''))throw rpc.error;
+    }catch(error){if(!/function .* does not exist|could not find the function|PGRST202/i.test(error?.message||''))console.warn('[V79 présence]',error)}
+    try{
+      const payload=eventType==='login'?{last_login_at:stamp,last_seen_at:stamp}:eventType==='logout'?{last_logout_at:stamp}:{last_seen_at:stamp};
+      let q=supabaseClient.from('utilisateurs').update(payload);
+      q=u.supabase_id?q.eq('id',u.supabase_id):q.eq('app_id',String(u.id));
+      const r=await q;if(r.error)throw r.error;return true;
+    }catch(_){return false}
+  }
+  window.edhPresenceTouchV79=persistPresence;
+  function startPresence(){clearInterval(presenceTimer);if(!current())return;persistPresence('heartbeat');presenceTimer=setInterval(()=>{if(document.visibilityState==='visible')persistPresence('heartbeat')},PRESENCE_INTERVAL)}
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')persistPresence('heartbeat')});
+
+  function defaultPrefs(){return{registrations:true,postForum:true,studentNotes:true,browser:true}}
+  function prefsFor(u=current()){return{...defaultPrefs(),...(u?.notificationPreferences||{})}}
+  async function savePrefs(prefs){
+    const u=current();if(!u)return false;u.notificationPreferences={...prefs};safeLocalStorageSet('edh_users_v3',JSON.stringify(usersForLocalStorage()));
+    const ready=await ensureSupabaseClient({silent:true});if(!ready.ok||!supabaseClient)return true;
+    try{const rpc=await supabaseClient.rpc('edh_update_notification_preferences',{p_app_id:String(u.id||u.email),p_preferences:prefs});if(!rpc.error)return true;}catch(_){}
+    try{let q=supabaseClient.from('utilisateurs').update({notification_preferences:prefs});q=u.supabase_id?q.eq('id',u.supabase_id):q.eq('app_id',String(u.id));const r=await q;if(r.error)throw r.error;return true}catch(_){return false}
+  }
+  window.saveNotificationPreferencesV79=async function(){
+    const prefs={registrations:$('v79-pref-registrations')?.checked!==false,postForum:$('v79-pref-postforum')?.checked!==false,studentNotes:$('v79-pref-studentnotes')?.checked!==false,browser:$('v79-pref-browser')?.checked!==false};
+    await savePrefs(prefs);showToast('Préférences de notifications enregistrées','success');
+    if(typeof updateRegistrationNotificationCenter==='function')updateRegistrationNotificationCenter(true);
+  };
+  function installPreferences(){
+    const modal=$('modal-post-forum');const body=modal?.querySelector('.modal-body');if(!body||$('v79-notification-preferences'))return;
+    const prefs=prefsFor();const section=document.createElement('section');section.id='v79-notification-preferences';section.innerHTML=`<div class="registration-activity-heading"><h3>Préférences</h3></div><div class="v79-pref-grid"><label class="v79-pref-item"><input id="v79-pref-registrations" type="checkbox" ${prefs.registrations?'checked':''}><span><strong>Inscriptions</strong><br>Alertes d’inscription et désinscription.</span></label><label class="v79-pref-item"><input id="v79-pref-postforum" type="checkbox" ${prefs.postForum?'checked':''}><span><strong>Forums terminés</strong><br>Récapitulatifs post-forum.</span></label><label class="v79-pref-item"><input id="v79-pref-studentnotes" type="checkbox" ${prefs.studentNotes?'checked':''}><span><strong>Notes étudiants</strong><br>Messages et confirmations de lecture.</span></label><label class="v79-pref-item"><input id="v79-pref-browser" type="checkbox" ${prefs.browser?'checked':''}><span><strong>Navigateur</strong><br>Notifications natives de l’appareil.</span></label></div><div class="small-actions" style="margin-top:10px"><button class="btn btn-primary" type="button" onclick="saveNotificationPreferencesV79()">Enregistrer les préférences</button></div><div class="divider"></div>`;body.prepend(section);
+  }
+
+  function eventKey(ev){return String((typeof canonicalEventId==='function'&&canonicalEventId(ev))||ev?.supabase_event_id||ev?.id||'')}
+  function eventMeta(ev){return typeof edhEventMetaV72==='function'?edhEventMetaV72(ev):{visible:true,ownerId:'',deadline:'',staffMax:0}}
+  function studentRegistrations(){return typeof currentStudentRegistrations==='function'?currentStudentRegistrations():[]}
+  function belongs(reg,ev){return typeof registrationBelongsToEvent==='function'?registrationBelongsToEvent(reg,ev):String(reg.eventId)===eventKey(ev)}
+  function upcomingEvents(){
+    const u=current();const schools=typeof userSchoolAccess==='function'?userSchoolAccess(u):[];const campuses=typeof userCampusAccess==='function'?userCampusAccess(u):[];
+    return (typeof allCalendarEvents==='function'?allCalendarEvents():[]).filter(ev=>{
+      const m=eventMeta(ev);const end=typeof parseEventEndDateTime==='function'?parseEventEndDateTime(ev):new Date((ev.date||'')+'T23:59:59');
+      if(!m.visible||!end||end<new Date())return false;
+      const evSchools=typeof getSchoolsArray==='function'?getSchoolsArray(ev.ecoles):[];if(schools.length&&evSchools.length&&!evSchools.some(s=>schools.includes(s)))return false;
+      const campus=String(m.campus||ev.campus||ev.region||'').toLowerCase();if(campuses.length&&campus&&!campuses.some(c=>campus.includes(String(c).toLowerCase())))return false;
+      return true;
+    }).sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+  }
+  function ownerName(ev){const id=eventMeta(ev).ownerId;const u=(window.USERS||USERS||[]).find(x=>userKeys(x).includes(String(id)));return u?`${u.firstName||''} ${u.lastName||''}`.trim()||u.email:'À définir'}
+  window.renderStudentUpcomingV79=function(){
+    const host=$('v79-upcoming-list');const count=$('v79-upcoming-count');if(!host)return;
+    const events=upcomingEvents();const regs=studentRegistrations();if(count)count.textContent=`${events.length} événement(s) à venir`;
+    host.innerHTML=events.length?`<div class="v79-upcoming-grid">${events.map(ev=>{const m=eventMeta(ev);const reg=regs.find(r=>belongs(r,ev));const active=(window.REGISTRATIONS||REGISTRATIONS||[]).filter(r=>belongs(r,ev)&&!['annule','refuse','désinscrit','desinscrit'].includes(String(r.status||'').toLowerCase()));const full=Number(m.staffMax)>0&&active.length>=Number(m.staffMax);const deadline=m.deadline&&new Date(m.deadline)<new Date();return `<article class="v79-upcoming-card"><div class="v79-upcoming-card-head"><div><div class="v79-upcoming-title">${esc(m.title||ev.nom||'Événement')}</div><div class="v79-upcoming-meta">${typeof fmtDate==='function'?fmtDate(ev.date):esc(ev.date||'')} ${ev.heure?'· '+esc(ev.heure):''}<br>${esc(ev.ville||'')}${ev.adresse?' · '+esc(ev.adresse):''}<br>Responsable : ${esc(ownerName(ev))}</div></div>${reg?'<span class="badge b-green">Inscrit</span>':deadline?'<span class="badge b-gray">Clôturé</span>':full?'<span class="badge b-yellow">Liste d’attente</span>':'<span class="badge b-blue">Ouvert</span>'}</div><div class="v79-upcoming-stats">${(typeof getSchoolsArray==='function'?getSchoolsArray(ev.ecoles):[]).map(s=>`<span class="tag-sm tag-${String(s).toLowerCase()}">${esc(s)}</span>`).join('')}<span class="badge b-gray">${active.length}${Number(m.staffMax)>0?' / '+m.staffMax:''} inscrit(s)</span></div><div class="v79-upcoming-actions"><button class="btn btn-outline" type="button" onclick="openDetail('${esc(eventKey(ev))}')">Voir les détails</button>${reg?`<button class="btn btn-danger" type="button" onclick="unregisterCurrentStudent('${esc(reg.id)}');setTimeout(renderStudentUpcomingV79,150)">Se désinscrire</button>`:deadline?'<button class="btn btn-outline" disabled>Inscriptions closes</button>':`<button class="btn btn-primary" type="button" onclick="openRegistrationModal('${esc(eventKey(ev))}')">S’inscrire</button>`}</div></article>`}).join('')}</div>`:'<div class="muted-box">Aucun événement à venir n’est actuellement ouvert pour ton école et ton campus.</div>';
+  };
+  function installUpcomingPage(){
+    if(!$('page-upcomingstudent')){const page=document.createElement('div');page.className='page';page.id='page-upcomingstudent';page.innerHTML=`<div class="page-header"><div><div class="page-title">Prochains événements</div><div class="page-subtitle">Découvre les événements ouverts à ton école et inscris-toi directement.</div></div><div class="card-count" id="v79-upcoming-count"></div></div><div id="v79-student-note-banner"></div><div id="v79-upcoming-list"></div>`;$('app-main-content')?.appendChild(page)}
+    const nav=document.querySelector('.sidebar .nav');if(nav&&!nav.querySelector('[data-page="upcomingstudent"]')){const btn=document.createElement('button');btn.className='nav-item nav-direct-item';btn.dataset.page='upcomingstudent';btn.dataset.role='student';btn.type='button';btn.style.display=role()==='student'?'':'none';btn.setAttribute('onclick',"showPage('upcomingstudent')");btn.innerHTML='<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg><span>Prochains événements</span>';const mes=nav.querySelector('[data-page="inscriptions"][data-role="student"]');nav.insertBefore(btn,mes||null)}
+  }
+  function showUpcoming(){
+    installUpcomingPage();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$('page-upcomingstudent')?.classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page==='upcomingstudent'));if($('mobile-page-title'))$('mobile-page-title').textContent='Prochains événements';if($('mobile-page-subtitle'))$('mobile-page-subtitle').textContent='Espace étudiant';document.body.classList.remove('mobile-sidebar-open');updateMobileStudentNav();document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.mobilePage==='upcomingstudent'));renderStudentUpcomingV79();renderStudentNotesBanner();window.scrollTo({top:0,left:0,behavior:'auto'});
+  }
+
+  function studentRecipient(studentOrUser){const email=String(studentOrUser?.email||'').toLowerCase();return (window.USERS||USERS||[]).find(u=>String(u.email||'').toLowerCase()===email&&String(u.role||'').toLowerCase().includes('student'))||studentOrUser}
+  function noteVisibleToCurrent(n){const keys=userKeys(current()).map(String);return keys.includes(String(n.recipientId))||String(current()?.email||'').toLowerCase()===String(n.recipientEmail||'').toLowerCase()}
+  async function loadStudentNotes(){
+    const u=current();if(!u)return[];const ready=await ensureSupabaseClient({silent:true});if(ready.ok&&supabaseClient){try{const keys=userKeys(u);let q=supabaseClient.from('notifications').select('*').eq('type','student_note').order('created_at',{ascending:false}).limit(100);const r=keys.length?await q.in('recipient_id',keys):await q;if(!r.error&&Array.isArray(r.data)){const remote=r.data.map(n=>({id:String(n.app_id||n.id),recipientId:n.recipient_id,recipientEmail:n.recipient_email||'',title:n.title||'Message de l’équipe',message:n.message||'',authorName:n.author_name||'',createdAt:n.created_at||now(),read:!!n.is_read}));const map=new Map(studentNotesCache.map(n=>[String(n.id),n]));remote.forEach(n=>map.set(String(n.id),{...map.get(String(n.id)),...n}));studentNotesCache=[...map.values()];localSet('edh_student_notes_v79',studentNotesCache)}}catch(error){console.warn('[V79 notes étudiant]',error)}}return studentNotesCache.filter(noteVisibleToCurrent).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
+  }
+  window.openStudentNoteModalV79=function(idOrEmail=''){
+    if(!internal())return showToast('Accès réservé aux collaborateurs et administrateurs','error');installStudentNoteModal();const select=$('v79-note-student');const users=(window.USERS||USERS||[]).filter(u=>roleOfUser(u)==='student');select.innerHTML='<option value="">Choisir un étudiant</option>'+users.map(u=>`<option value="${esc(u.id||u.email)}">${esc(`${u.firstName||''} ${u.lastName||''}`.trim()||u.email)} · ${esc(u.email||'')}</option>`).join('');const target=users.find(u=>userKeys(u).includes(String(idOrEmail))||String(u.email||'').toLowerCase()===String(idOrEmail).toLowerCase());if(target)select.value=target.id||target.email;$('v79-note-message').value='';$('modal-student-note-v79').classList.add('open')
+  };
+  function roleOfUser(u){return typeof normalizeRoleValue==='function'?normalizeRoleValue(u?.role):String(u?.role||'')}
+  function installStudentNoteModal(){if($('modal-student-note-v79'))return;const modal=document.createElement('div');modal.className='modal-overlay';modal.id='modal-student-note-v79';modal.setAttribute('onclick',"closeModalIf(event,'modal-student-note-v79')");modal.innerHTML=`<div class="modal" style="max-width:620px"><div class="modal-header"><div><div class="modal-title">Laisser une note à un étudiant</div><div class="modal-subtitle">Le message apparaîtra lors de sa prochaine connexion.</div></div><button class="modal-close" onclick="closeModal('modal-student-note-v79')">✕</button></div><div class="modal-body"><div class="form-grid"><div class="form-field full"><label class="form-label">Étudiant</label><select class="form-select" id="v79-note-student"></select></div><div class="form-field full"><label class="form-label">Titre</label><input class="form-input" id="v79-note-title" value="Message de l’équipe forums"></div><div class="form-field full"><label class="form-label">Note *</label><textarea class="form-textarea" id="v79-note-message" rows="5" placeholder="Consigne, rappel, information logistique..."></textarea></div></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-student-note-v79')">Annuler</button><button class="btn btn-primary" onclick="saveStudentNoteV79()">Envoyer la note</button></div></div>`;document.body.appendChild(modal)}
+  window.saveStudentNoteV79=async function(){
+    const id=$('v79-note-student')?.value;const message=$('v79-note-message')?.value.trim();const title=$('v79-note-title')?.value.trim()||'Message de l’équipe';if(!id||!message)return showToast('Choisis un étudiant et saisis une note','error');const target=(window.USERS||USERS||[]).find(u=>userKeys(u).includes(String(id)));if(!target)return showToast('Compte étudiant introuvable','error');const author=current();const note={id:'SNOTE_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),recipientId:String(target.id||target.email),recipientEmail:target.email||'',title,message,authorName:`${author?.firstName||''} ${author?.lastName||''}`.trim()||author?.email||'Équipe forums',createdAt:now(),read:false};studentNotesCache.unshift(note);localSet('edh_student_notes_v79',studentNotesCache);const ready=await ensureSupabaseClient({silent:true});if(ready.ok&&supabaseClient){try{const r=await supabaseClient.from('notifications').insert([{app_id:note.id,recipient_id:note.recipientId,recipient_email:note.recipientEmail,type:'student_note',title:note.title,message:note.message,author_id:String(author?.id||author?.email||''),author_name:note.authorName,link_target:'student_notes',is_read:false,created_at:note.createdAt}]);if(r.error)throw r.error}catch(error){console.warn('[V79 envoi note]',error);showToast('Note enregistrée localement, mais la table notifications doit être configurée dans Supabase.','error')}}closeModal('modal-student-note-v79');showToast('Note envoyée à l’étudiant','success')
+  };
+  window.markStudentNoteReadV79=async function(id){const note=studentNotesCache.find(n=>String(n.id)===String(id));if(note)note.read=true;localSet('edh_student_notes_v79',studentNotesCache);if(supabaseClient){try{await supabaseClient.from('notifications').update({is_read:true,read_at:now()}).eq('app_id',String(id))}catch(_){}}renderStudentNotesBanner()};
+  async function renderStudentNotesBanner(){
+    const host=document.querySelector('.page.active #v79-student-note-banner, .page.active #student-note-banner-v79')||$('v79-student-note-banner')||$('student-note-banner-v79');
+    if(!host||role()!=='student')return;
+    const notes=await loadStudentNotes();
+    const unread=notes.filter(n=>!n.read);
+    host.innerHTML=unread.length?`<section class="v79-student-message-banner"><div class="registration-activity-heading"><h3>Messages de l’équipe</h3><span class="badge b-blue">${unread.length} non lu(s)</span></div>${unread.map(n=>`<article class="v79-note-card v79-note-unread"><div class="v79-note-head"><div><div class="v79-note-title">${esc(n.title)}</div><div class="v79-note-meta">${esc(n.authorName||'Équipe forums')} · ${new Date(n.createdAt).toLocaleString('fr-FR')}</div></div><button class="btn btn-ghost" onclick="markStudentNoteReadV79('${esc(n.id)}')">J’ai lu</button></div><div class="v79-note-body">${esc(n.message)}</div></article>`).join('')}</section>`:'';
+  }
+  function injectStudentNoteButtons(){if(!internal())return;document.querySelectorAll('#users-tbody tr').forEach(row=>{const email=row.children?.[1]?.textContent?.trim();const u=(window.USERS||USERS||[]).find(x=>String(x.email||'')===email);if(!u||roleOfUser(u)!=='student'||row.querySelector('.v79-student-note-btn'))return;const actions=row.lastElementChild?.querySelector('.small-actions');if(actions){const b=document.createElement('button');b.className='btn btn-outline v79-student-note-btn';b.style.cssText='padding:4px 8px;font-size:11px';b.textContent='Laisser une note';b.onclick=()=>openStudentNoteModalV79(u.id||u.email);actions.prepend(b)}})}
+
+  async function loadForumNotes(key){const ready=await ensureSupabaseClient({silent:true});if(ready.ok&&supabaseClient){try{const r=await supabaseClient.from('historique_actions').select('*').eq('event_key',String(key)).eq('action','forum_note').order('created_at',{ascending:false}).limit(100);if(!r.error&&Array.isArray(r.data)){const remote=r.data.map(x=>({id:String(x.id||x.app_id||('FH_'+Date.now())),eventKey:String(x.event_key),category:x.details?.category||'Information interne',message:x.details?.message||x.message||'',authorName:x.actor_name||'',createdAt:x.created_at||now()}));const map=new Map(forumNotesCache.map(n=>[String(n.id),n]));remote.forEach(n=>map.set(String(n.id),n));forumNotesCache=[...map.values()];localSet('edh_forum_notes_v79',forumNotesCache)}}catch(error){console.warn('[V79 notes forum]',error)}}return forumNotesCache.filter(n=>String(n.eventKey)===String(key)).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))}
+  window.addForumNoteV79=async function(key){const category=$('v79-forum-note-category')?.value||'Information interne';const message=$('v79-forum-note-message')?.value.trim();if(!message)return showToast('Saisis une note CRM','error');const u=current();const note={id:'FNOTE_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),eventKey:String(key),category,message,authorName:`${u?.firstName||''} ${u?.lastName||''}`.trim()||u?.email||'Équipe forums',createdAt:now()};forumNotesCache.unshift(note);localSet('edh_forum_notes_v79',forumNotesCache);if(typeof logHistoryV72==='function')await logHistoryV72('forum_note',typeof findCalendarEventById==='function'?findCalendarEventById(key):null,{category,message,noteId:note.id});$('v79-forum-note-message').value='';renderForumNotesV79(key);showToast('Note CRM ajoutée','success')};
+  window.renderForumNotesV79=async function(key){const host=$('v79-forum-notes-list');if(!host)return;const notes=await loadForumNotes(key);host.innerHTML=notes.length?notes.map(n=>`<article class="v79-note-card"><div class="v79-note-head"><div><div class="v79-note-title">${esc(n.category)}</div><div class="v79-note-meta">${esc(n.authorName||'Équipe forums')} · ${new Date(n.createdAt).toLocaleString('fr-FR')}</div></div></div><div class="v79-note-body">${esc(n.message)}</div></article>`).join(''):'<div class="muted-box">Aucune note CRM sur cet événement.</div>'};
+  function injectForumCrm(key){const body=$('detail-body');if(!body||!internal()||body.querySelector('.v79-crm-panel'))return;const panel=document.createElement('section');panel.className='v79-crm-panel';panel.innerHTML=`<div class="detail-panel-title">Notes CRM du forum</div><div class="v79-crm-form"><div class="form-field"><label class="form-label">Catégorie</label><select class="form-select" id="v79-forum-note-category"><option>Information interne</option><option>Contact lycée</option><option>Logistique</option><option>Étudiants</option><option>Matériel</option><option>Transport</option><option>Action à réaliser</option></select></div><div class="form-field"><label class="form-label">Nouvelle note</label><textarea class="form-textarea" id="v79-forum-note-message" rows="2" placeholder="Historique, décision, prochaine action..."></textarea></div><button class="btn btn-primary" type="button" onclick="addForumNoteV79('${esc(key)}')">Ajouter</button></div><div class="v79-crm-timeline" id="v79-forum-notes-list"></div>`;body.appendChild(panel);renderForumNotesV79(key)}
+
+  const previousOpenDetail=window.openDetail;if(typeof previousOpenDetail==='function')window.openDetail=function(id){const result=previousOpenDetail.apply(this,arguments);setTimeout(()=>injectForumCrm(String(id)),30);return result};
+  const previousRenderUsers=window.renderUsersPage;if(typeof previousRenderUsers==='function')window.renderUsersPage=function(autoRefresh=true){const result=previousRenderUsers.apply(this,arguments);setTimeout(injectStudentNoteButtons,0);if(autoRefresh!==false)refreshUserActivityV79(false).then(ok=>{if(ok&&$('page-users')?.classList.contains('active')){previousRenderUsers(false);setTimeout(injectStudentNoteButtons,0)}});return result};
+  const previousOpenNotifications=window.openPostForumNotifications;if(typeof previousOpenNotifications==='function')window.openPostForumNotifications=function(){installPreferences();return previousOpenNotifications.apply(this,arguments)};
+  const previousShowPage=window.showPage;if(typeof previousShowPage==='function')window.showPage=function(page){if(page==='upcomingstudent')return showUpcoming();const result=previousShowPage.apply(this,arguments);setTimeout(()=>{updateMobileStudentNav();if(role()==='student'){installUpcomingPage();renderStudentNotesBanner();if(page==='inscriptions'){let banner=$('student-note-banner-v79');if(!banner){banner=document.createElement('div');banner.id='student-note-banner-v79';$('page-inscriptions')?.querySelector('.page-header')?.insertAdjacentElement('afterend',banner)}renderStudentNotesBanner()}}},0);return result};
+  const previousSetRole=window.setRole;if(typeof previousSetRole==='function')window.setRole=function(){const result=previousSetRole.apply(this,arguments);setTimeout(()=>{installUpcomingPage();startPresence();if(role()==='student')showUpcoming()},30);return result};
+
+  function updateMobileStudentNav(){if(role()!=='student')return;const buttons=[...document.querySelectorAll('.mobile-nav-btn')];const cfg=[['upcomingstudent','◷','À venir'],['inscriptions','✓','Mes forums'],['leads','◎','Leads']];buttons.forEach((b,i)=>{if(i<cfg.length){const [p,ico,label]=cfg[i];b.style.display='flex';b.dataset.mobilePage=p;b.setAttribute('onclick',`showPage('${p}')`);b.innerHTML=`<span>${ico}</span><span>${label}</span>`}else b.style.display='none'});const nav=document.querySelector('.mobile-bottom-nav');if(nav)nav.style.gridTemplateColumns='repeat(3,1fr)'}
+  let activityRefreshAt=0;
+  let activityRefreshBusy=false;
+  async function refreshUserActivityV79(force=false){
+    if(activityRefreshBusy||(!force&&Date.now()-activityRefreshAt<30000))return false;
+    const ready=await ensureSupabaseClient({silent:true});if(!ready.ok||!supabaseClient)return false;
+    activityRefreshBusy=true;
+    try{
+      const r=await supabaseClient.rpc('edh_get_user_activity');
+      if(r.error)throw r.error;
+      (Array.isArray(r.data)?r.data:[]).forEach(row=>{const u=(window.USERS||USERS||[]).find(x=>String(x.id||'')===String(row.app_id||'')||String(x.email||'').toLowerCase()===String(row.email||'').toLowerCase());if(u){u.lastLoginAt=row.last_login_at||u.lastLoginAt||'';u.lastSeenAt=row.last_seen_at||u.lastSeenAt||'';u.lastLogoutAt=row.last_logout_at||u.lastLogoutAt||'';u.notificationPreferences=row.notification_preferences||u.notificationPreferences||{}}});
+      activityRefreshAt=Date.now();safeLocalStorageSet('edh_users_v3',JSON.stringify(usersForLocalStorage()));return true;
+    }catch(_){return false}finally{activityRefreshBusy=false}
+  }
+  window.refreshUserActivityV79=refreshUserActivityV79;
+  const previousSaveRegistrationV79=window.saveRegistration;if(typeof previousSaveRegistrationV79==='function')window.saveRegistration=function(){const result=previousSaveRegistrationV79.apply(this,arguments);setTimeout(()=>{if($('page-upcomingstudent')?.classList.contains('active'))renderStudentUpcomingV79()},180);return result};
+
+  async function boot(){installUpcomingPage();installStudentNoteModal();installPreferences();startPresence();updateMobileStudentNav();if(role()==='student'){let banner=$('student-note-banner-v79');if(!banner){banner=document.createElement('div');banner.id='student-note-banner-v79';$('page-inscriptions')?.querySelector('.page-header')?.insertAdjacentElement('afterend',banner)}renderStudentNotesBanner()}setInterval(()=>{if($('page-users')?.classList.contains('active')&&typeof renderUsersPage==='function')renderUsersPage(false)},60000)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
 
