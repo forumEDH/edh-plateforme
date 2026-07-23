@@ -1627,6 +1627,18 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
   .login-shell{max-height:calc(100dvh - 24px);overflow:auto}
 }
 </style>
+
+<style id="edh-v80-backlog-style">
+/* V80 — journal d'erreurs */
+.backlog-filter-box .form-grid{grid-template-columns:1.6fr .8fr .8fr .8fr}
+.backlog-table td{max-width:280px}
+.backlog-table code{font-family:'DM Mono',monospace;font-size:11px;color:var(--red);background:var(--red-bg);border:1px solid var(--red-border);padding:3px 6px;border-radius:6px}
+.backlog-message-cell{white-space:normal;line-height:1.45;min-width:260px}
+.backlog-version-value{font-size:20px!important}
+html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:rgba(220,38,38,.13)!important}
+@media(max-width:1100px){.backlog-filter-box .form-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.backlog-filter-box .form-grid{grid-template-columns:1fr!important}.backlog-message-cell{min-width:0}}
+</style>
 </head>
 <body>
 
@@ -1739,6 +1751,10 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
         <button class="nav-item nav-subitem" data-page="users" data-role="collaborateur" type="button" onclick="showPage('users')">
           <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
           <span>Utilisateurs</span>
+        </button>
+        <button class="nav-item nav-subitem" data-page="backlog" data-role="collaborateur" type="button" onclick="showPage('backlog')">
+          <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.6 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>
+          <span>Backlog erreurs</span>
         </button>
       </div></div>
     </div>
@@ -2405,6 +2421,61 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
               <tbody id="users-tbody"></tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BACKLOG ERREURS V80 ═══ -->
+    <div class="page" id="page-backlog">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Backlog erreurs</div>
+          <div class="page-subtitle">Journal technique des erreurs Supabase et JavaScript, avec utilisateur, date, contexte et version de l’application.</div>
+        </div>
+        <div class="small-actions">
+          <button class="btn btn-outline" type="button" onclick="reloadBacklogPage()">Recharger Supabase</button>
+          <button class="btn btn-outline" type="button" onclick="downloadBacklogExcel()">Exporter Excel</button>
+          <button class="btn btn-danger" type="button" onclick="clearBacklogLocal()">Vider le journal local</button>
+        </div>
+      </div>
+
+      <div class="kpi-row" id="backlog-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+
+      <div class="lead-filter-box backlog-filter-box">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Recherche</label>
+            <input class="form-input" id="backlog-search" placeholder="Code, message, utilisateur, action…" oninput="renderBacklogPage()">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Code</label>
+            <select class="form-select" id="backlog-code-filter" onchange="renderBacklogPage()"><option value="">Tous les codes</option></select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Niveau</label>
+            <select class="form-select" id="backlog-severity-filter" onchange="renderBacklogPage()">
+              <option value="">Tous les niveaux</option>
+              <option value="error">Erreur</option>
+              <option value="warning">Avertissement</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Depuis le</label>
+            <input class="form-input" type="date" id="backlog-date-from" onchange="renderBacklogPage()">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Erreurs enregistrées</div>
+          <div class="card-count" id="backlog-count">—</div>
+        </div>
+        <div class="table-scroll">
+          <table class="backlog-table">
+            <thead><tr><th>Date</th><th>Nb</th><th>Niveau</th><th>Utilisateur</th><th>Code</th><th>Action / page</th><th>Message</th><th>Version</th><th>Sync</th></tr></thead>
+            <tbody id="backlog-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -3353,9 +3424,9 @@ html[data-theme="dark"] .nav-group.open>.nav-group-toggle,html[data-theme="dark"
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V79-2026-07-22-collaboration-activity-login-fix";
-window.addEventListener("error", (e) => { try { showToast("Erreur JS : " + (e.message || "erreur inconnue"), "error"); } catch(_){} });
-window.addEventListener("unhandledrejection", (e) => { try { showToast("Erreur async : " + ((e.reason && (e.reason.message || e.reason.details || e.reason.code)) || e.reason || "erreur inconnue"), "error"); } catch(_){} });
+const APP_PATCH_VERSION = "V80-2026-07-23-hour-backlog-reporting-sync";
+// V80 : les écouteurs globaux sont installés après l'initialisation du backlog,
+// afin d'éviter les doubles handlers et les accès à un état encore non initialisé.
 // ══════════════════════════════════════
 // DATA BOOTSTRAP
 // ══════════════════════════════════════
@@ -3410,6 +3481,12 @@ let IMPORT_USER_HEADERS = [];
 let IMPORT_REPORTING_ROWS = [];
 let IMPORT_REPORTING_HEADERS = [];
 let REPORTING_DATA = {};
+let BACKLOG_ERRORS = [];
+let BACKLOG_SUPABASE_DISABLED = false;
+let BACKLOG_SYNC_TIMER = null;
+let BACKLOG_SYNC_IN_FLIGHT = false;
+let BACKLOG_RETRY_AFTER = 0;
+let BACKLOG_LAST_REMOTE_LOAD_AT = 0;
 let LEADS = [];
 let ARCHIVED_FORUM_IDS = [];
 let MULTI_REGISTRATION_STUDENT_IDS = new Set();
@@ -3538,8 +3615,307 @@ function cleanDateForSupabase(value){
   const dd = String(d.getDate()).padStart(2,"0");
   return `${yyyy}-${mm}-${dd}`;
 }
-function getSupabaseErrorMessage(err){
+const BACKLOG_STORAGE_KEY = 'edh_backlog_errors_v80';
+const BACKLOG_MAX_ENTRIES = 500;
+const BACKLOG_DEDUPE_WINDOW_MS = 60000;
+
+function backlogLimitText(value, maxLength){
+  const text = value === undefined || value === null ? '' : String(value);
+  return text.length > maxLength ? text.slice(0, maxLength) + '…' : text;
+}
+function redactBacklogText(value, maxLength=4000){
+  let text = backlogLimitText(value, maxLength);
+  if(!text) return '';
+  text = text
+    .replace(/(authorization\s*[:=]\s*bearer\s+)[a-z0-9._~+\/-]+/gi, '$1[MASQUÉ]')
+    .replace(/((?:access_token|refresh_token|apikey|api_key|password|mot_de_passe)\s*[:=]\s*)[^\s&,;]+/gi, '$1[MASQUÉ]')
+    .replace(/eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}/g, '[JWT MASQUÉ]');
+  return text;
+}
+function backlogHash(value){
+  let hash = 2166136261;
+  const input = String(value || '');
+  for(let i=0;i<input.length;i++){
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+function backlogCurrentPage(){
+  const active = document.querySelector('.page.active');
+  return active?.id ? active.id.replace(/^page-/, '') : '';
+}
+function backlogActor(){
+  const user = typeof currentUser === 'function' ? currentUser() : null;
+  const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+  return {
+    utilisateur: fullName || user?.email || user?.id || 'Non identifié',
+    utilisateur_id: user?.id || user?.supabase_id || null,
+    utilisateur_role: user?.role || null
+  };
+}
+function backlogContextObject(context){
+  if(context && typeof context === 'object') return { ...context };
+  return context ? { action:String(context) } : {};
+}
+function loadBacklogLocal(){
+  try {
+    const rows = JSON.parse(localStorage.getItem(BACKLOG_STORAGE_KEY) || '[]');
+    BACKLOG_ERRORS = Array.isArray(rows) ? rows.slice(0, BACKLOG_MAX_ENTRIES) : [];
+  } catch(error){
+    BACKLOG_ERRORS = [];
+    console.warn('[Backlog] historique local illisible', error);
+  }
+}
+function saveBacklogLocal(){
+  const limits = [BACKLOG_MAX_ENTRIES, 300, 150, 75, 30];
+  let lastError = null;
+  for(const limit of limits){
+    try {
+      const rows = (BACKLOG_ERRORS || []).slice(0, limit);
+      localStorage.setItem(BACKLOG_STORAGE_KEY, JSON.stringify(rows));
+      if(rows.length < BACKLOG_ERRORS.length) BACKLOG_ERRORS = rows;
+      return true;
+    } catch(error){
+      lastError = error;
+    }
+  }
+  console.warn('[Backlog] stockage local impossible même après réduction du journal', lastError);
+  return false;
+}
+function normalizeBacklogError(error){
+  if(error && typeof error === 'object') return error;
+  return { message:error === undefined || error === null ? 'Erreur inconnue' : String(error) };
+}
+function recordAppError(error, context, options={}){
+  try {
+    const err = normalizeBacklogError(error);
+    const ctx = backlogContextObject(context);
+    const actor = backlogActor();
+    const now = new Date().toISOString();
+    const code = redactBacklogText(err.code || options.code || 'APP_ERROR', 120);
+    const message = redactBacklogText(err.message || err.details || String(error || 'Erreur inconnue'), 2000);
+    const details = redactBacklogText(err.details || options.details || '', 4000);
+    const hint = redactBacklogText(err.hint || '', 2000);
+    const stack = redactBacklogText(err.stack || '', 8000);
+    const action = redactBacklogText(ctx.action || ctx.contexte || options.action || 'Erreur application', 300);
+    const page = redactBacklogText(ctx.page || backlogCurrentPage(), 120);
+    const source = redactBacklogText(ctx.source || err.source || '', 500);
+    const line = ctx.line || err.line || null;
+    const column = ctx.column || err.column || null;
+    const severity = options.severity || ctx.severity || (String(code).includes('WARNING') ? 'warning' : 'error');
+    const fingerprint = backlogHash([code, message, action, page, source, line, APP_PATCH_VERSION].join('|'));
+    const recent = (BACKLOG_ERRORS || []).find(entry =>
+      entry.fingerprint === fingerprint &&
+      entry.utilisateur_id === actor.utilisateur_id &&
+      Date.now() - new Date(entry.last_seen_at || entry.created_at || 0).getTime() <= BACKLOG_DEDUPE_WINDOW_MS
+    );
+    if(recent){
+      recent.count = Number(recent.count || 1) + 1;
+      recent.last_seen_at = now;
+      recent.synced = false;
+      recent.details = details || recent.details || '';
+      recent.stack = stack || recent.stack || '';
+      saveBacklogLocal();
+      queueBacklogSync();
+      if(backlogCurrentPage() === 'backlog') renderBacklogPage();
+      return recent;
+    }
+    const entry = {
+      id: `ERR-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+      created_at: now,
+      last_seen_at: now,
+      count: 1,
+      fingerprint,
+      severity,
+      utilisateur: actor.utilisateur,
+      utilisateur_id: actor.utilisateur_id,
+      utilisateur_role: actor.utilisateur_role,
+      code,
+      message,
+      details,
+      hint,
+      stack,
+      action,
+      page,
+      source,
+      line,
+      column,
+      app_version: APP_PATCH_VERSION,
+      online: navigator.onLine !== false,
+      synced: false
+    };
+    BACKLOG_ERRORS.unshift(entry);
+    if(BACKLOG_ERRORS.length > BACKLOG_MAX_ENTRIES) BACKLOG_ERRORS.length = BACKLOG_MAX_ENTRIES;
+    saveBacklogLocal();
+    if(options.sync !== false) queueBacklogSync();
+    if(backlogCurrentPage() === 'backlog') renderBacklogPage();
+    return entry;
+  } catch(logError){
+    console.warn('[Backlog] journalisation impossible', logError);
+    return null;
+  }
+}
+function backlogRowForSupabase(entry){
+  return {
+    id: entry.id,
+    created_at: entry.created_at,
+    last_seen_at: entry.last_seen_at,
+    occurrences: Number(entry.count || 1),
+    fingerprint: entry.fingerprint,
+    severity: entry.severity,
+    utilisateur: entry.utilisateur,
+    utilisateur_id: entry.utilisateur_id ? String(entry.utilisateur_id) : null,
+    utilisateur_role: entry.utilisateur_role,
+    code: entry.code,
+    message: entry.message,
+    details: entry.details,
+    hint: entry.hint,
+    stack: entry.stack,
+    contexte: entry.action,
+    page: entry.page,
+    source: entry.source,
+    ligne: entry.line ? Number(entry.line) : null,
+    colonne: entry.column ? Number(entry.column) : null,
+    app_version: entry.app_version,
+    online: Boolean(entry.online)
+  };
+}
+function isMissingBacklogTableError(error){
+  const raw = `${error?.code || ''} ${error?.message || ''} ${error?.details || ''}`;
+  return /42P01|PGRST205|backlog_erreurs.*does not exist|relation .*backlog_erreurs.*does not exist|could not find the table/i.test(raw);
+}
+function queueBacklogSync(delay=1200){
+  if(BACKLOG_SUPABASE_DISABLED || !supabaseClient || navigator.onLine === false) return;
+  if(BACKLOG_SYNC_TIMER) clearTimeout(BACKLOG_SYNC_TIMER);
+  BACKLOG_SYNC_TIMER = setTimeout(() => flushBacklogQueue(), delay);
+}
+async function flushBacklogQueue(){
+  if(BACKLOG_SYNC_IN_FLIGHT || BACKLOG_SUPABASE_DISABLED || !supabaseClient || navigator.onLine === false) return;
+  if(Date.now() < BACKLOG_RETRY_AFTER) return;
+  const pending = (BACKLOG_ERRORS || []).filter(entry => !entry.synced).slice(0, 25);
+  if(!pending.length) return;
+  BACKLOG_SYNC_IN_FLIGHT = true;
+  try {
+    const { error } = await supabaseClient.from('backlog_erreurs').upsert(pending.map(backlogRowForSupabase), { onConflict:'id' });
+    if(error) throw error;
+    const syncedIds = new Set(pending.map(entry => entry.id));
+    BACKLOG_ERRORS.forEach(entry => { if(syncedIds.has(entry.id)) entry.synced = true; });
+    saveBacklogLocal();
+    BACKLOG_RETRY_AFTER = 0;
+    if((BACKLOG_ERRORS || []).some(entry => !entry.synced)) queueBacklogSync(1800);
+  } catch(error){
+    if(isMissingBacklogTableError(error)){
+      BACKLOG_SUPABASE_DISABLED = true;
+      console.warn('[Backlog] table Supabase absente : journal local uniquement. Exécutez la migration V80.');
+    } else {
+      BACKLOG_RETRY_AFTER = Date.now() + 30000;
+      console.warn('[Backlog] synchronisation différée', error);
+    }
+  } finally {
+    BACKLOG_SYNC_IN_FLIGHT = false;
+    if(backlogCurrentPage() === 'backlog') renderBacklogPage();
+  }
+}
+function mapSupabaseBacklogRow(row){
+  return {
+    id: String(row.id || `REMOTE-${Date.now()}-${Math.random().toString(36).slice(2,8)}`),
+    created_at: row.created_at || new Date().toISOString(),
+    last_seen_at: row.last_seen_at || row.created_at || new Date().toISOString(),
+    count: Number(row.occurrences || row.count || 1),
+    fingerprint: row.fingerprint || backlogHash(`${row.code}|${row.message}|${row.contexte}`),
+    severity: row.severity || 'error',
+    utilisateur: row.utilisateur || 'Non identifié',
+    utilisateur_id: row.utilisateur_id || null,
+    utilisateur_role: row.utilisateur_role || null,
+    code: row.code || 'APP_ERROR',
+    message: row.message || '',
+    details: row.details || '',
+    hint: row.hint || '',
+    stack: row.stack || '',
+    action: row.contexte || '',
+    page: row.page || '',
+    source: row.source || '',
+    line: row.ligne || null,
+    column: row.colonne || null,
+    app_version: row.app_version || '',
+    online: row.online !== false,
+    synced: true
+  };
+}
+async function loadBacklogFromSupabase(force=false){
+  if(BACKLOG_SUPABASE_DISABLED || !supabaseClient) return false;
+  if(!force && Date.now() - BACKLOG_LAST_REMOTE_LOAD_AT < 30000) return true;
+  try {
+    const { data, error } = await supabaseClient.from('backlog_erreurs').select('*').order('created_at', { ascending:false }).limit(500);
+    if(error) throw error;
+    const merged = new Map((BACKLOG_ERRORS || []).map(entry => [String(entry.id), entry]));
+    (Array.isArray(data) ? data : []).forEach(row => {
+      const id = String(row.id);
+      const remote = mapSupabaseBacklogRow(row);
+      const local = merged.get(id);
+      if(!local){
+        merged.set(id, remote);
+        return;
+      }
+      const localTime = new Date(local.last_seen_at || local.created_at || 0).getTime();
+      const remoteTime = new Date(remote.last_seen_at || remote.created_at || 0).getTime();
+      merged.set(id, {
+        ...(remoteTime >= localTime ? local : remote),
+        ...(remoteTime >= localTime ? remote : local),
+        count:Math.max(Number(local.count || 1), Number(remote.count || 1)),
+        synced:local.synced === false ? false : true
+      });
+    });
+    BACKLOG_ERRORS = [...merged.values()]
+      .sort((a,b) => new Date(b.last_seen_at || b.created_at) - new Date(a.last_seen_at || a.created_at))
+      .slice(0, BACKLOG_MAX_ENTRIES);
+    BACKLOG_LAST_REMOTE_LOAD_AT = Date.now();
+    saveBacklogLocal();
+    return true;
+  } catch(error){
+    if(isMissingBacklogTableError(error)){
+      BACKLOG_SUPABASE_DISABLED = true;
+      console.warn('[Backlog] table Supabase absente : affichage local uniquement.');
+    } else console.warn('[Backlog] chargement Supabase impossible', error);
+    return false;
+  }
+}
+function installBacklogErrorListeners(){
+  if(window.__EDH_BACKLOG_LISTENERS_V80__) return;
+  window.__EDH_BACKLOG_LISTENERS_V80__ = true;
+  window.addEventListener('error', event => {
+    const message = event.message || 'Erreur JavaScript';
+    if(/ResizeObserver loop|Script error\.?$/i.test(message)) return;
+    recordAppError({
+      message,
+      code:'JS_ERROR',
+      stack:event.error?.stack || ''
+    }, {
+      action:'Erreur JavaScript globale',
+      source:event.filename || '',
+      line:event.lineno || null,
+      column:event.colno || null
+    });
+    try { showToast('Erreur JS : ' + message, 'error'); } catch(_) {}
+  });
+  window.addEventListener('unhandledrejection', event => {
+    const reason = event.reason;
+    const message = reason?.message || reason?.details || String(reason || 'Promesse rejetée');
+    recordAppError({
+      message,
+      code:reason?.code || 'PROMISE_REJECTION',
+      details:reason?.details || '',
+      hint:reason?.hint || '',
+      stack:reason?.stack || ''
+    }, { action:'Promesse non gérée' });
+    try { showToast('Erreur async : ' + message, 'error'); } catch(_) {}
+  });
+  window.addEventListener('online', () => queueBacklogSync(600));
+}
+function getSupabaseErrorMessage(err, context){
   if(!err) return 'Erreur inconnue';
+  recordAppError(err, context || 'Erreur Supabase');
   const parts = [];
   if(err.message) parts.push(err.message);
   if(err.details) parts.push('Détail : ' + err.details);
@@ -3666,7 +4042,7 @@ if(new URLSearchParams(window.location.search).get('resetEvents') === '1'){
   } catch(e) {}
 }
 function getMissingSupabaseColumn(err){
-  const msg = getSupabaseErrorMessage(err);
+  const msg = [err?.message, err?.details, err?.hint].filter(Boolean).join(' — ');
   const m = msg.match(/could not find the "([^"]+)" column/i) || msg.match(/column "([^"]+)".*does not exist/i);
   return m ? m[1] : '';
 }
@@ -3677,7 +4053,18 @@ function removeMissingColumnAndRetryPayload(payload, err){
   delete cleaned[missing];
   const warning = `Colonne Supabase absente ignorée pour cette sauvegarde : ${missing}`;
   console.warn(warning);
+  recordAppError(err, { action:'Compatibilité du schéma Supabase', source:missing }, { severity:'warning' });
   try { showToast(warning, 'error'); } catch(_) {}
+  return cleaned;
+}
+function removeInvalidHourAndRetryPayload(payload, err, context){
+  if(!payload || !Object.prototype.hasOwnProperty.call(payload, 'heure') || !payload.heure) return null;
+  const raw = `${err?.code || ''} ${err?.message || ''} ${err?.details || ''} ${err?.hint || ''}`;
+  if(!['22007','22P02'].includes(String(err?.code || '')) || !/time|heure|invalid input syntax/i.test(raw)) return null;
+  const cleaned = { ...payload };
+  delete cleaned.heure;
+  recordAppError(err, { action:context || 'Sauvegarde événement', source:'champ heure' }, { severity:'warning' });
+  console.warn('[V80] Horaire libre non accepté par Supabase : nouvelle tentative sans le champ heure.');
   return cleaned;
 }
 
@@ -4641,6 +5028,7 @@ async function saveEventDirectToSupabase(localEvent){
       existingId = existing && existing.length ? existing[0].id : null;
     }
     const missingColumns = [];
+    const omittedFields = [];
     for(let attempt=0; attempt<12; attempt++){
       const response = existingId
         ? await supabaseClient.from('evenements').update(payload).eq('id', existingId)
@@ -4649,7 +5037,7 @@ async function saveEventDirectToSupabase(localEvent){
         if(!existingId) localEvent.supabase_event_id = response.data?.id || null;
         else localEvent.supabase_event_id = existingId;
         if(missingColumns.length) console.warn('Supabase événements : colonnes manquantes ignorées pendant la sauvegarde', [...new Set(missingColumns)]);
-        return { ok:true, id: localEvent.supabase_event_id, missingColumns };
+        return { ok:true, id: localEvent.supabase_event_id, missingColumns, omittedFields:[...new Set(omittedFields)] };
       }
       const cleaned = removeMissingColumnAndRetryPayload(payload, response.error);
       if(cleaned){
@@ -4658,13 +5046,19 @@ async function saveEventDirectToSupabase(localEvent){
         payload = cleaned;
         continue;
       }
+      const withoutInvalidHour = removeInvalidHourAndRetryPayload(payload, response.error, 'Sauvegarde événement Supabase');
+      if(withoutInvalidHour){
+        omittedFields.push('heure');
+        payload = withoutInvalidHour;
+        continue;
+      }
       throw response.error;
     }
     if(missingColumns.length) console.warn('Supabase événements : sauvegarde abandonnée après colonnes manquantes', [...new Set(missingColumns)]);
     return { ok:false, message:'Trop de colonnes Supabase manquantes pour sauvegarder cet événement', missingColumns };
   } catch(err){
     console.error('Erreur sauvegarde événement Supabase:', err);
-    return { ok:false, error:err, message:getSupabaseErrorMessage(err) };
+    return { ok:false, error:err, message:getSupabaseErrorMessage(err, 'Sauvegarde événement Supabase') };
   }
 }
 async function deleteEventDirectFromSupabase(localEvent){
@@ -6882,7 +7276,12 @@ async function saveForm(){
       SUPABASE_IS_PUSHING = true;
       saveLocalData();
       SUPABASE_IS_PUSHING = previousPushState2;
-      showToast(eventSave.skipped ? successLabel + ' dans Supabase' : successLabel + ' + événement enregistrés dans Supabase');
+      const hourOmitted = Array.isArray(eventSave.omittedFields) && eventSave.omittedFields.includes('heure');
+      if(hourOmitted){
+        showToast(successLabel + ' + événement enregistrés, mais l’horaire n’a pas été synchronisé. Exécutez la migration Supabase V80.', 'error');
+      } else {
+        showToast(eventSave.skipped ? successLabel + ' dans Supabase' : successLabel + ' + événement enregistrés dans Supabase');
+      }
     } else {
       console.error('Sauvegarde Supabase refusée:', { lyceeSave, suiviSave, eventSave });
       const msg = !lyceeSave.ok ? lyceeSave.message : (!suiviSave.ok ? suiviSave.message : eventSave.message);
@@ -6890,7 +7289,7 @@ async function saveForm(){
     }
   })().catch(err => {
     console.error('Erreur sauvegarde Supabase:', err);
-    showToast('Erreur Supabase : ' + getSupabaseErrorMessage(err), 'error');
+    showToast('Erreur Supabase : ' + getSupabaseErrorMessage(err, 'Sauvegarde formulaire lycée / événement'), 'error');
   });
 }
 
@@ -7288,6 +7687,116 @@ function checkPostForumNotifications(silent=true){
 }
 
 // ══════════════════════════════════════
+// V80 — BACKLOG ERREURS : AFFICHAGE / EXPORT
+// ══════════════════════════════════════
+function backlogExcelSafe(value){
+  const text = value === undefined || value === null ? '' : String(value);
+  return /^[=+\-@]/.test(text) ? "'" + text : text;
+}
+function backlogFilteredEntries(){
+  const search = (document.getElementById('backlog-search')?.value || '').trim().toLowerCase();
+  const code = document.getElementById('backlog-code-filter')?.value || '';
+  const severity = document.getElementById('backlog-severity-filter')?.value || '';
+  const dateFrom = document.getElementById('backlog-date-from')?.value || '';
+  return (BACKLOG_ERRORS || []).filter(entry => {
+    if(code && entry.code !== code) return false;
+    if(severity && entry.severity !== severity) return false;
+    if(dateFrom && String(entry.created_at || '').slice(0,10) < dateFrom) return false;
+    if(search){
+      const haystack = [entry.utilisateur,entry.code,entry.message,entry.details,entry.hint,entry.action,entry.page,entry.app_version].join(' ').toLowerCase();
+      if(!haystack.includes(search)) return false;
+    }
+    return true;
+  }).sort((a,b) => new Date(b.last_seen_at || b.created_at) - new Date(a.last_seen_at || a.created_at));
+}
+function refreshBacklogCodeOptions(){
+  const select = document.getElementById('backlog-code-filter');
+  if(!select) return;
+  const current = select.value;
+  const codes = [...new Set((BACKLOG_ERRORS || []).map(entry => entry.code).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  select.innerHTML = '<option value="">Tous les codes</option>' + codes.map(code => `<option value="${escapeHtml(code)}">${escapeHtml(code)}</option>`).join('');
+  if(codes.includes(current)) select.value = current;
+}
+function renderBacklogPage(){
+  const tbody = document.getElementById('backlog-tbody');
+  if(!tbody) return;
+  refreshBacklogCodeOptions();
+  const entries = backlogFilteredEntries();
+  const totalOccurrences = entries.reduce((sum,entry)=>sum+Number(entry.count||1),0);
+  const uniqueUsers = new Set(entries.map(entry=>entry.utilisateur_id || entry.utilisateur).filter(Boolean)).size;
+  const pendingSync = (BACKLOG_ERRORS || []).filter(entry=>!entry.synced).length;
+  const kpis = document.getElementById('backlog-kpis');
+  if(kpis) kpis.innerHTML = `
+    <div class="kpi-card kpi-accent-red"><div class="kpi-label">Entrées affichées</div><div class="kpi-value">${entries.length}</div><div class="kpi-meta">${totalOccurrences} occurrence(s)</div></div>
+    <div class="kpi-card"><div class="kpi-label">Utilisateurs</div><div class="kpi-value">${uniqueUsers}</div><div class="kpi-meta">dans le filtre actuel</div></div>
+    <div class="kpi-card kpi-accent-yellow"><div class="kpi-label">À synchroniser</div><div class="kpi-value">${pendingSync}</div><div class="kpi-meta">journal local</div></div>
+    <div class="kpi-card kpi-accent-blue"><div class="kpi-label">Version</div><div class="kpi-value backlog-version-value">V80</div><div class="kpi-meta">${escapeHtml(APP_PATCH_VERSION)}</div></div>`;
+  const count = document.getElementById('backlog-count');
+  if(count) count.textContent = `${entries.length} entrée(s) · maximum local ${BACKLOG_MAX_ENTRIES}`;
+  tbody.innerHTML = entries.length ? entries.map(entry => {
+    const date = new Date(entry.last_seen_at || entry.created_at);
+    const dateText = isNaN(date.getTime()) ? (entry.created_at || '—') : date.toLocaleString('fr-FR');
+    const context = [entry.action, entry.page ? `page ${entry.page}` : ''].filter(Boolean).join(' · ');
+    const detailsTitle = [entry.message, entry.details, entry.hint, entry.stack].filter(Boolean).join('\n\n');
+    const severityClass = entry.severity === 'warning' ? 'b-yellow' : 'b-red';
+    return `<tr>
+      <td data-label="Date">${escapeHtml(dateText)}</td>
+      <td data-label="Occurrences"><strong>${Number(entry.count||1)}</strong></td>
+      <td data-label="Niveau"><span class="badge ${severityClass}">${entry.severity === 'warning' ? 'Avertissement' : 'Erreur'}</span></td>
+      <td data-label="Utilisateur" title="${escapeHtml(entry.utilisateur_id || '')}">${escapeHtml(entry.utilisateur || 'Non identifié')}</td>
+      <td data-label="Code"><code>${escapeHtml(entry.code || 'APP_ERROR')}</code></td>
+      <td data-label="Action">${escapeHtml(context || '—')}</td>
+      <td data-label="Message" class="backlog-message-cell" title="${escapeHtml(detailsTitle)}">${escapeHtml(entry.message || '')}</td>
+      <td data-label="Version">${escapeHtml(entry.app_version || '—')}</td>
+      <td data-label="Sync"><span class="badge ${entry.synced ? 'b-green' : 'b-gray'}">${entry.synced ? 'Supabase' : 'Local'}</span></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" class="empty-state">Aucune erreur ne correspond aux filtres.</td></tr>';
+}
+async function reloadBacklogPage(){
+  const loaded = await loadBacklogFromSupabase(true);
+  renderBacklogPage();
+  showToast(loaded ? 'Backlog rechargé depuis Supabase' : 'Backlog local affiché : table Supabase indisponible', loaded ? 'success' : 'error');
+}
+function downloadBacklogExcel(){
+  if(typeof XLSX === 'undefined') return showToast('Bibliothèque Excel indisponible','error');
+  const rows = backlogFilteredEntries().map(entry => ({
+    'Première occurrence': backlogExcelSafe(new Date(entry.created_at).toLocaleString('fr-FR')),
+    'Dernière occurrence': backlogExcelSafe(new Date(entry.last_seen_at || entry.created_at).toLocaleString('fr-FR')),
+    'Nombre occurrences': Number(entry.count || 1),
+    'Niveau': backlogExcelSafe(entry.severity || ''),
+    'Utilisateur': backlogExcelSafe(entry.utilisateur || ''),
+    'Identifiant utilisateur': backlogExcelSafe(entry.utilisateur_id || ''),
+    'Rôle': backlogExcelSafe(entry.utilisateur_role || ''),
+    'Code': backlogExcelSafe(entry.code || ''),
+    'Action': backlogExcelSafe(entry.action || ''),
+    'Page': backlogExcelSafe(entry.page || ''),
+    'Message': backlogExcelSafe(entry.message || ''),
+    'Détails': backlogExcelSafe(entry.details || ''),
+    'Indice': backlogExcelSafe(entry.hint || ''),
+    'Source': backlogExcelSafe(entry.source || ''),
+    'Ligne': entry.line || '',
+    'Colonne': entry.column || '',
+    'Stack': backlogExcelSafe(entry.stack || ''),
+    'Version': backlogExcelSafe(entry.app_version || ''),
+    'Empreinte': backlogExcelSafe(entry.fingerprint || ''),
+    'Synchronisé': entry.synced ? 'Oui' : 'Non'
+  }));
+  if(!rows.length) return showToast('Aucune erreur à exporter','error');
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:20},{wch:20},{wch:12},{wch:14},{wch:24},{wch:22},{wch:16},{wch:18},{wch:28},{wch:16},{wch:55},{wch:55},{wch:35},{wch:35},{wch:9},{wch:9},{wch:70},{wch:42},{wch:18},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Backlog');
+  XLSX.writeFile(wb, `EDH_backlog_erreurs_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+function clearBacklogLocal(){
+  if(!confirm('Vider le journal local de cet appareil ? Les erreurs déjà synchronisées dans Supabase resteront disponibles après rechargement.')) return;
+  BACKLOG_ERRORS = [];
+  saveBacklogLocal();
+  renderBacklogPage();
+  showToast('Journal local vidé');
+}
+
+// ══════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════
 function updateTopbarForPage(page){
@@ -7341,6 +7850,7 @@ function showPage(page){
     reporting: "Reporting opérationnel",
     performance: "Bilan & conversion",
     users: "Utilisateurs",
+    backlog: "Backlog erreurs",
     inscriptions: "Mes évènements"
   };
   document.querySelectorAll('.nav-item').forEach(btn=>{
@@ -7359,6 +7869,7 @@ function showPage(page){
   else if(page==='students') renderStudentsPage();
   else if(page==='registrations') renderRegistrationsPage();
   else if(page==='users') { renderUsersPage(); }
+  else if(page==='backlog') { renderBacklogPage(); loadBacklogFromSupabase(false).then(()=>renderBacklogPage()); }
   else if(page==='reporting') { renderReportingPage(); }
   else if(page==='leads') renderLeadsPage();
   else if(page==='leadsall') renderAllLeadsPage();
@@ -9000,13 +9511,56 @@ function reportingRowsForExport(){
 function downloadReportingExcel(){ const ws=XLSX.utils.json_to_sheet(reportingRowsForExport()); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Reporting'); XLSX.writeFile(wb,'EDH_reporting_forums.xlsx'); }
 function openImportReportingModal(){ document.getElementById('reporting-import-file').value=''; document.getElementById('import-reporting-box').innerHTML="Sélectionne d'abord un fichier Excel."; IMPORT_REPORTING_ROWS=[]; IMPORT_REPORTING_HEADERS=[]; document.getElementById('modal-import-reporting').classList.add('open'); }
 function handleReportingFile(event){ const file=event.target.files?.[0]; if(!file)return; const reader=new FileReader(); reader.onload=e=>{ try{ const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}); IMPORT_REPORTING_ROWS=rows; IMPORT_REPORTING_HEADERS=rows.length?Object.keys(rows[0]):[]; document.getElementById('import-reporting-box').innerHTML=`${rows.length} ligne(s) détectée(s). Import automatique sur événement/lycée + école.`; }catch(err){ document.getElementById('import-reporting-box').innerHTML='<span style="color:var(--red)">Impossible de lire ce fichier.</span>'; }}; reader.readAsArrayBuffer(file); }
-function importReportingFromFile(){
+async function importReportingFromFile(){
   if(!IMPORT_REPORTING_ROWS.length) return showToast('Aucun reporting à importer','error');
-  const h=IMPORT_REPORTING_HEADERS; const cEvent=findCol(h,['évènement','evenement','lycée','lycee','établissement','etablissement']); const cSchool=findCol(h,['école','ecole','school']);
+  const h=IMPORT_REPORTING_HEADERS;
+  const cEvent=findCol(h,['évènement','evenement','lycée','lycee','établissement','etablissement']);
+  const cSchool=findCol(h,['école','ecole','school']);
   const mapping={nombreProspect:findCol(h,['nombre de prospect']), statut:findCol(h,['statuts','statut']), global:findCol(h,['global']), seconde:findCol(h,['2nd','seconde']), premiere:findCol(h,['1ere','1ère','premiere']), terminale:findCol(h,['term']), autres:findCol(h,['autres']), prospect:findCol(h,['prospect']), candidat:findCol(h,['candidat']), admis:findCol(h,['admis']), inscrit:findCol(h,['inscrit'])};
   let imported=0;
-  IMPORT_REPORTING_ROWS.forEach(row=>{ const name=normalizeLyceeName(row[cEvent]||''); const school=normalizeSchoolName(row[cSchool]||''); if(!name||!school)return; const ev=LYCEES.find(l=>normalizeLyceeName(l.nom)===name && schoolMatches(l.ecoles,school)); if(!ev)return; const rec=getReportRecord(ev.id,school); Object.entries(mapping).forEach(([field,col])=>{ if(!col)return; rec[field]=field==='statut' ? (row[col]||rec[field]) : Number(row[col]||0); }); imported++; });
-  saveLocalData(); closeModal('modal-import-reporting'); renderReportingPage(); showToast(`${imported} ligne(s) de reporting importée(s)`);
+  const modifiedEvents = new Map();
+  IMPORT_REPORTING_ROWS.forEach(row=>{
+    const name=normalizeLyceeName(row[cEvent]||'');
+    const school=normalizeSchoolName(row[cSchool]||'');
+    if(!name||!school) return;
+    const ev=LYCEES.find(l=>normalizeLyceeName(l.nom)===name && schoolMatches(l.ecoles,school));
+    if(!ev) return;
+    const rec=getReportRecord(ev.id,school);
+    Object.entries(mapping).forEach(([field,col])=>{
+      if(!col) return;
+      rec[field]=field==='statut' ? (row[col]||rec[field]) : Math.max(0, Number(row[col]||0));
+    });
+    modifiedEvents.set(String(canonicalEventId(ev) || ev.id), ev);
+    imported++;
+  });
+  if(!imported) return showToast('Aucune ligne du fichier ne correspond à un forum et une école connus.','error');
+
+  saveLocalData();
+  const events = [...modifiedEvents.values()];
+  let failed = 0;
+  if(supabaseClient){
+    showToast(`${imported} ligne(s) importée(s). Synchronisation de ${events.length} événement(s)…`);
+    const results = await Promise.all(events.map(async ev => {
+      try { return { ev, result:await saveEventExtrasToSupabase(ev) }; }
+      catch(error){ return { ev, error }; }
+    }));
+    results.forEach(({ev,result,error}) => {
+      const syncError = error || (!result?.ok ? (result?.error || new Error(result?.message || 'Synchronisation refusée')) : null);
+      if(syncError){
+        failed++;
+        recordAppError(syncError, { action:'Import Excel du reporting', source:ev?.nom || ev?.id || '' });
+      }
+    });
+  }
+  closeModal('modal-import-reporting');
+  renderReportingPage();
+  if(failed){
+    showToast(`${imported} ligne(s) importée(s), mais ${failed} événement(s) non synchronisé(s) dans Supabase. Consultez le backlog.`, 'error');
+  } else if(!supabaseClient){
+    showToast(`${imported} ligne(s) importée(s) localement. Supabase n’est pas disponible.`, 'error');
+  } else {
+    showToast(`${imported} ligne(s) importée(s) et ${events.length} événement(s) synchronisé(s) dans Supabase.`);
+  }
 }
 
 
@@ -9049,6 +9603,10 @@ async function init(){
   if(typeof window !== 'undefined') window.__EDH_EMBEDDED_LYCEES = [];
   if(supabaseClient) clearEventLocalCache(false);
 
+  // V80 : le journal technique est indépendant du cache métier.
+  loadBacklogLocal();
+  installBacklogErrorListeners();
+
   // Production : Supabase est la source de vérité.
   // L'interface se charge puis récupère les données partagées en arrière-plan.
   loadLocalData();
@@ -9073,6 +9631,7 @@ async function init(){
   if(supabaseClient){
     SUPABASE_SYNC_READY = true;
     setupSupabaseRealtime();
+    queueBacklogSync(1800);
     window.addEventListener('focus', () => { if(typeof edhRequestSmartRefresh === 'function') edhRequestSmartRefresh('window-focus', 60000); });
     window.addEventListener('online', () => { if(typeof edhRequestSmartRefresh === 'function') edhRequestSmartRefresh('online-again', 0); });
     setTimeout(async () => {
