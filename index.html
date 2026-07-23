@@ -2904,8 +2904,12 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
               <input class="form-input" id="f-date" type="date">
             </div>
             <div class="form-field">
-              <label class="form-label">Heure</label>
-              <input class="form-input" id="f-heure" placeholder="ex : 13h – 17h">
+              <label class="form-label" for="f-heure-debut">Heure de début</label>
+              <input class="form-input" id="f-heure-debut" type="time" step="300" aria-label="Heure de début du forum">
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="f-heure-fin">Heure de fin</label>
+              <input class="form-input" id="f-heure-fin" type="time" step="300" aria-label="Heure de fin du forum">
             </div>
             <div class="form-field">
               <label class="form-label">Formations ciblées</label>
@@ -3424,7 +3428,7 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V80-2026-07-23-hour-backlog-reporting-sync";
+const APP_PATCH_VERSION = "V81-2026-07-23-time-pickers-complete-backlog";
 // V80 : les écouteurs globaux sont installés après l'initialisation du backlog,
 // afin d'éviter les doubles handlers et les accès à un état encore non initialisé.
 // ══════════════════════════════════════
@@ -3615,6 +3619,70 @@ function cleanDateForSupabase(value){
   const dd = String(d.getDate()).padStart(2,"0");
   return `${yyyy}-${mm}-${dd}`;
 }
+
+// ══════════════════════════════════════
+// V81 — HORAIRES STRUCTURÉS
+// ══════════════════════════════════════
+// Supabase stocke les colonnes `heure`, `heure_debut` et `heure_fin` au format TIME.
+// L'interface conserve un libellé lisible "HH:MM - HH:MM", mais n'envoie jamais
+// cette plage complète dans une colonne TIME unique.
+function normalizeEventTime(value){
+  if(value === undefined || value === null) return '';
+  const raw = String(value).trim().toLowerCase();
+  if(!raw) return '';
+  const hFormat = raw.match(/^([01]?\d|2[0-3])\s*h(?:\s*([0-5]\d))?(?::[0-5]\d)?$/i);
+  if(hFormat) return `${String(Number(hFormat[1])).padStart(2,'0')}:${String(hFormat[2] || '00').padStart(2,'0')}`;
+  const colonFormat = raw.match(/^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/);
+  if(colonFormat) return `${String(Number(colonFormat[1])).padStart(2,'0')}:${colonFormat[2]}`;
+  const hourOnly = raw.match(/^([01]?\d|2[0-3])$/);
+  if(hourOnly) return `${String(Number(hourOnly[1])).padStart(2,'0')}:00`;
+  return '';
+}
+function extractEventTimeTokens(value){
+  if(value === undefined || value === null) return [];
+  const normalized = String(value)
+    .replace(/([01]?\d|2[0-3])\s*h(?:\s*([0-5]\d))?/gi, (_,h,m) => `${h}:${m || '00'}`);
+  const matches = normalized.match(/(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?/g) || [];
+  return matches.map(normalizeEventTime).filter(Boolean);
+}
+function eventOperationalMetaObject(eventObj){
+  const candidates = [eventObj?.eventMeta, eventObj?.operationnel_json, eventObj?.operational_json];
+  for(const candidate of candidates){
+    if(candidate && typeof candidate === 'object' && !Array.isArray(candidate)) return { ...candidate };
+    if(typeof candidate === 'string' && candidate.trim()){
+      try {
+        const parsed = JSON.parse(candidate);
+        if(parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+      } catch(_) {}
+    }
+  }
+  return {};
+}
+function eventTimeParts(eventObj){
+  const meta = eventOperationalMetaObject(eventObj || {});
+  const tokens = extractEventTimeTokens(eventObj?.heure || eventObj?.horaire || '');
+  const start = normalizeEventTime(eventObj?.heure_debut || meta.start || tokens[0] || '');
+  const end = normalizeEventTime(eventObj?.heure_fin || meta.end || tokens[1] || '');
+  return { start, end };
+}
+function formatEventTimeRange(start, end){
+  const cleanStart = normalizeEventTime(start);
+  const cleanEnd = normalizeEventTime(end);
+  return cleanStart && cleanEnd ? `${cleanStart} - ${cleanEnd}` : (cleanStart || cleanEnd || '');
+}
+function updateEventStructuredTimes(eventObj, start, end){
+  if(!eventObj) return eventObj;
+  const cleanStart = normalizeEventTime(start);
+  const cleanEnd = normalizeEventTime(end);
+  const meta = { ...eventOperationalMetaObject(eventObj), start:cleanStart, end:cleanEnd };
+  eventObj.heure_debut = cleanStart || null;
+  eventObj.heure_fin = cleanEnd || null;
+  eventObj.heure = formatEventTimeRange(cleanStart, cleanEnd) || null;
+  eventObj.eventMeta = meta;
+  eventObj.operationnel_json = meta;
+  return eventObj;
+}
+
 const BACKLOG_STORAGE_KEY = 'edh_backlog_errors_v80';
 const BACKLOG_MAX_ENTRIES = 500;
 const BACKLOG_DEDUPE_WINDOW_MS = 60000;
@@ -3717,7 +3785,7 @@ function recordAppError(error, context, options={}){
       recent.details = details || recent.details || '';
       recent.stack = stack || recent.stack || '';
       saveBacklogLocal();
-      queueBacklogSync();
+      if(options.sync !== false) queueBacklogSync();
       if(backlogCurrentPage() === 'backlog') renderBacklogPage();
       return recent;
     }
@@ -3881,9 +3949,123 @@ async function loadBacklogFromSupabase(force=false){
     return false;
   }
 }
+
+function backlogSerializableText(value, depth=0, seen=new WeakSet()){
+  if(value === undefined) return 'undefined';
+  if(value === null) return 'null';
+  if(typeof value === 'string') return value;
+  if(typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') return String(value);
+  if(value instanceof Error) return [value.name, value.message, value.code, value.details, value.hint].filter(Boolean).join(' — ');
+  if(typeof value !== 'object') return String(value);
+  if(depth > 2) return '[objet]';
+  if(seen.has(value)) return '[circulaire]';
+  seen.add(value);
+  try {
+    const compact = {};
+    Object.entries(value).slice(0, 24).forEach(([key,val]) => {
+      if(/password|token|secret|authorization|apikey|api_key/i.test(key)) compact[key] = '[MASQUÉ]';
+      else compact[key] = typeof val === 'object' && val !== null ? backlogSerializableText(val, depth + 1, seen) : val;
+    });
+    return JSON.stringify(compact);
+  } catch(_) { return Object.prototype.toString.call(value); }
+}
+function findBacklogErrorCandidate(value, depth=0, seen=new WeakSet()){
+  if(!value || depth > 4) return null;
+  if(value instanceof Error) return value;
+  if(typeof value !== 'object') return null;
+  if(seen.has(value)) return null;
+  seen.add(value);
+  if(value.error) return findBacklogErrorCandidate(value.error, depth + 1, seen) || value.error;
+  if(value.code && (value.message || value.details || value.hint)) return value;
+  if(value.ok === false && (value.message || value.error)) return value.error || value;
+  for(const child of Object.values(value)){
+    const found = findBacklogErrorCandidate(child, depth + 1, seen);
+    if(found) return found;
+  }
+  return null;
+}
+function recordOperationFailure(result, context, options={}){
+  if(!result || result.ok !== false || result.skipped === true) return null;
+  const candidate = findBacklogErrorCandidate(result) || result.error || result;
+  const error = {
+    code:candidate?.code || result.code || options.code || 'OPERATION_FAILED',
+    message:candidate?.message || result.message || options.message || 'Opération non terminée',
+    details:candidate?.details || result.details || '',
+    hint:candidate?.hint || result.hint || '',
+    stack:candidate?.stack || ''
+  };
+  return recordAppError(error, context, { ...options, severity:options.severity || 'error' });
+}
+function installToastBacklogCapture(){
+  if(window.__EDH_TOAST_BACKLOG_CAPTURE_V81__) return;
+  const original = window.showToast;
+  if(typeof original !== 'function') return;
+  window.__EDH_TOAST_BACKLOG_CAPTURE_V81__ = true;
+  window.showToast = function(message, type='success'){
+    if(type === 'error' && !window.__EDH_TOAST_BACKLOG_BUSY__){
+      window.__EDH_TOAST_BACKLOG_BUSY__ = true;
+      try {
+        const text = String(message || 'Erreur affichée à l’utilisateur');
+        const codeMatch = text.match(/code\s*[:=]\s*([A-Z0-9_]{3,24})/i)
+          || text.match(/\b(PGRST\d{3}|[0-9]{5}|[A-Z]{2}[0-9A-Z]{3}|VALIDATION_[A-Z0-9_]+)\b/);
+        recordAppError({
+          code:codeMatch ? codeMatch[1].toUpperCase() : 'USER_VISIBLE_ERROR',
+          message:text
+        }, {
+          action:'Erreur affichée dans l’interface',
+          source:'showToast'
+        }, { severity:'warning' });
+      } catch(_) {
+      } finally {
+        window.__EDH_TOAST_BACKLOG_BUSY__ = false;
+      }
+    }
+    return original.apply(this, arguments);
+  };
+}
+
+function installConsoleBacklogCapture(){
+  if(window.__EDH_CONSOLE_BACKLOG_CAPTURE_V81__) return;
+  window.__EDH_CONSOLE_BACKLOG_CAPTURE_V81__ = true;
+  ['warn','error'].forEach(level => {
+    const original = console[level]?.bind(console);
+    if(!original) return;
+    console[level] = (...args) => {
+      original(...args);
+      if(window.__EDH_CONSOLE_BACKLOG_BUSY__) return;
+      window.__EDH_CONSOLE_BACKLOG_BUSY__ = true;
+      try {
+        const candidate = args.map(arg => findBacklogErrorCandidate(arg)).find(Boolean);
+        const combined = args.map(arg => backlogSerializableText(arg)).filter(Boolean).join(' ');
+        const internalBacklogMessage = /^\[Backlog\]/i.test(combined.trim());
+        recordAppError({
+          code:candidate?.code || (level === 'warn' ? 'CONSOLE_WARNING' : 'CONSOLE_ERROR'),
+          message:candidate?.message || combined || `Console ${level}`,
+          details:candidate?.details || '',
+          hint:candidate?.hint || '',
+          stack:candidate?.stack || ''
+        }, {
+          action:level === 'warn' ? 'Avertissement technique capturé' : 'Erreur technique capturée',
+          source:'console.' + level
+        }, {
+          severity:level === 'warn' ? 'warning' : 'error',
+          // Les erreurs du journal lui-même restent visibles localement sans créer de boucle de synchronisation.
+          sync:!internalBacklogMessage
+        });
+      } catch(_) {
+        // Le logger ne doit jamais casser l'application.
+      } finally {
+        window.__EDH_CONSOLE_BACKLOG_BUSY__ = false;
+      }
+    };
+  });
+}
+
 function installBacklogErrorListeners(){
-  if(window.__EDH_BACKLOG_LISTENERS_V80__) return;
-  window.__EDH_BACKLOG_LISTENERS_V80__ = true;
+  if(window.__EDH_BACKLOG_LISTENERS_V81__) return;
+  window.__EDH_BACKLOG_LISTENERS_V81__ = true;
+  installConsoleBacklogCapture();
+  installToastBacklogCapture();
   window.addEventListener('error', event => {
     const message = event.message || 'Erreur JavaScript';
     if(/ResizeObserver loop|Script error\.?$/i.test(message)) return;
@@ -4062,9 +4244,16 @@ function removeInvalidHourAndRetryPayload(payload, err, context){
   const raw = `${err?.code || ''} ${err?.message || ''} ${err?.details || ''} ${err?.hint || ''}`;
   if(!['22007','22P02'].includes(String(err?.code || '')) || !/time|heure|invalid input syntax/i.test(raw)) return null;
   const cleaned = { ...payload };
+  const parsed = eventTimeParts({ heure:payload.heure, heure_debut:payload.heure_debut, heure_fin:payload.heure_fin });
+  if(parsed.start && normalizeEventTime(payload.heure) !== parsed.start){
+    cleaned.heure = parsed.start;
+    recordAppError(err, { action:context || 'Sauvegarde événement', source:'champ heure corrigé automatiquement' }, { severity:'warning' });
+    console.warn('[V81] Plage horaire reçue dans une colonne TIME : nouvelle tentative avec l’heure de début uniquement.', payload.heure, '→', parsed.start);
+    return cleaned;
+  }
   delete cleaned.heure;
-  recordAppError(err, { action:context || 'Sauvegarde événement', source:'champ heure' }, { severity:'warning' });
-  console.warn('[V80] Horaire libre non accepté par Supabase : nouvelle tentative sans le champ heure.');
+  recordAppError(err, { action:context || 'Sauvegarde événement', source:'champ heure retiré après échec de normalisation' }, { severity:'warning' });
+  console.warn('[V81] Horaire non reconnu par Supabase : nouvelle tentative sans la colonne heure.', payload.heure);
   return cleaned;
 }
 
@@ -4933,11 +5122,14 @@ async function deleteLyceeDirectFromSupabase(localLycee){
 
 
 function mapSupabaseEventToSeasonRow(row){
+  const structuredTimes = eventTimeParts({ heure_debut:row.heure_debut, heure_fin:row.heure_fin, heure:row.heure || row.horaire });
   return {
     nom: row.lycee || row.nom || '',
     ville: row.ville || '',
     date: cleanDateForSupabase(row.date),
-    heure: row.heure || row.horaire || null,
+    heure: formatEventTimeRange(structuredTimes.start, structuredTimes.end) || null,
+    heure_debut: structuredTimes.start || null,
+    heure_fin: structuredTimes.end || null,
     formation: row.formation || row.formations || null,
     statut: row.statut || 'Participation Validée',
     region: row.region || null,
@@ -4973,6 +5165,7 @@ function getReportTotalsForEvent(l){
 }
 function mapAppEventToSupabase(l){
   const t = getReportTotalsForEvent(l);
+  const structuredTimes = eventTimeParts(l);
   return {
     lycee: normalizeSupabaseText(l.nom),
     ville: normalizeSupabaseText(l.ville),
@@ -4982,7 +5175,10 @@ function mapAppEventToSupabase(l){
     region: normalizeSupabaseText(l.region),
     campus: normalizeSupabaseText(l.campus),
     ecoles: normalizeSupabaseText(l.ecoles || 'tout le monde'),
-    heure: normalizeSupabaseText(l.heure),
+    // La colonne historique `heure` est de type TIME : elle reçoit uniquement l'heure de début.
+    heure: normalizeSupabaseText(structuredTimes.start),
+    heure_debut: normalizeSupabaseText(structuredTimes.start),
+    heure_fin: normalizeSupabaseText(structuredTimes.end),
     formation: normalizeSupabaseText(l.formation),
     adresse: normalizeSupabaseText(l.adresse),
     contact_nom: normalizeSupabaseText(l.organisateur || l.contact_nom),
@@ -5048,7 +5244,7 @@ async function saveEventDirectToSupabase(localEvent){
       }
       const withoutInvalidHour = removeInvalidHourAndRetryPayload(payload, response.error, 'Sauvegarde événement Supabase');
       if(withoutInvalidHour){
-        omittedFields.push('heure');
+        omittedFields.push(Object.prototype.hasOwnProperty.call(withoutInvalidHour, 'heure') ? 'heure_corrigee' : 'heure');
         payload = withoutInvalidHour;
         continue;
       }
@@ -7171,7 +7367,9 @@ function openEdit(id){
     document.getElementById('f-adresse').value=l.adresse||'';
     document.getElementById('f-statut').value=l.statut||'A contacter';
     document.getElementById('f-date').value=l.date||'';
-    document.getElementById('f-heure').value=l.heure||'';
+    const editTimes = eventTimeParts(eventCandidate || l);
+    document.getElementById('f-heure-debut').value=editTimes.start||'';
+    document.getElementById('f-heure-fin').value=editTimes.end||'';
     document.getElementById('f-formation').value=l.formation||'';
     setCheckedValues('f-schools', (l.ecoles||'').toLowerCase().includes('tout le monde') ? SCHOOLS : getSchoolsArray(l.ecoles));
     setupEventCollaboratorOptions(eventCollaboratorIds(eventCandidate || l));
@@ -7207,6 +7405,18 @@ async function saveForm(){
   if(!nom||!ville||!statut){ showToast('Nom, ville et statut sont requis','error'); return; }
 
   const schools = checkedValues('f-schools');
+  const hourStart = normalizeEventTime(document.getElementById('f-heure-debut')?.value || '');
+  const hourEnd = normalizeEventTime(document.getElementById('f-heure-fin')?.value || '');
+  if(hourStart && hourEnd && hourEnd <= hourStart){
+    const validationError = {
+      code:'VALIDATION_TIME_RANGE',
+      message:`L'heure de fin (${hourEnd}) doit être postérieure à l'heure de début (${hourStart}).`
+    };
+    recordAppError(validationError, { action:'Validation du formulaire lycée / événement', source:'heures début-fin' }, { severity:'warning' });
+    showToast(validationError.message, 'error');
+    document.getElementById('f-heure-fin')?.focus();
+    return;
+  }
 
   const obj = {
     nom, ville,
@@ -7218,7 +7428,9 @@ async function saveForm(){
     adresse: document.getElementById('f-adresse').value||null,
     statut,
     date: cleanDateForSupabase(document.getElementById('f-date').value),
-    heure: document.getElementById('f-heure').value||null,
+    heure: formatEventTimeRange(hourStart, hourEnd) || null,
+    heure_debut: hourStart || null,
+    heure_fin: hourEnd || null,
     formation: document.getElementById('f-formation').value||null,
     ecoles: schools.length===SCHOOLS.length?'tout le monde':schools.join(', ')||null,
     collaboratorIds: checkedValues('f-collaborators'),
@@ -7251,6 +7463,7 @@ async function saveForm(){
     LYCEES.unshift(obj);
     savedLycee = obj;
   }
+  if(savedLycee) updateEventStructuredTimes(savedLycee, hourStart, hourEnd);
   markEventAsNotDeleted(savedLycee);
 
   if(!savedLycee) return showToast('Lycée introuvable', 'error');
@@ -7283,6 +7496,9 @@ async function saveForm(){
         showToast(eventSave.skipped ? successLabel + ' dans Supabase' : successLabel + ' + événement enregistrés dans Supabase');
       }
     } else {
+      recordOperationFailure(lyceeSave, { action:'Sauvegarde du référentiel lycée', source:'table lycees' });
+      recordOperationFailure(suiviSave, { action:'Sauvegarde du suivi annuel du lycée', source:'table lycees_suivi_annuel' });
+      recordOperationFailure(eventSave, { action:'Sauvegarde de l’événement', source:'table evenements' });
       console.error('Sauvegarde Supabase refusée:', { lyceeSave, suiviSave, eventSave });
       const msg = !lyceeSave.ok ? lyceeSave.message : (!suiviSave.ok ? suiviSave.message : eventSave.message);
       showToast(successLabel + ' non synchronisé complètement dans Supabase : ' + (msg || 'erreur inconnue'), 'error');
@@ -7730,7 +7946,7 @@ function renderBacklogPage(){
     <div class="kpi-card kpi-accent-red"><div class="kpi-label">Entrées affichées</div><div class="kpi-value">${entries.length}</div><div class="kpi-meta">${totalOccurrences} occurrence(s)</div></div>
     <div class="kpi-card"><div class="kpi-label">Utilisateurs</div><div class="kpi-value">${uniqueUsers}</div><div class="kpi-meta">dans le filtre actuel</div></div>
     <div class="kpi-card kpi-accent-yellow"><div class="kpi-label">À synchroniser</div><div class="kpi-value">${pendingSync}</div><div class="kpi-meta">journal local</div></div>
-    <div class="kpi-card kpi-accent-blue"><div class="kpi-label">Version</div><div class="kpi-value backlog-version-value">V80</div><div class="kpi-meta">${escapeHtml(APP_PATCH_VERSION)}</div></div>`;
+    <div class="kpi-card kpi-accent-blue"><div class="kpi-label">Version</div><div class="kpi-value backlog-version-value">V81</div><div class="kpi-meta">${escapeHtml(APP_PATCH_VERSION)}</div></div>`;
   const count = document.getElementById('backlog-count');
   if(count) count.textContent = `${entries.length} entrée(s) · maximum local ${BACKLOG_MAX_ENTRIES}`;
   tbody.innerHTML = entries.length ? entries.map(entry => {
@@ -13585,7 +13801,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   function setEventMeta(ev,meta){
     if(!ev)return;
     const clean={...eventMeta(ev),...meta,source:PLATFORM_SOURCE,updatedAt:nowIso()};
-    ev.eventMeta=clean;ev.operationnel_json=clean;ev.type_evenement=clean.type;ev.titre_evenement=clean.title;ev.lycee_id=clean.linkedLyceeSupabaseId||null;ev.lyceeNom=clean.linkedLyceeName||'';ev.statut_operationnel=clean.status;ev.heure_debut=clean.start;ev.heure_fin=clean.end;ev.date_limite_inscription=clean.deadline||null;ev.mode_inscription=clean.registrationMode;ev.ambassadeurs_min=clean.staffMin;ev.ambassadeurs_ideal=clean.staffIdeal;ev.ambassadeurs_max=clean.staffMax;ev.visibilite_etudiant=clean.visible;ev.responsable_id=clean.ownerId||null;ev.consigne_terrain=clean.instructions;ev.source_evenement=PLATFORM_SOURCE;ev.isStandaloneEvent=true;
+    ev.eventMeta=clean;ev.operationnel_json=clean;ev.type_evenement=clean.type;ev.titre_evenement=clean.title;ev.lycee_id=clean.linkedLyceeSupabaseId||null;ev.lyceeNom=clean.linkedLyceeName||'';ev.statut_operationnel=clean.status;ev.heure_debut=normalizeEventTime(clean.start)||null;ev.heure_fin=normalizeEventTime(clean.end)||null;ev.heure=formatEventTimeRange(ev.heure_debut,ev.heure_fin)||null;ev.date_limite_inscription=clean.deadline||null;ev.mode_inscription=clean.registrationMode;ev.ambassadeurs_min=clean.staffMin;ev.ambassadeurs_ideal=clean.staffIdeal;ev.ambassadeurs_max=clean.staffMax;ev.visibilite_etudiant=clean.visible;ev.responsable_id=clean.ownerId||null;ev.consigne_terrain=clean.instructions;ev.source_evenement=PLATFORM_SOURCE;ev.isStandaloneEvent=true;
     META_CACHE[eventKey(ev)]=clean;saveMetaCache();
   }
   function normaliseAllEventMeta(){
@@ -13601,7 +13817,8 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   const originalMapTo=window.mapAppEventToSupabase;
   if(typeof originalMapTo==='function')window.mapAppEventToSupabase=function(ev){
     const base=originalMapTo(ev);const m=eventMeta(ev);const linked=m.linkedLyceeName||ev.lyceeNom||base.lycee||ev.nom||m.title;
-    return {...base,lycee:linked,titre_evenement:m.title||ev.nom,type_evenement:m.type,lycee_id:m.linkedLyceeSupabaseId||(/^[0-9]+$/.test(String(m.linkedLyceeId||''))?Number(m.linkedLyceeId):null),lycee_nom:m.linkedLyceeName||null,heure_debut:m.start||null,heure_fin:m.end||null,date_limite_inscription:m.deadline||null,mode_inscription:m.registrationMode,ambassadeurs_min:m.staffMin,ambassadeurs_ideal:m.staffIdeal,ambassadeurs_max:m.staffMax,visibilite_etudiant:m.visible,statut_operationnel:m.status,responsable_id:m.ownerId||null,consigne_terrain:m.instructions||null,source_evenement:PLATFORM_SOURCE,operationnel_json:m,heure:(m.start&&m.end)?`${m.start} - ${m.end}`:(m.start||base.heure)};
+    const start=normalizeEventTime(m.start||ev.heure_debut||base.heure);const end=normalizeEventTime(m.end||ev.heure_fin);
+    return {...base,lycee:linked,titre_evenement:m.title||ev.nom,type_evenement:m.type,lycee_id:m.linkedLyceeSupabaseId||(/^[0-9]+$/.test(String(m.linkedLyceeId||''))?Number(m.linkedLyceeId):null),lycee_nom:m.linkedLyceeName||null,heure_debut:start||null,heure_fin:end||null,date_limite_inscription:m.deadline||null,mode_inscription:m.registrationMode,ambassadeurs_min:m.staffMin,ambassadeurs_ideal:m.staffIdeal,ambassadeurs_max:m.staffMax,visibilite_etudiant:m.visible,statut_operationnel:m.status,responsable_id:m.ownerId||null,consigne_terrain:m.instructions||null,source_evenement:PLATFORM_SOURCE,operationnel_json:{...m,start,end},heure:start||null};
   };
 
   function eventSchoolsHtml(selected=[]){const set=new Set(selected);return (window.SCHOOLS||SCHOOLS||[]).map(s=>`<label class="v72-school-check"><input type="checkbox" value="${esc(s)}" ${set.has(s)?'checked':''}> ${esc(s)}</label>`).join('')}
