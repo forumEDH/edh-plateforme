@@ -3483,7 +3483,7 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V81-2026-07-23-time-pickers-complete-backlog";
+const APP_PATCH_VERSION = "V83-2026-07-24-scoped-import-bulk-actions-email-campaigns";
 // V80 : les écouteurs globaux sont installés après l'initialisation du backlog,
 // afin d'éviter les doubles handlers et les accès à un état encore non initialisé.
 // ══════════════════════════════════════
@@ -14558,6 +14558,218 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   document.addEventListener('DOMContentLoaded',()=>{renderAmbassadorQr();checkAmbHash();}); window.addEventListener('hashchange',checkAmbHash);
 })();
 </script>
+
+<style id="plateforme-leo-v83-style">
+/* V83 — import cloisonné, sélection et actions de masse, campagnes email */
+.bulk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.bulk-toolbar-left,.bulk-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.bulk-selection-count{font-size:12px;font-weight:850;color:var(--text)}.bulk-selection-meta{font-size:11px;color:var(--text3)}
+.bulk-check{width:17px;height:17px;accent-color:var(--primary);cursor:pointer}.bulk-card-selector{display:flex;align-items:center;gap:7px;padding:7px 9px;margin:-2px 0 10px;border-radius:9px;background:var(--bg);border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--text2);width:max-content}
+.bulk-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.bulk-school-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px}.bulk-school-grid label{display:flex;align-items:center;gap:7px;padding:8px;border:1px solid var(--border);border-radius:9px;background:var(--bg);font-size:12px;color:var(--text2)}
+.import-scope-box{border:1px solid #bfdbfe;background:var(--primary-light);border-radius:12px;padding:14px;margin-bottom:14px}.import-scope-title{font-size:12px;font-weight:900;color:var(--primary);margin-bottom:5px}.import-scope-copy{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:10px}.import-school-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.import-school-grid label{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:11px;font-weight:750;color:var(--text2)}
+.campaign-layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(340px,.95fr);gap:16px}.campaign-recipient-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:12px}.campaign-recipient-list{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:6px;margin-top:8px}.campaign-recipient-item{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:11px}.campaign-history{display:flex;flex-direction:column;gap:9px;padding:14px}.campaign-history-card{border:1px solid var(--border);border-radius:11px;padding:11px 12px;background:var(--surface)}.campaign-history-title{font-size:13px;font-weight:850;color:var(--text)}.campaign-history-meta{font-size:11px;color:var(--text3);margin-top:3px}.campaign-status-pill{display:inline-flex;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:850;background:var(--primary-light);color:var(--primary);border:1px solid #bfdbfe}
+html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!important;border-color:#1e40af!important}.bulk-danger-note{font-size:11px;color:var(--red);line-height:1.45;margin-top:8px}
+@media(max-width:900px){.campaign-layout,.bulk-modal-grid{grid-template-columns:1fr}.import-school-grid,.bulk-school-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.bulk-toolbar-actions{display:grid;width:100%;grid-template-columns:1fr 1fr}.bulk-toolbar-actions .btn{width:100%}.import-school-grid,.bulk-school-grid{grid-template-columns:1fr}}
+</style>
+
+<script id="plateforme-leo-v83-features">
+/* V83 — périmètres d'accès, actions de masse et campagnes email */
+(function(){
+  const $=id=>document.getElementById(id);
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]||m));
+  const uniq=arr=>[...new Set((arr||[]).map(v=>String(v||'').trim()).filter(Boolean))];
+  const normalizeEmail=e=>String(e||'').trim().toLowerCase();
+  const validEmail=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(e));
+  const V83_DB_FIELDS=[
+    ['nom','Nom du lycée *',['lycée','lycee','établissement','etablissement','nom']],
+    ['ville','Ville du lycée *',['ville','city']],
+    ['departement','Département',['département','departement','dept']],
+    ['cp','Code postal',['code postal','cp','postal']],
+    ['type','Type public / privé',['type','public','privé','prive']],
+    ['adresse','Adresse',['adresse','address']],
+    ['statut','Statut',['statut','status']],
+    ['organisateur','Contact / organisateur',['organisateur','contact nom','contact']],
+    ['mail_ecole','Email',['email','mail','courriel']],
+    ['tel_ecole','Téléphone',['téléphone','telephone','tel','phone']],
+    ['commentaire','Commentaire',['commentaire','notes','note']]
+  ];
+  function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
+  function guessHeader(headers,aliases){return (headers||[]).find(h=>(aliases||[]).some(a=>norm(h).includes(norm(a))))||''}
+  function mergeValues(existing, additions){
+    const a=typeof splitAccessValues==='function'?splitAccessValues(existing):String(existing||'').split(/[,;/|]+/);
+    return uniq([...a,...(additions||[])]).join(', ');
+  }
+  function currentScopeSchools(){return Array.from(document.querySelectorAll('input[name="db-import-scope-schools"]:checked')).map(x=>x.value)}
+
+  // ── IMPORT BASE : le périmètre est imposé à tout le fichier ──
+  window.handleDatabaseImportFile=function(event){
+    const file=event.target.files?.[0]; if(!file)return;
+    const reader=new FileReader();
+    reader.onload=e=>{try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}), sh=wb.Sheets[wb.SheetNames[0]];
+      IMPORT_DATABASE_ROWS=XLSX.utils.sheet_to_json(sh,{defval:''});
+      IMPORT_DATABASE_HEADERS=IMPORT_DATABASE_ROWS.length?Object.keys(IMPORT_DATABASE_ROWS[0]):[];
+      renderDatabaseMappingV83();
+    }catch(err){console.error(err);$('database-import-box').innerHTML='<span style="color:var(--red)">Impossible de lire ce fichier.</span>'}}
+    reader.readAsArrayBuffer(file);
+  };
+  function renderDatabaseMappingV83(){
+    const box=$('database-import-box'); if(!box)return;
+    if(!IMPORT_DATABASE_HEADERS.length){box.textContent='Aucune ligne détectée.';return}
+    const options='<option value="">— Ne pas importer —</option>'+IMPORT_DATABASE_HEADERS.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join('');
+    const campusOptions=(window.CAMPUS_LIST||CAMPUS_LIST||[]).map(c=>`<option value="${esc(c)}"></option>`).join('');
+    const schools=(window.SCHOOLS||SCHOOLS||[]);
+    box.className='';
+    box.innerHTML=`
+      <div class="import-scope-box">
+        <div class="import-scope-title">1. Périmètre de visibilité de l’import</div>
+        <div class="import-scope-copy">Ce rattachement ne remplace pas la ville réelle du lycée. Il détermine quels utilisateurs peuvent voir les lignes importées selon leurs campus et marques autorisés.</div>
+        <div class="form-grid">
+          <div class="form-field"><label class="form-label">Ville / campus de rattachement *</label><input class="form-input" id="db-import-scope-campus" list="db-import-campus-list" placeholder="Ex : Lille"><datalist id="db-import-campus-list">${campusOptions}</datalist></div>
+          <div class="form-field"><label class="form-label">Si le lycée existe déjà</label><select class="form-select" id="db-import-scope-mode"><option value="replace">Remplacer son périmètre par celui de cet import</option><option value="merge">Ajouter ce périmètre à l’existant</option></select></div>
+          <div class="form-field full"><label class="form-label">Marques / écoles autorisées *</label><div class="import-school-grid">${schools.map(s=>`<label><input class="bulk-check" type="checkbox" name="db-import-scope-schools" value="${esc(s)}"> ${esc(s)}</label>`).join('')}</div></div>
+        </div>
+      </div>
+      <div class="muted-box" style="margin-bottom:12px"><strong>${IMPORT_DATABASE_ROWS.length}</strong> ligne(s) détectée(s). Associez maintenant les colonnes métier. Les doublons sont recherchés sur <strong>Nom + Ville du lycée</strong>.</div>
+      <div class="kicker" style="margin-bottom:8px">2. Mapping des colonnes</div>
+      <div class="form-grid">${V83_DB_FIELDS.map(([k,label])=>`<div class="form-field"><label class="form-label">${label}</label><select class="form-select" id="dbmap-${k}">${options}</select></div>`).join('')}</div>`;
+    V83_DB_FIELDS.forEach(([k,,aliases])=>{const el=$('dbmap-'+k),g=guessHeader(IMPORT_DATABASE_HEADERS,aliases);if(el&&g)el.value=g});
+  }
+  window.importMappedDatabase=async function(){
+    if(!IMPORT_DATABASE_ROWS.length)return showToast('Aucune donnée à importer','error');
+    const map={};V83_DB_FIELDS.forEach(([k])=>map[k]=$('dbmap-'+k)?.value||'');
+    const campus=$('db-import-scope-campus')?.value.trim()||'', schools=currentScopeSchools(), mode=$('db-import-scope-mode')?.value||'replace';
+    if(!map.nom||!map.ville)return showToast('Associez au minimum Nom du lycée et Ville du lycée','error');
+    if(!campus)return showToast('Choisissez la ville / campus de rattachement de cet import','error');
+    if(!schools.length)return showToast('Sélectionnez au moins une marque / école pour cet import','error');
+    const btn=$('database-import-submit');if(btn){btn.disabled=true;btn.classList.add('is-loading')}
+    let created=0,updated=0,failed=0;
+    try{
+      for(let i=0;i<IMPORT_DATABASE_ROWS.length;i++){
+        const row=IMPORT_DATABASE_ROWS[i],nom=String(row[map.nom]||'').trim(),ville=String(row[map.ville]||'').trim();
+        if(!nom||!ville){failed++;continue}
+        const existing=(LYCEES||[]).find(l=>norm(l.nom)===norm(nom)&&norm(l.ville)===norm(ville));
+        const l=existing||{id:typeof nextId==='function'?nextId():'LYC'+Date.now()+'_'+i,statut:'A contacter'};
+        V83_DB_FIELDS.forEach(([k])=>{if(map[k]&&row[map[k]]!==undefined&&String(row[map[k]]).trim()!=='')l[k]=String(row[map[k]]).trim()});
+        if(existing&&mode==='merge'){
+          l.campus=mergeValues(l.campus||l.region,[campus]); l.region=l.campus;
+          const oldSchools=getSchoolsArray(l.ecoles||'');
+          l.ecoles=(String(l.ecoles||'').toLowerCase().includes('tout le monde'))?'tout le monde':mergeValues(oldSchools,schools);
+        }else{l.campus=campus;l.region=campus;l.ecoles=schools.join(', ')}
+        if(!existing)LYCEES.push(l);
+        const a=await saveLyceeDirectToSupabase(l);const b=a.ok?await saveLyceeSuiviAnnuelDirectToSupabase(l):{ok:false};
+        if(a.ok){existing?updated++:created++;if(!b.ok&&!b.skipped)console.warn('Suivi annuel non importé',b)}else failed++;
+      }
+      saveLocalData();if(typeof loadFromSupabase==='function'&&supabaseClient)await loadFromSupabase({silent:true});if(typeof renderListing==='function')renderListing();closeModal('modal-import-database');
+      showToast(`${created} créé(s), ${updated} mis à jour · ${campus} · ${schools.join(', ')}${failed?` · ${failed} erreur(s)`:''}`,failed?'error':'success');
+    }finally{if(btn){btn.disabled=false;btn.classList.remove('is-loading')}}
+  };
+
+  // ── Leads : ajout du campus comme vraie donnée de périmètre ──
+  const baseMapLeadToSupabase=window.mapAppLeadToSupabase;
+  if(typeof baseMapLeadToSupabase==='function')window.mapAppLeadToSupabase=function(l){const p=baseMapLeadToSupabase(l),ev=typeof findCalendarEventById==='function'?(findCalendarEventById(l.eventId)||{}):{};const campus=l.campus||ev.campus||ev.region||'';p.campus=typeof normalizeSupabaseText==='function'?normalizeSupabaseText(campus):campus||null;if(campus&&!l.campus)l.campus=campus;return p};
+  const baseMapLeadToApp=window.mapSupabaseLeadToApp;
+  if(typeof baseMapLeadToApp==='function')window.mapSupabaseLeadToApp=function(row){const l=baseMapLeadToApp(row);l.campus=row.campus||row.region||l.campus||'';return l};
+  const baseCanSeeLead=window.canSeeLeadForCurrentUser;
+  if(typeof baseCanSeeLead==='function')window.canSeeLeadForCurrentUser=function(lead){
+    const cu=typeof currentUser==='function'?currentUser():null;if(!cu)return true;
+    const role=normalizeRoleValue(cu.role);if(role==='student'||role==='admin_global'||normalizeEmail(cu.email)==='admin')return baseCanSeeLead(lead);
+    const allowedSchools=userSchoolAccess(cu),school=normalizeSchoolName(lead.school)||lead.school||'';
+    if(allowedSchools.length&&school&&!allowedSchools.includes(school)){const ev=findCalendarEventById(lead.eventId)||{};if(!getSchoolsArray(ev.ecoles||'').some(s=>allowedSchools.includes(s)))return false}
+    const allowedCampus=userCampusAccess(cu).map(norm).filter(Boolean);if(!allowedCampus.length)return true;
+    const leadCampus=norm(lead.campus||'');if(leadCampus)return allowedCampus.some(c=>leadCampus===c||leadCampus.includes(c)||c.includes(leadCampus));
+    return baseCanSeeLead(lead);
+  };
+
+  // ── Sélection persistante ──
+  const BULK_KEY='plateforme_leo_bulk_v83';
+  const rawBulk=(()=>{try{return JSON.parse(localStorage.getItem(BULK_KEY)||'{}')}catch(_){return {}}})();
+  const BULK={lycees:new Set(rawBulk.lycees||[]),students:new Set(rawBulk.students||[]),leads:new Set(rawBulk.leads||[])};
+  let bulkType='lycees';
+  function saveBulk(){try{localStorage.setItem(BULK_KEY,JSON.stringify({lycees:[...BULK.lycees],students:[...BULK.students],leads:[...BULK.leads]}))}catch(_){}}
+  function labelType(type){return type==='lycees'?'lycée(s)':type==='students'?'ambassadeur(s)':'lead(s)'}
+  function visibleRows(type){
+    if(type==='lycees')return typeof paged==='function'&&typeof filtered==='function'?paged(filtered(),S.page,S.pageSize):getVisibleLycees();
+    if(type==='students')return typeof filteredStudents==='function'?filteredStudents():getVisibleStudents();
+    if($('page-leadsall')?.classList.contains('active')&&typeof filteredAllLeadsRows==='function')return filteredAllLeadsRows();
+    return [...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  }
+  function allObjects(type){return type==='lycees'?(LYCEES||[]):type==='students'?(STUDENTS||[]):(LEADS||[])}
+  function objectVisible(type,obj){if(type==='leads')return typeof canSeeLeadForCurrentUser==='function'?canSeeLeadForCurrentUser(obj):true;return typeof canSeeRecord==='function'?canSeeRecord(type==='students'?{...obj,ecoles:obj.school,campus:obj.campus}:obj):true}
+  function selectedObjects(type){const set=BULK[type];return allObjects(type).filter(o=>set.has(String(o.id))&&objectVisible(type,o))}
+  window.toggleBulkSelection=function(type,id,checked){if(!BULK[type])return;checked?BULK[type].add(String(id)):BULK[type].delete(String(id));saveBulk();refreshBulkToolbars()};
+  window.toggleBulkVisible=function(type,checked){visibleRows(type).forEach(o=>checked?BULK[type].add(String(o.id)):BULK[type].delete(String(o.id)));saveBulk();refreshBulkToolbars();decorateCurrentBulk(type)};
+  window.clearBulkSelection=function(type){BULK[type]?.clear();saveBulk();refreshBulkToolbars();decorateCurrentBulk(type)};
+  function canBulkManageV83(){return typeof roleIsInternal==='function'?roleIsInternal(S.role):true}function toolbarHtml(type){if(!canBulkManageV83())return '';const n=selectedObjects(type).length,v=visibleRows(type).length;return `<div class="bulk-toolbar-left"><input class="bulk-check" type="checkbox" ${v&&visibleRows(type).every(o=>BULK[type].has(String(o.id)))?'checked':''} onchange="toggleBulkVisible('${type}',this.checked)" title="Sélectionner les éléments visibles"><div><div class="bulk-selection-count">${n} ${labelType(type)} dans la sélection</div><div class="bulk-selection-meta">La sélection reste mémorisée pendant les changements de filtre et de page.</div></div></div><div class="bulk-toolbar-actions"><button class="btn btn-outline" type="button" onclick="toggleBulkVisible('${type}',true)">Ajouter les visibles</button><button class="btn btn-ghost" type="button" onclick="clearBulkSelection('${type}')">Vider</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="startCampaignFromSelection('${type}')">Envoyer un mail</button><button class="btn btn-primary" type="button" ${n?'':'disabled'} onclick="openBulkActions('${type}')">Actions de masse</button></div>`}
+  function ensureBulkToolbars(){
+    [['page-listing','lycees'],['page-students','students'],['page-leads','leads'],['page-leadsall','leads']].forEach(([pageId,type])=>{const page=$(pageId);if(!page)return;let host=page.querySelector(`[data-bulk-toolbar="${type}"]`);if(!host){host=document.createElement('div');host.dataset.bulkToolbar=type;const header=page.querySelector('.page-header');header?.insertAdjacentElement('afterend',host)}host.innerHTML=toolbarHtml(type)});
+  }
+  function refreshBulkToolbars(){document.querySelectorAll('[data-bulk-toolbar]').forEach(h=>{h.innerHTML=toolbarHtml(h.dataset.bulkToolbar)})}
+  function decorateListing(){
+    const table=document.querySelector('#page-listing table');if(!table)return;const hr=table.querySelector('thead tr');if(hr&&!hr.querySelector('.v83-bulk-th'))hr.insertAdjacentHTML('afterbegin','<th class="v83-bulk-th">Sélect.</th>');
+    const rows=[...table.querySelectorAll('tbody tr')],data=visibleRows('lycees');rows.forEach((tr,i)=>{if(!data[i]){tr.querySelector('td')?.setAttribute('colspan','11');return}if(tr.querySelector('.v83-bulk-cell'))return;const id=String(data[i].id),existingCell=tr.querySelector('.v83-bulk-cell');if(existingCell){const cb=existingCell.querySelector('input');if(cb)cb.checked=BULK.lycees.has(id);return}tr.insertAdjacentHTML('afterbegin',`<td class="v83-bulk-cell" onclick="event.stopPropagation()"><input class="bulk-check" type="checkbox" ${BULK.lycees.has(id)?'checked':''} onchange="toggleBulkSelection('lycees','${esc(id)}',this.checked)"></td>`)});
+  }
+  function decorateStudents(){const cards=[...document.querySelectorAll('#students-list .student-card')],data=visibleRows('students');cards.forEach((card,i)=>{if(!data[i])return;const id=String(data[i].id),existingSelector=card.querySelector('.bulk-card-selector');if(existingSelector){const cb=existingSelector.querySelector('input');if(cb)cb.checked=BULK.students.has(id);return}card.insertAdjacentHTML('afterbegin',`<label class="bulk-card-selector"><input class="bulk-check" type="checkbox" ${BULK.students.has(id)?'checked':''} onchange="toggleBulkSelection('students','${esc(id)}',this.checked)"> Ajouter à la sélection</label>`)});}
+  function decorateLeads(){
+    [['leads-tbody',()=>[...getVisibleLeads()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''))],['all-leads-tbody',()=>filteredAllLeadsRows()]].forEach(([id,getData])=>{const tbody=$(id);if(!tbody)return;const table=tbody.closest('table'),hr=table?.querySelector('thead tr');if(hr&&!hr.querySelector('.v83-bulk-th'))hr.insertAdjacentHTML('afterbegin','<th class="v83-bulk-th">Sélect.</th>');const data=getData(),rows=[...tbody.querySelectorAll('tr')];rows.forEach((tr,i)=>{if(!data[i]){const td=tr.querySelector('td');if(td&&!tr.dataset.v83ColspanAdjusted){td.colSpan=(Number(td.colSpan)||0)+1;tr.dataset.v83ColspanAdjusted='1'}return}const lid=String(data[i].id),existingCell=tr.querySelector('.v83-bulk-cell');if(existingCell){const cb=existingCell.querySelector('input');if(cb)cb.checked=BULK.leads.has(lid);return}tr.insertAdjacentHTML('afterbegin',`<td class="v83-bulk-cell"><input class="bulk-check" type="checkbox" ${BULK.leads.has(lid)?'checked':''} onchange="toggleBulkSelection('leads','${esc(lid)}',this.checked)"></td>`)});});
+  }
+  function decorateCurrentBulk(type){setTimeout(()=>{if(type==='lycees')decorateListing();else if(type==='students')decorateStudents();else decorateLeads();refreshBulkToolbars()},0)}
+  [['renderListing','lycees',decorateListing],['renderStudentsPage','students',decorateStudents],['renderLeadsPage','leads',decorateLeads],['renderAllLeadsPage','leads',decorateLeads]].forEach(([name,type,decor])=>{const base=window[name];if(typeof base==='function')window[name]=function(){const r=base.apply(this,arguments);setTimeout(()=>{decor();refreshBulkToolbars()},0);return r}});
+
+  // ── Modale d'actions de masse ──
+  function installBulkModal(){if($('modal-bulk-v83'))return;document.body.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modal-bulk-v83" onclick="closeModalIf(event,'modal-bulk-v83')"><div class="modal" style="max-width:680px"><div class="modal-header"><div><div class="modal-title">Actions de masse</div><div class="modal-subtitle" id="bulk-v83-subtitle"></div></div><button class="modal-close" onclick="closeModal('modal-bulk-v83')">✕</button></div><div class="modal-body"><div class="form-field" style="margin-bottom:12px"><label class="form-label">Action</label><select class="form-select" id="bulk-v83-action" onchange="renderBulkActionFields()"><option value="campus">Attribuer à une ville / campus</option><option value="school">Attribuer à une marque / école</option><option value="delete">Supprimer les éléments sélectionnés</option></select></div><div id="bulk-v83-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-bulk-v83')">Annuler</button><button class="btn btn-primary" id="bulk-v83-apply" onclick="applyBulkActionV83()">Appliquer</button></div></div></div>`)}
+  window.openBulkActions=function(type){if(!canBulkManageV83())return showToast('Actions de masse réservées aux collaborateurs','error');bulkType=type;installBulkModal();const n=selectedObjects(type).length;$('bulk-v83-subtitle').textContent=`${n} ${labelType(type)} accessible(s) sélectionné(s)`;$('bulk-v83-action').value='campus';renderBulkActionFields();$('modal-bulk-v83').classList.add('open')};
+  window.renderBulkActionFields=function(){const host=$('bulk-v83-fields');if(!host)return;const action=$('bulk-v83-action')?.value||'campus';if(action==='campus'){host.innerHTML=`<div class="form-field"><label class="form-label">Ville / campus de rattachement</label><select class="form-select" id="bulk-v83-campus"><option value="">— Sélectionner —</option>${(window.CAMPUS_LIST||CAMPUS_LIST||[]).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select></div><div class="muted-box" style="margin-top:10px">Cette valeur sert aussi au cloisonnement des données selon les campus autorisés sur le compte utilisateur.</div>`}else if(action==='school'){const schools=window.SCHOOLS||SCHOOLS||[];host.innerHTML=bulkType==='lycees'?`<div class="form-field"><label class="form-label">Marques / écoles autorisées</label><div class="bulk-school-grid">${schools.map(s=>`<label><input class="bulk-check" type="checkbox" name="bulk-v83-schools" value="${esc(s)}"> ${esc(s)}</label>`).join('')}</div></div><div class="form-field" style="margin-top:10px"><label class="form-label">Mode</label><select class="form-select" id="bulk-v83-school-mode"><option value="replace">Remplacer l’attribution actuelle</option><option value="merge">Ajouter aux marques déjà attribuées</option></select></div>`:`<div class="form-field"><label class="form-label">Marque / école</label><select class="form-select" id="bulk-v83-school"><option value="">— Sélectionner —</option>${schools.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}</select></div>`}else{host.innerHTML=`<div class="muted-box"><strong>Suppression définitive</strong><br>Les ${labelType(bulkType)} seront supprimés localement et dans Supabase quand la ligne distante existe.</div><div class="bulk-danger-note">Vérifiez votre sélection avant de continuer. Cette action n’est pas annulable depuis la plateforme.</div>`}};
+  async function saveBulkObject(type,obj){if(type==='lycees'){const a=await saveLyceeDirectToSupabase(obj);if(a.ok)await saveLyceeSuiviAnnuelDirectToSupabase(obj);return a}if(type==='students')return saveStudentDirectToSupabase(obj);return saveLeadDirectToSupabase(obj)}
+  async function deleteBulkObject(type,obj){if(type==='lycees')return deleteLyceeDirectFromSupabase(obj);if(type==='students')return deleteStudentDirectFromSupabase(obj);return deleteLeadDirectFromSupabase(obj)}
+  function removeLocalBulk(type,ids){const set=new Set(ids.map(String));if(type==='lycees')LYCEES=(LYCEES||[]).filter(x=>!set.has(String(x.id)));else if(type==='students')STUDENTS=(STUDENTS||[]).filter(x=>!set.has(String(x.id)));else LEADS=(LEADS||[]).filter(x=>!set.has(String(x.id)))}
+  window.applyBulkActionV83=async function(){
+    if(!canBulkManageV83())return showToast('Actions de masse réservées aux collaborateurs','error');
+    const action=$('bulk-v83-action')?.value||'',objs=selectedObjects(bulkType);if(!objs.length)return showToast('La sélection est vide','error');const btn=$('bulk-v83-apply');if(btn){btn.disabled=true;btn.classList.add('is-loading')}
+    try{
+      if(action==='delete'){
+        if(!confirm(`Supprimer définitivement ${objs.length} ${labelType(bulkType)} ?`))return;
+        const deleted=[];for(const obj of objs){const r=await deleteBulkObject(bulkType,obj);if(r.ok||r.skipped)deleted.push(String(obj.id))}removeLocalBulk(bulkType,deleted);deleted.forEach(id=>BULK[bulkType].delete(id));showToast(`${deleted.length} élément(s) supprimé(s)`);
+      }else{
+        if(action==='campus'){const c=$('bulk-v83-campus')?.value||'';if(!c)return showToast('Sélectionnez une ville / campus','error');for(const obj of objs){obj.campus=c;if(bulkType==='lycees')obj.region=c;await saveBulkObject(bulkType,obj)}}
+        if(action==='school'){
+          if(bulkType==='lycees'){const s=Array.from(document.querySelectorAll('input[name="bulk-v83-schools"]:checked')).map(x=>x.value);if(!s.length)return showToast('Sélectionnez au moins une marque','error');const mode=$('bulk-v83-school-mode')?.value||'replace';for(const obj of objs){const old=getSchoolsArray(obj.ecoles||'');obj.ecoles=mode==='merge'&&!String(obj.ecoles||'').toLowerCase().includes('tout le monde')?mergeValues(old,s):s.join(', ');await saveBulkObject(bulkType,obj)}}else{const s=$('bulk-v83-school')?.value||'';if(!s)return showToast('Sélectionnez une marque','error');for(const obj of objs){obj.school=s;await saveBulkObject(bulkType,obj)}}
+        }
+        showToast(`${objs.length} ${labelType(bulkType)} modifié(s)`);
+      }
+      saveBulk();saveLocalData();if(typeof loadFromSupabase==='function'&&supabaseClient)await loadFromSupabase({silent:true});closeModal('modal-bulk-v83');rerenderBulkType(bulkType);
+    }catch(err){console.error(err);showToast('Une erreur est survenue pendant l’action de masse','error')}finally{if(btn){btn.disabled=false;btn.classList.remove('is-loading')}}
+  };
+  function rerenderBulkType(type){if(type==='lycees')renderListing();else if(type==='students')renderStudentsPage();else{renderLeadsPage();renderAllLeadsPage()}refreshBulkToolbars()}
+
+  // ── Campagnes email ──
+  const CAMPAIGN_LOCAL_KEY='plateforme_leo_campaigns_v83';let CAMPAIGN_SOURCE='selection-all',CAMPAIGN_ROWS=[];
+  function localCampaigns(){try{return JSON.parse(localStorage.getItem(CAMPAIGN_LOCAL_KEY)||'[]')}catch(_){return []}}
+  function saveLocalCampaigns(rows){try{localStorage.setItem(CAMPAIGN_LOCAL_KEY,JSON.stringify(rows.slice(0,100)))}catch(_){}}
+  function entityRecipient(type,o){if(type==='lycees')return {entityType:'lycee',entityId:o.id,email:normalizeEmail(o.mail_ecole||o.contact_email),firstName:o.organisateur||o.nom||'',lastName:'',label:o.nom||o.organisateur||'',school:o.ecoles||'',campus:o.campus||o.region||'',source:o.ville||''};if(type==='students')return {entityType:'ambassadeur',entityId:o.id,email:normalizeEmail(o.email),firstName:o.firstName||'',lastName:o.lastName||'',label:`${o.firstName||''} ${o.lastName||''}`.trim(),school:o.school||'',campus:o.campus||'',source:o.lycee||''};return {entityType:'lead',entityId:o.id,email:normalizeEmail(o.email),firstName:o.firstName||'',lastName:o.lastName||'',label:`${o.firstName||''} ${o.lastName||''}`.trim(),school:o.school||'',campus:o.campus||'',source:typeof leadEventName==='function'?leadEventName(o):o.lycee||''}}
+  function dedupeRecipients(rows){const seen=new Set();return rows.filter(r=>{if(!validEmail(r.email)||seen.has(r.email))return false;seen.add(r.email);return true})}
+  function recipientsFor(source){let rows=[];if(source==='selection-all'){['lycees','students','leads'].forEach(t=>rows.push(...selectedObjects(t).map(o=>entityRecipient(t,o))))}else if(source==='selection-lycees')rows=selectedObjects('lycees').map(o=>entityRecipient('lycees',o));else if(source==='selection-students')rows=selectedObjects('students').map(o=>entityRecipient('students',o));else if(source==='selection-leads')rows=selectedObjects('leads').map(o=>entityRecipient('leads',o));else if(source==='all-lycees')rows=getVisibleLycees().map(o=>entityRecipient('lycees',o));else if(source==='all-students')rows=getVisibleStudents().map(o=>entityRecipient('students',o));else if(source==='all-leads')rows=getVisibleLeads().map(o=>entityRecipient('leads',o));return dedupeRecipients(rows)}
+  function installCampaignPage(){
+    if(!$('page-campaigns'))$('app-main-content')?.insertAdjacentHTML('beforeend',`<div class="page" id="page-campaigns"><div class="page-header"><div><div class="page-title">Campagnes email</div><div class="page-subtitle">Préparer des envois groupés à partir des leads, ambassadeurs, lycées ou de votre panier de sélection.</div></div><div class="small-actions"><button class="btn btn-outline" onclick="resetCampaignComposerV83()">Nouvelle campagne</button></div></div><div class="campaign-layout"><div class="card"><div class="card-header"><div><div class="card-title">Composer la campagne</div><div class="card-count">BCC / Outlook + export CSV</div></div></div><div style="padding:16px"><div class="form-grid"><div class="form-field"><label class="form-label">Source des destinataires</label><select class="form-select" id="campaign-source-v83" onchange="refreshCampaignRecipientsV83()"><option value="selection-all">Toutes mes sélections</option><option value="selection-leads">Leads sélectionnés</option><option value="selection-students">Ambassadeurs sélectionnés</option><option value="selection-lycees">Lycées sélectionnés</option><option value="all-leads">Tous les leads visibles</option><option value="all-students">Tous les ambassadeurs visibles</option><option value="all-lycees">Tous les lycées visibles</option></select></div><div class="form-field"><label class="form-label">Nom interne de campagne</label><input class="form-input" id="campaign-name-v83" placeholder="Ex : Relance JPO septembre"></div><div class="form-field full"><label class="form-label">Objet *</label><input class="form-input" id="campaign-subject-v83" placeholder="Objet du mail"></div><div class="form-field full"><label class="form-label">Message *</label><textarea class="form-textarea" id="campaign-body-v83" rows="10" placeholder="Bonjour,…"></textarea></div></div><div class="campaign-recipient-box"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><strong id="campaign-recipient-count-v83">0 destinataire</strong><span class="campaign-status-pill">BCC recommandé</span></div><div class="campaign-recipient-list" id="campaign-recipient-list-v83"></div></div><div class="small-actions" style="margin-top:12px"><button class="btn btn-outline" onclick="copyCampaignBccV83()">Copier les BCC</button><button class="btn btn-outline" onclick="exportCampaignCsvV83()">Exporter CSV</button><button class="btn btn-primary" onclick="openCampaignMailtoV83()">Ouvrir dans la messagerie</button><button class="btn btn-primary" onclick="saveCampaignV83()">Enregistrer la campagne</button></div><div class="muted-box" style="margin-top:12px"><strong>Envoi réellement massif :</strong> la plateforme ne stocke volontairement aucune clé SMTP/API dans le HTML. La structure Supabase fournie permet de brancher ensuite une Edge Function sécurisée (Brevo, Resend, Mailjet…) sans changer cette interface.</div></div></div><div class="card"><div class="card-header"><div><div class="card-title">Historique des campagnes</div><div class="card-count" id="campaign-history-count-v83"></div></div></div><div class="campaign-history" id="campaign-history-v83"></div></div></div></div>`);
+    const leadsMenu=$('nav-submenu-leads')?.querySelector('.nav-submenu-inner');if(leadsMenu&&!leadsMenu.querySelector('[data-page="campaigns"]'))leadsMenu.insertAdjacentHTML('beforeend',`<button class="nav-item nav-subitem" data-page="campaigns" data-role="collaborateur" type="button" onclick="showPage('campaigns')"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="m4 7 8 6 8-6"/></svg><span>Campagnes email</span></button>`);
+  }
+  window.refreshCampaignRecipientsV83=function(){const sel=$('campaign-source-v83');CAMPAIGN_SOURCE=sel?.value||CAMPAIGN_SOURCE;CAMPAIGN_ROWS=recipientsFor(CAMPAIGN_SOURCE);if($('campaign-recipient-count-v83'))$('campaign-recipient-count-v83').textContent=`${CAMPAIGN_ROWS.length} destinataire(s) unique(s)`;if($('campaign-recipient-list-v83'))$('campaign-recipient-list-v83').innerHTML=CAMPAIGN_ROWS.length?CAMPAIGN_ROWS.slice(0,120).map(r=>`<div class="campaign-recipient-item"><span><strong>${esc(r.label||r.email)}</strong><br>${esc(r.email)}</span><span>${esc([r.school,r.campus].filter(Boolean).join(' · '))}</span></div>`).join(''):'<div class="muted-box">Aucune adresse email exploitable dans cette source.</div>'};
+  window.startCampaignFromSelection=function(type){if(!canBulkManageV83())return showToast('Campagnes réservées aux collaborateurs','error');CAMPAIGN_SOURCE='selection-'+type;installCampaignPage();showPage('campaigns');setTimeout(()=>{if($('campaign-source-v83'))$('campaign-source-v83').value=CAMPAIGN_SOURCE;refreshCampaignRecipientsV83()},0)};
+  window.resetCampaignComposerV83=function(){CAMPAIGN_SOURCE='selection-all';['campaign-name-v83','campaign-subject-v83','campaign-body-v83'].forEach(id=>{if($(id))$(id).value=''});if($('campaign-source-v83'))$('campaign-source-v83').value=CAMPAIGN_SOURCE;refreshCampaignRecipientsV83()};
+  window.copyCampaignBccV83=async function(){refreshCampaignRecipientsV83();const txt=CAMPAIGN_ROWS.map(r=>r.email).join('; ');if(!txt)return showToast('Aucun destinataire','error');try{await navigator.clipboard.writeText(txt);showToast(`${CAMPAIGN_ROWS.length} adresse(s) BCC copiée(s)`) }catch(_){showToast('Copie impossible','error')}};
+  window.openCampaignMailtoV83=function(){refreshCampaignRecipientsV83();const subject=$('campaign-subject-v83')?.value.trim()||'',body=$('campaign-body-v83')?.value||'';if(!CAMPAIGN_ROWS.length)return showToast('Aucun destinataire','error');if(!subject||!body)return showToast('Renseignez l’objet et le message','error');const batch=CAMPAIGN_ROWS.slice(0,40);if(CAMPAIGN_ROWS.length>40)showToast('La messagerie est ouverte avec les 40 premiers destinataires. Utilisez l’export CSV pour les gros volumes.','error');location.href=`mailto:?bcc=${encodeURIComponent(batch.map(r=>r.email).join(';'))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`};
+  window.exportCampaignCsvV83=function(){refreshCampaignRecipientsV83();if(!CAMPAIGN_ROWS.length)return showToast('Aucun destinataire','error');const rows=CAMPAIGN_ROWS.map(r=>({Email:r.email,Prenom:r.firstName,Nom:r.lastName,Type:r.entityType,Ecole:r.school,Campus:r.campus,Origine:r.source}));const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Destinataires');XLSX.writeFile(wb,`Plateforme_Leo_Campagne_${new Date().toISOString().slice(0,10)}.xlsx`)};
+  async function loadCampaignHistory(){let rows=localCampaigns();if(supabaseClient){try{const r=await supabaseClient.from('email_campaigns').select('*').order('created_at',{ascending:false}).limit(50);if(!r.error&&Array.isArray(r.data)){const remote=r.data.map(x=>({id:x.app_id||x.id,name:x.name||x.nom||'',subject:x.subject||x.objet||'',body:x.body||x.message||'',recipientCount:x.recipient_count||0,createdAt:x.created_at||'',status:x.status||'draft'}));const map=new Map([...remote,...rows].map(x=>[String(x.id),x]));rows=[...map.values()].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')))}}catch(_){}}renderCampaignHistory(rows)}
+  function renderCampaignHistory(rows){const host=$('campaign-history-v83');if(!host)return;$('campaign-history-count-v83').textContent=`${rows.length} campagne(s)`;host.innerHTML=rows.length?rows.map(c=>`<div class="campaign-history-card"><div style="display:flex;justify-content:space-between;gap:8px"><div class="campaign-history-title">${esc(c.name||c.subject||'Campagne')}</div><span class="campaign-status-pill">${esc(c.status||'draft')}</span></div><div class="campaign-history-meta">${esc(c.subject||'Sans objet')} · ${Number(c.recipientCount||0)} destinataire(s)<br>${c.createdAt?new Date(c.createdAt).toLocaleString('fr-FR'):''}</div></div>`).join(''):'<div class="muted-box">Aucune campagne enregistrée.</div>'}
+  window.saveCampaignV83=async function(){refreshCampaignRecipientsV83();const name=$('campaign-name-v83')?.value.trim()||'',subject=$('campaign-subject-v83')?.value.trim()||'',body=$('campaign-body-v83')?.value||'';if(!subject||!body)return showToast('Renseignez l’objet et le message','error');if(!CAMPAIGN_ROWS.length)return showToast('Aucun destinataire','error');const c={id:'CMP'+Date.now(),name:name||subject,subject,body,recipientCount:CAMPAIGN_ROWS.length,recipients:CAMPAIGN_ROWS,createdAt:new Date().toISOString(),status:'draft',createdBy:currentUser()?.email||''};let rows=[c,...localCampaigns()];saveLocalCampaigns(rows);let remoteOk=false;if(supabaseClient){try{const payload={app_id:c.id,name:c.name,subject:c.subject,body:c.body,status:c.status,recipient_count:c.recipientCount,recipients_json:c.recipients,created_by:c.createdBy,created_at:c.createdAt,updated_at:c.createdAt};const r=await supabaseClient.from('email_campaigns').upsert([payload],{onConflict:'app_id'});remoteOk=!r.error;if(r.error)console.warn('Campagne Supabase non enregistrée',r.error)}catch(_){}}showToast(remoteOk?'Campagne enregistrée dans Supabase':'Campagne enregistrée localement — exécutez le SQL V83 pour la synchroniser',remoteOk?'success':'error');loadCampaignHistory()};
+  window.renderCampaignsPageV83=function(){installCampaignPage();document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelector('[data-page="campaigns"]')?.classList.add('active');const mt=$('mobile-page-title');if(mt)mt.textContent='Campagnes email';if($('campaign-source-v83'))$('campaign-source-v83').value=CAMPAIGN_SOURCE;refreshCampaignRecipientsV83();loadCampaignHistory()};
+
+  const baseShowPage=window.showPage;if(typeof baseShowPage==='function')window.showPage=function(page){const r=baseShowPage.apply(this,arguments);if(page==='campaigns')setTimeout(renderCampaignsPageV83,0);return r};
+  function boot(){installCampaignPage();installBulkModal();ensureBulkToolbars();decorateListing();decorateStudents();decorateLeads();refreshBulkToolbars()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
+</script>
+
 </body>
 </html>
 <!-- EDH Forums Version 2 — build production compatible Supabase historique. -->
