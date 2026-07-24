@@ -6,18 +6,18 @@
 
 <meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="EDH Gestion Event">
+<meta name="apple-mobile-web-app-title" content="Plateforme Léo">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=yes">
 <link rel="manifest" href="manifest.webmanifest">
 
 <meta name="description" content="Plateforme interne EDH pour piloter les forums lycées, les leads QR et le reporting de conversion.">
-<meta property="og:title" content="EDH Gestion Event">
+<meta property="og:title" content="Plateforme Léo">
 <meta property="og:description" content="Pilotage des forums lycées, ambassadeurs, leads et reporting opérationnel.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='800' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232563eb'/%3E%3Ctext x='90' y='108' text-anchor='middle' font-family='Arial,sans-serif' font-size='52' font-weight='900' fill='white'%3EEDH%3C/text%3E%3C/svg%3E">
-<title>EDH Gestion Event</title>
+<title>Plateforme Léo</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 
@@ -1666,7 +1666,7 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
     <button class="mobile-menu-btn" type="button" aria-label="Ouvrir le menu" onclick="document.body.classList.toggle('mobile-sidebar-open')">☰</button>
     <div class="mobile-brand">
       <div class="mobile-brand-title" id="mobile-page-title">Tableau de bord</div>
-      <div class="mobile-brand-sub" id="mobile-page-subtitle">EDH Gestion Event · terrain & recrutement</div>
+      <div class="mobile-brand-sub" id="mobile-page-subtitle">Plateforme Léo · terrain & recrutement</div>
     </div>
   </div>
   <div class="mobile-pill">EDH</div>
@@ -1697,8 +1697,8 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 <aside class="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-logo">
-      <div class="sidebar-logo-badge">EDH</div>
-      Groupe EDH
+      <div class="sidebar-logo-badge">LÉO</div>
+      Plateforme Léo
     </div>
     <div class="sidebar-season" id="sidebar-season-label"></div>
   </div>
@@ -1984,6 +1984,10 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
           <div class="page-title">Base de données</div>
           <div class="page-subtitle" id="listing-sub">Toutes les coordonnées et informations disponibles sur les établissements</div>
         </div>
+        <div class="small-actions">
+          <button class="btn btn-outline" type="button" onclick="openDatabaseImportModal()">Importer ma base</button>
+          <button class="btn btn-primary" type="button" onclick="openAddModal()">Ajouter un lycée</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-header">
@@ -2068,6 +2072,22 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
       </div>
 
       <div class="kpi-row" id="students-kpis"></div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div><div class="card-title">Formulaire nouveaux ambassadeurs</div><div class="card-count">QR code public · sans connexion</div></div></div>
+        <div style="padding:16px" class="qr-box">
+          <div style="flex:1;min-width:280px">
+            <div style="font-size:14px;font-weight:800;margin-bottom:6px">Collecter les coordonnées dès l’arrivée des étudiants</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.55">Le QR code ouvre un formulaire public demandant nom, prénom, ancien lycée, école actuelle, campus, téléphone, mail et ville de résidence. Les réponses alimentent la base Ambassadeurs.</div>
+            <div class="small-actions" style="margin-top:12px">
+              <button class="btn btn-outline" type="button" onclick="copyAmbassadorFormUrl()">Copier le lien</button>
+              <button class="btn btn-outline" type="button" onclick="downloadAmbassadorQrCode()">Télécharger le QR code</button>
+              <button class="btn btn-primary" type="button" onclick="openAmbassadorPublicForm()">Ouvrir le formulaire</button>
+            </div>
+          </div>
+          <div class="qr-preview" id="ambassador-qr-preview">QR</div>
+        </div>
+      </div>
 
       <div class="simple-grid-2">
         <div class="card">
@@ -3112,7 +3132,7 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
     <div class="login-brand-panel login-brand-panel-clean">
       <div class="login-edh-mark" aria-label="Groupe EDH">
         <div class="login-edh-badge">EDH</div>
-        <div class="login-edh-text">EDH Gestion Event</div>
+        <div class="login-edh-text">Plateforme Léo</div>
       </div>
     </div>
     <div class="login-card">
@@ -3347,7 +3367,7 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 <div class="public-lead-overlay crm-public" id="public-lead-overlay">
   <div class="public-lead-card">
     <div class="public-lead-head">
-      <div class="public-lead-brand"><span class="sidebar-logo-badge">EDH</span> Groupe EDH</div>
+      <div class="public-lead-brand"><span class="sidebar-logo-badge">LÉO</span> Plateforme Léo</div>
       <div class="public-lead-title">Recevoir plus d’informations</div>
       <div class="public-lead-sub" id="public-lead-event-label">Complète tes coordonnées pour être recontacté par notre équipe.</div>
       <div class="public-lead-event-pill" id="public-lead-event-pill">Forum lycée</div>
@@ -3380,6 +3400,41 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 </div>
 
 
+
+
+<!-- ═══ IMPORT BASE LYCÉES AVEC MAPPING ═══ -->
+<div class="modal-overlay" id="modal-import-database" role="dialog" aria-modal="true" onclick="closeModalIf(event,'modal-import-database')">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-header"><div><div class="modal-title">Importer ma base</div><div class="modal-subtitle">Excel ou CSV · associez les colonnes de votre fichier à celles de la Plateforme Léo</div></div><button class="modal-close" onclick="closeModal('modal-import-database')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-field" style="margin-bottom:14px"><label class="form-label">Fichier Excel / CSV</label><input class="form-input" type="file" id="database-import-file" accept=".xlsx,.xls,.csv" onchange="handleDatabaseImportFile(event)"></div>
+      <div id="database-import-box" class="muted-box">Sélectionnez un fichier pour commencer le mapping.</div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-import-database')">Annuler</button><button class="btn btn-primary" id="database-import-submit" onclick="importMappedDatabase()">Importer dans la plateforme</button></div>
+  </div>
+</div>
+
+<!-- ═══ FORMULAIRE PUBLIC AMBASSADEUR ═══ -->
+<div class="public-lead-overlay crm-public" id="public-ambassador-overlay">
+  <div class="public-lead-card">
+    <div class="public-lead-head"><div class="public-lead-brand"><span class="sidebar-logo-badge">LÉO</span> Plateforme Léo</div><div class="public-lead-title">Devenir ambassadeur</div><div class="public-lead-sub">Bienvenue ! Renseigne tes coordonnées pour rejoindre la base des étudiants ambassadeurs du campus.</div></div>
+    <div class="public-lead-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">Prénom *</label><input class="form-input" id="amb-public-firstname" autocomplete="given-name"></div>
+        <div class="form-field"><label class="form-label">Nom *</label><input class="form-input" id="amb-public-lastname" autocomplete="family-name"></div>
+        <div class="form-field full"><label class="form-label">Ancien lycée *</label><input class="form-input" id="amb-public-lycee" placeholder="Nom de ton ancien lycée"></div>
+        <div class="form-field"><label class="form-label">École actuelle *</label><select class="form-select" id="amb-public-school"><option value="">Sélectionner</option><option>EFAP</option><option>ICART</option><option>CREAD</option><option>BRASSART</option><option>EFJ</option><option>MOPA</option><option>ESEC</option><option>Ecole Bleue</option><option>3W</option><option>IFA Paris</option></select></div>
+        <div class="form-field"><label class="form-label">Campus *</label><select class="form-select" id="amb-public-campus"><option value="">Sélectionner</option><option>Lille</option><option>Paris</option><option>Lyon</option><option>Strasbourg</option><option>Rennes</option><option>Aix-En-Provence</option><option>Nice</option><option>Toulouse</option><option>Montpellier</option><option>Bordeaux</option><option>Grenoble</option><option>Annecy</option><option>Nantes</option><option>Tours</option><option>Caen</option></select></div>
+        <div class="form-field"><label class="form-label">Téléphone *</label><input class="form-input" id="amb-public-phone" type="tel" autocomplete="tel"></div>
+        <div class="form-field"><label class="form-label">Mail *</label><input class="form-input" id="amb-public-email" type="email" autocomplete="email"></div>
+        <div class="form-field full"><label class="form-label">Ville de résidence *</label><input class="form-input" id="amb-public-city" autocomplete="address-level2"></div>
+      </div>
+      <button class="btn btn-primary" id="amb-public-submit" style="width:100%;justify-content:center;margin-top:16px" onclick="submitPublicAmbassador()">Envoyer mes informations</button>
+      <div class="public-lead-success" id="amb-public-success">Merci ! Tes informations ont bien été enregistrées.</div>
+      <div class="public-lead-error" id="amb-public-error">Impossible d’enregistrer les informations. Merci de réessayer.</div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ V53 MODALE CONFIRMATION STYLEE ═══ -->
 <div class="modal-overlay" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title" onclick="closeModalIf(event,'modal-confirm')">
@@ -3484,6 +3539,8 @@ let IMPORT_USER_ROWS = [];
 let IMPORT_USER_HEADERS = [];
 let IMPORT_REPORTING_ROWS = [];
 let IMPORT_REPORTING_HEADERS = [];
+let IMPORT_DATABASE_ROWS = [];
+let IMPORT_DATABASE_HEADERS = [];
 let REPORTING_DATA = {};
 let BACKLOG_ERRORS = [];
 let BACKLOG_SUPABASE_DISABLED = false;
@@ -4309,7 +4366,7 @@ function mapSupabaseStudentToApp(row){
   };
 }
 function mapAppStudentToSupabase(s){
-  return { app_id: normalizeSupabaseText(s.id), first_name: normalizeSupabaseText(s.firstName), last_name: normalizeSupabaseText(s.lastName), email: normalizeSupabaseText(s.email), phone: normalizeSupabaseText(s.phone), school: normalizeSupabaseText(s.school), campus: normalizeSupabaseText(s.campus), lycee: normalizeSupabaseText(s.lycee), lycee_ville: normalizeSupabaseText(s.lyceeVille), promo: normalizeSupabaseText(s.promo), notes: normalizeSupabaseText(s.notes) };
+  return { app_id: normalizeSupabaseText(s.id), first_name: normalizeSupabaseText(s.firstName), last_name: normalizeSupabaseText(s.lastName), email: normalizeSupabaseText(s.email), phone: normalizeSupabaseText(s.phone), school: normalizeSupabaseText(s.school), campus: normalizeSupabaseText(s.campus), lycee: normalizeSupabaseText(s.lycee), lycee_ville: normalizeSupabaseText(s.lyceeVille), promo: normalizeSupabaseText(s.promo), notes: normalizeSupabaseText(s.notes), ville_residence: normalizeSupabaseText(s.residenceCity) };
 }
 function mapSupabaseUserToApp(row){
   const firstName = pickField(row, ['first_name','firstname','firstName','prenom','prénom','Prenom','Prénom','nom_prenom','nom prénom']) || '';
@@ -7638,6 +7695,9 @@ html[data-theme="dark"] table td strong,html[data-theme="dark"] .advanced-title,
 
 
 
+
+
+
 </body></html>`;
 }
 function printForumFieldSheet(eventId){
@@ -10762,7 +10822,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function activePageId(){ const active = document.querySelector('.page.active'); return active ? (active.id || '').replace(/^page-/, '') : 'dashboard'; }
   function syncMobileChrome(){
     const page = activePageId();
-    const title = document.querySelector('.page.active .page-title')?.textContent?.trim() || 'EDH Gestion Event · terrain & recrutement';
+    const title = document.querySelector('.page.active .page-title')?.textContent?.trim() || 'Plateforme Léo · terrain & recrutement';
     const subtitle = document.querySelector('.page.active .page-subtitle')?.textContent?.trim() || 'Mode terrain';
     const titleEl = document.getElementById('mobile-page-title');
     const subEl = document.getElementById('mobile-page-subtitle');
@@ -13589,7 +13649,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     const labels={dashboard:'Accueil',calendrier:'Forums',listing:'Base de données',registrations:'Équipe étudiante',terrain:'Préparation',leads:'Leads',leadsall:'Tous les leads',students:'Ambassadeurs',reporting:'Pilotage',myactions:'Mes actions',actions:'Pipeline',performance:'Conversion',users:'Administration',inscriptions:'Mes forums',resources:'Ressources'};
     document.querySelectorAll('.nav-item').forEach(btn=>{if(btn.textContent.trim()===labels[page])btn.classList.add('active');});
-    const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'EDH Gestion Event · terrain & recrutement';
+    const mt=$('mobile-page-title');if(mt)mt.textContent=mobilePageLabel(page);const ms=$('mobile-page-subtitle');if(ms)ms.textContent=role==='student'?'Espace étudiant':'Plateforme Léo · terrain & recrutement';
     updateMobileNavV71(page);removeContextTabs();document.body.classList.remove('mobile-sidebar-open');
     const needRender=!renderedPages.has(page)||dirtyPages.has(page);
     if(needRender&&target)target.classList.add('is-rendering');
@@ -13870,7 +13930,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   function operationalPanel(ev){
     const m=eventMeta(ev),regs=activeRegs(ev),r=readiness(ev),key=eventKey(ev),internal=typeof isAdminMode==='function'&&isAdminMode();
     const rows=regs.map(reg=>`<div class="v72-staff-row"><div><div class="v72-staff-name">${esc(`${reg.firstName||''} ${reg.lastName||''}`.trim()||reg.email||'Étudiant')}</div><div class="v72-staff-sub">${esc(reg.school||'')} · ${esc(reg.email||'Email non renseigné')}</div></div>${internal?`<select class="form-select v72-compact-select" onchange="setRegistrationStatusV72('${esc(reg.id)}',this.value)">${['en_attente','inscrit','confirme','liste_attente','desiste','refuse'].map(s=>`<option value="${s}" ${registrationStatus(reg)===s?'selected':''}>${statusLabel(s)}</option>`).join('')}</select><select class="form-select v72-compact-select" onchange="setAttendanceStatusV72('${esc(reg.id)}',this.value)">${['a_confirmer','present','absent','retard','remplace'].map(s=>`<option value="${s}" ${attendanceStatus(reg)===s?'selected':''}>${attendanceLabel(s)}</option>`).join('')}</select>`:`<span class="badge b-blue">${esc(statusLabel(registrationStatus(reg)))}</span>`}</div>`).join('');
-    return `<section class="v72-operational-panel"><div class="v72-operational-head"><div><div class="v72-operational-title">Pilotage de l’événement</div><div class="v72-operational-meta"><span class="v72-event-type">${esc(m.type)}</span> <span class="v72-event-source">EDH Gestion Event</span> · Responsable : ${esc(ownerName(m))}</div></div>${internal?`<button class="btn btn-outline" type="button" onclick="closeModal('modal-detail');openEventModalV72('${esc(key)}')">Modifier l’événement</button>`:''}</div><div class="v72-operational-body"><div class="v72-meta-grid"><div class="v72-meta-card"><strong>${regs.length}</strong><span>Inscrits actifs</span></div><div class="v72-meta-card"><strong>${m.staffMin}</strong><span>Minimum requis</span></div><div class="v72-meta-card"><strong>${m.staffIdeal}</strong><span>Effectif idéal</span></div><div class="v72-meta-card"><strong>${m.staffMax}</strong><span>Capacité maximale</span></div></div><div class="v72-readiness"><div class="v72-readiness-track"><div class="v72-readiness-fill ${r.cls}" style="width:${r.score}%"></div></div><div class="v72-readiness-label">${r.score}%</div></div>${m.instructions?`<div class="muted-box" style="margin-top:12px"><strong>Consignes terrain</strong><br>${esc(m.instructions).replace(/\n/g,'<br>')}</div>`:''}<div class="v72-staff-list">${rows||'<div class="muted-box">Aucun ambassadeur inscrit pour le moment.</div>'}</div></div></section>`;
+    return `<section class="v72-operational-panel"><div class="v72-operational-head"><div><div class="v72-operational-title">Pilotage de l’événement</div><div class="v72-operational-meta"><span class="v72-event-type">${esc(m.type)}</span> <span class="v72-event-source">Plateforme Léo</span> · Responsable : ${esc(ownerName(m))}</div></div>${internal?`<button class="btn btn-outline" type="button" onclick="closeModal('modal-detail');openEventModalV72('${esc(key)}')">Modifier l’événement</button>`:''}</div><div class="v72-operational-body"><div class="v72-meta-grid"><div class="v72-meta-card"><strong>${regs.length}</strong><span>Inscrits actifs</span></div><div class="v72-meta-card"><strong>${m.staffMin}</strong><span>Minimum requis</span></div><div class="v72-meta-card"><strong>${m.staffIdeal}</strong><span>Effectif idéal</span></div><div class="v72-meta-card"><strong>${m.staffMax}</strong><span>Capacité maximale</span></div></div><div class="v72-readiness"><div class="v72-readiness-track"><div class="v72-readiness-fill ${r.cls}" style="width:${r.score}%"></div></div><div class="v72-readiness-label">${r.score}%</div></div>${m.instructions?`<div class="muted-box" style="margin-top:12px"><strong>Consignes terrain</strong><br>${esc(m.instructions).replace(/\n/g,'<br>')}</div>`:''}<div class="v72-staff-list">${rows||'<div class="muted-box">Aucun ambassadeur inscrit pour le moment.</div>'}</div></div></section>`;
   }
   const originalOpenDetail=window.openDetail;
   if(typeof originalOpenDetail==='function')window.openDetail=function(id){const result=originalOpenDetail.apply(this,arguments);setTimeout(()=>{const ev=typeof findCalendarEventById==='function'?findCalendarEventById(id):null;const body=$('detail-body');if(ev&&ev.date&&body&&!body.querySelector('.v72-operational-panel')){body.insertAdjacentHTML('afterbegin',operationalPanel(ev));const edit=$('detail-edit-btn');if(edit)edit.style.display='none'}},0);return result};
@@ -13925,7 +13985,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   const previousShowPage=window.showPage;
   if(typeof previousShowPage==='function')window.showPage=function(page){const student=(typeof normalizeRoleValue==='function'?normalizeRoleValue(S.role):S.role)==='student';if(student&&page==='leadsall')page='leads';const result=previousShowPage.call(this,page);setTimeout(()=>{patchEventButtons();applyStudentPrivacy();decorateCalendar()},0);return result};
 
-  function addIndependentCopy(){const cal=$('page-calendrier');if(cal){const sub=cal.querySelector('.page-subtitle');if(sub)sub.textContent='Forums, salons, JPO et opérations de recrutement gérés uniquement dans EDH Gestion Event.';if(!cal.querySelector('.v72-independent-note'))sub?.insertAdjacentHTML('afterend','<div class="v72-independent-note">Cette plateforme ne communique pas avec GEDH.</div>')}const logo=document.querySelector('.sidebar-logo');if(logo&&!logo.querySelector('.v72-product-name'))logo.insertAdjacentHTML('beforeend','<span class="v72-product-name" style="font-size:11px;color:var(--text3);font-weight:700">EDH Gestion Event</span>')}
+  function addIndependentCopy(){const cal=$('page-calendrier');if(cal){const sub=cal.querySelector('.page-subtitle');if(sub)sub.textContent='Forums, salons, JPO et opérations de recrutement gérés uniquement dans Plateforme Léo.';if(!cal.querySelector('.v72-independent-note'))sub?.insertAdjacentHTML('afterend','<div class="v72-independent-note">Cette plateforme ne communique pas avec GEDH.</div>')}const logo=document.querySelector('.sidebar-logo');if(logo&&!logo.querySelector('.v72-product-name'))logo.insertAdjacentHTML('beforeend','<span class="v72-product-name" style="font-size:11px;color:var(--text3);font-weight:700">Plateforme Léo</span>')}
 
   patchEventButtons();addIndependentCopy();normaliseAllEventMeta();loadStructuredV72().then(()=>{applyStudentPrivacy();if($('page-dashboard')?.classList.contains('active'))renderRiskPanel()});setTimeout(()=>{patchEventButtons();addIndependentCopy();applyStudentPrivacy();decorateCalendar()},600);
 })();
@@ -13957,7 +14017,7 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
   if(typeof previousSetRole==='function'){window.setRole=function(){const result=previousSetRole.apply(this,arguments);setTimeout(enforceInternalNavigation,0);return result;};}
   const previousShowPageV73=window.showPage;
   if(typeof previousShowPageV73==='function'){window.showPage=function(){const result=previousShowPageV73.apply(this,arguments);setTimeout(enforceInternalNavigation,0);return result;};}
-  const title='EDH Gestion Event';
+  const title='Plateforme Léo';
   document.title=title;
   document.querySelectorAll('.sidebar-logo').forEach(el=>{
     const textNodes=[...el.childNodes].filter(n=>n.nodeType===3);
@@ -14452,6 +14512,52 @@ html[data-theme="dark"] .v72-school-check,html[data-theme="dark"] .v72-operation
 })();
 </script>
 
+<script id="plateforme-leo-v82-features">
+/* V82 — Plateforme Léo : import base mappé + formulaire public ambassadeurs */
+(function(){
+  const DB_FIELDS = [
+    ['nom','Nom du lycée *',['lycée','lycee','établissement','etablissement','nom']],
+    ['ville','Ville *',['ville','city']],
+    ['departement','Département',['département','departement','dept']],
+    ['cp','Code postal',['code postal','cp','postal']],
+    ['type','Type public / privé',['type','public','privé','prive']],
+    ['adresse','Adresse',['adresse','address']],
+    ['region','Région',['région','region']],
+    ['campus','Campus',['campus']],
+    ['statut','Statut',['statut','status']],
+    ['ecoles','Écoles',['écoles','ecoles','school']],
+    ['organisateur','Contact / organisateur',['organisateur','contact nom','contact']],
+    ['mail_ecole','Email',['email','mail','courriel']],
+    ['tel_ecole','Téléphone',['téléphone','telephone','tel','phone']],
+    ['commentaire','Commentaire',['commentaire','notes','note']]
+  ];
+  function esc(v){ return typeof escapeHtml==='function' ? escapeHtml(String(v??'')) : String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function guessHeader(headers, aliases){ const norm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); return headers.find(h=>aliases.some(a=>norm(h).includes(norm(a)))) || ''; }
+  window.openDatabaseImportModal=function(){ IMPORT_DATABASE_ROWS=[]; IMPORT_DATABASE_HEADERS=[]; const input=document.getElementById('database-import-file'); if(input) input.value=''; const box=document.getElementById('database-import-box'); if(box) box.textContent='Sélectionnez un fichier pour commencer le mapping.'; document.getElementById('modal-import-database')?.classList.add('open'); };
+  window.handleDatabaseImportFile=function(event){ const file=event.target.files?.[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ try{ const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); const sh=wb.Sheets[wb.SheetNames[0]]; IMPORT_DATABASE_ROWS=XLSX.utils.sheet_to_json(sh,{defval:''}); IMPORT_DATABASE_HEADERS=IMPORT_DATABASE_ROWS.length?Object.keys(IMPORT_DATABASE_ROWS[0]):[]; renderDatabaseMapping(); }catch(err){ console.error(err); document.getElementById('database-import-box').innerHTML='<span style="color:var(--red)">Impossible de lire ce fichier.</span>'; }}; reader.readAsArrayBuffer(file); };
+  function renderDatabaseMapping(){
+    const box=document.getElementById('database-import-box');
+    if(!box) return;
+    if(!IMPORT_DATABASE_HEADERS.length){ box.textContent='Aucune ligne détectée.'; return; }
+    const optionHtml = '<option value="">— Ne pas importer —</option>' + IMPORT_DATABASE_HEADERS.map(function(h){ return '<option value="'+esc(h)+'">'+esc(h)+'</option>'; }).join('');
+    let fieldsHtml='';
+    DB_FIELDS.forEach(function(field){ const key=field[0], label=field[1]; fieldsHtml += '<div class="form-field"><label class="form-label">'+label+'</label><select class="form-select" id="dbmap-'+key+'">'+optionHtml+'</select></div>'; });
+    box.className='';
+    box.innerHTML='<div class="muted-box" style="margin-bottom:12px"><strong>'+IMPORT_DATABASE_ROWS.length+'</strong> ligne(s) détectée(s). Vérifiez le mapping avant import. Les doublons Nom + Ville seront mis à jour plutôt que recréés.</div><div class="form-grid">'+fieldsHtml+'</div>';
+    DB_FIELDS.forEach(function(field){ const key=field[0], aliases=field[2]; const el=document.getElementById('dbmap-'+key); const g=guessHeader(IMPORT_DATABASE_HEADERS,aliases); if(el&&g) el.value=g; });
+  }
+  window.importMappedDatabase=async function(){ if(!IMPORT_DATABASE_ROWS.length) return showToast('Aucune donnée à importer','error'); const map={}; DB_FIELDS.forEach(([k])=>map[k]=document.getElementById('dbmap-'+k)?.value||''); if(!map.nom||!map.ville) return showToast('Associez au minimum Nom du lycée et Ville','error'); const btn=document.getElementById('database-import-submit'); if(btn){btn.disabled=true;btn.classList.add('is-loading');} let created=0,updated=0,failed=0; try{ for(const row of IMPORT_DATABASE_ROWS){ const nom=String(row[map.nom]||'').trim(), ville=String(row[map.ville]||'').trim(); if(!nom||!ville){failed++;continue;} const existing=(LYCEES||[]).find(l=>String(l.nom||'').trim().toLowerCase()===nom.toLowerCase()&&String(l.ville||'').trim().toLowerCase()===ville.toLowerCase()); const l=existing||{id:typeof nextId==='function'?nextId():'LYC'+Date.now()+Math.random().toString(36).slice(2,7),statut:'A contacter',ecoles:'tout le monde'}; DB_FIELDS.forEach(([k])=>{if(map[k]&&row[map[k]]!==undefined&&String(row[map[k]]).trim()!=='') l[k]=String(row[map[k]]).trim();}); if(!existing) LYCEES.push(l); const a=await saveLyceeDirectToSupabase(l); const b=a.ok?await saveLyceeSuiviAnnuelDirectToSupabase(l):{ok:false}; if(a.ok){existing?updated++:created++; if(!b.ok&&!b.skipped) console.warn('Suivi annuel non importé',b);} else failed++; } saveLocalData(); if(typeof loadFromSupabase==='function'&&supabaseClient) await loadFromSupabase({silent:true}); if(typeof renderListing==='function') renderListing(); closeModal('modal-import-database'); showToast(`${created} créé(s), ${updated} mis à jour${failed?`, ${failed} ignoré(s)/en erreur`:''}`, failed?'error':'success'); } finally {if(btn){btn.disabled=false;btn.classList.remove('is-loading');}} };
+  function ambassadorFormUrl(){ return window.location.href.split('#')[0]+'#ambassador=1'; }
+  function renderAmbassadorQr(){ const box=document.getElementById('ambassador-qr-preview'); if(box){const u=ambassadorFormUrl(); box.innerHTML=`<img src="${qrImageUrl(u)}" alt="QR code formulaire ambassadeur">`;}}
+  window.copyAmbassadorFormUrl=async function(){ try{await navigator.clipboard.writeText(ambassadorFormUrl());showToast('Lien du formulaire copié');}catch(_){showToast('Copie impossible','error');} };
+  window.downloadAmbassadorQrCode=function(){ const a=document.createElement('a');a.href=qrImageUrl(ambassadorFormUrl());a.download='Plateforme-Leo-QR-Ambassadeurs.png';a.target='_blank';a.click(); };
+  window.openAmbassadorPublicForm=function(){ window.open(ambassadorFormUrl(),'_blank'); };
+  function setAmbOverlay(open){ const el=document.getElementById('public-ambassador-overlay'); if(!el)return; el.classList.toggle('open',open); document.body.classList.toggle('public-lead-mode',open); }
+  function checkAmbHash(){ setAmbOverlay((location.hash||'').includes('ambassador=1')); }
+  window.submitPublicAmbassador=async function(){ const get=id=>document.getElementById(id)?.value.trim()||''; const firstName=get('amb-public-firstname'),lastName=get('amb-public-lastname'),lycee=get('amb-public-lycee'),school=get('amb-public-school'),campus=get('amb-public-campus'),phone=get('amb-public-phone'),email=get('amb-public-email').toLowerCase(),residenceCity=get('amb-public-city'); const err=document.getElementById('amb-public-error'),ok=document.getElementById('amb-public-success'),btn=document.getElementById('amb-public-submit'); err?.classList.remove('show');ok?.classList.remove('show'); if(!firstName||!lastName||!lycee||!school||!campus||!phone||!email||!residenceCity) { if(err){err.textContent='Merci de remplir tous les champs.';err.classList.add('show');} return; } if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(err){err.textContent='Adresse mail invalide.';err.classList.add('show');}return;} const obj={id:nextStudentId(),firstName,lastName,lycee,school,campus,phone,email,residenceCity,lyceeVille:'',promo:'',notes:`Ville de résidence : ${residenceCity}`}; if(btn){btn.disabled=true;btn.classList.add('is-loading');} try{ const r=await saveStudentDirectToSupabase(obj); if(!r.ok&&!r.skipped) throw new Error(r.message||'Erreur Supabase'); STUDENTS.unshift(obj); saveLocalData(); ok?.classList.add('show'); ['amb-public-firstname','amb-public-lastname','amb-public-lycee','amb-public-phone','amb-public-email','amb-public-city'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';}); if(typeof renderStudentsPage==='function') renderStudentsPage(); }catch(e){console.error(e);if(err){err.textContent='Impossible d’enregistrer les informations. Merci de réessayer.';err.classList.add('show');}}finally{if(btn){btn.disabled=false;btn.classList.remove('is-loading');}} };
+  document.addEventListener('DOMContentLoaded',()=>{renderAmbassadorQr();checkAmbHash();}); window.addEventListener('hashchange',checkAmbHash);
+})();
+</script>
 </body>
 </html>
 <!-- EDH Forums Version 2 — build production compatible Supabase historique. -->
