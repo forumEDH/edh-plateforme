@@ -1656,6 +1656,19 @@ html[data-theme="dark"] .v84-section-tab.active{background:#111!important}html[d
 @media(max-width:900px){.v84-school-access-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.v84-section-tabs{width:100%;display:grid;grid-template-columns:1fr}.v84-section-tab{width:100%}.v84-filter-city{width:100%;min-width:0}}
 </style>
+
+<style id="plateforme-leo-v86-import-style">
+/* V86 — imports robustes et lisibles */
+#modal-import-students .modal,#modal-import-database .modal{display:flex;flex-direction:column;overflow:hidden}
+#modal-import-students .modal-body,#modal-import-database .modal-body{overflow-y:auto;min-height:0}
+#modal-import-students .modal-footer,#modal-import-database .modal-footer{flex:0 0 auto;background:var(--surface)}
+.leo-import-progress{margin-top:12px;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg)}
+.leo-import-progress-text{font-size:11px;font-weight:800;color:var(--text2);margin-bottom:7px}
+.leo-import-progress-track{height:7px;border-radius:999px;background:var(--bg2);overflow:hidden}
+.leo-import-progress-fill{height:100%;width:0;background:var(--primary);border-radius:999px;transition:width .18s ease}
+#modal-import-students .import-scope-box,#modal-import-database .import-scope-box{margin-bottom:14px}
+@media(max-width:768px){#modal-import-students .modal,#modal-import-database .modal{max-height:94dvh!important}#modal-import-students .form-grid,#modal-import-database .form-grid{grid-template-columns:1fr!important}}
+</style>
 </head>
 <body>
 
@@ -3035,26 +3048,26 @@ html[data-theme="dark"] .v84-section-tab.active{background:#111!important}html[d
 
 </div>
 
-<!-- ═══ MODAL IMPORT ÉTUDIANTS ═══ -->
+<!-- ═══ MODAL IMPORT AMBASSADEURS ═══ -->
 <div class="modal-overlay" id="modal-import-students" onclick="closeModalIf(event,'modal-import-students')">
-  <div class="modal">
+  <div class="modal" style="max-width:860px">
     <div class="modal-header">
       <div>
-        <div class="modal-title">Importer des étudiants depuis Excel</div>
-        <div class="modal-subtitle">Charge un fichier .xlsx puis associe les colonnes Excel aux champs de la plateforme</div>
+        <div class="modal-title">Importer des ambassadeurs</div>
+        <div class="modal-subtitle">Excel ou CSV · associez les colonnes du fichier aux champs de la Plateforme Léo</div>
       </div>
       <button class="modal-close" onclick="closeModal('modal-import-students')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-field" style="margin-bottom:14px">
-        <label class="form-label">Fichier Excel</label>
+        <label class="form-label">Fichier Excel / CSV</label>
         <input class="form-input" type="file" id="students-import-file" accept=".xlsx,.xls,.csv" onchange="handleStudentsFile(event)">
       </div>
       <div id="import-students-box" class="muted-box">Sélectionne d'abord un fichier Excel.</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-import-students')">Annuler</button>
-      <button class="btn btn-primary" onclick="importStudentsFromFile()">Importer</button>
+      <button class="btn btn-primary" id="students-import-submit" onclick="importStudentsFromFile()">Importer</button>
     </div>
   </div>
 </div>
@@ -3485,7 +3498,7 @@ html[data-theme="dark"] .v84-section-tab.active{background:#111!important}html[d
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V85-2026-07-24-stable-no-bulk-lycees-ambassadeurs-performance";
+const APP_PATCH_VERSION = "V86-2026-07-24-imports-robustes-supabase-csv";
 // V80 : les écouteurs globaux sont installés après l'initialisation du backlog,
 // afin d'éviter les doubles handlers et les accès à un état encore non initialisé.
 // ══════════════════════════════════════
@@ -5719,21 +5732,18 @@ function typeBadge(t){
   return `<span class="tag-sm ${p?'tag-prive':'tag-public'}">${p?'Privé':'Public'}</span>`;
 }
 
-function nextId(){
-  return 'NEW' + Date.now();
+let __leoIdSequence = 0;
+function nextUniqueLeoId(prefix){
+  __leoIdSequence = (__leoIdSequence + 1) % 1000000;
+  const rnd = (typeof crypto !== 'undefined' && crypto.getRandomValues)
+    ? Array.from(crypto.getRandomValues(new Uint32Array(1)))[0].toString(36)
+    : Math.random().toString(36).slice(2,10);
+  return prefix + Date.now().toString(36) + '_' + __leoIdSequence.toString(36) + '_' + rnd;
 }
-
-function nextStudentId(){
-  return 'STD' + Date.now();
-}
-
-function nextRegistrationId(){
-  return 'REG' + Date.now();
-}
-
-function nextUserId(){
-  return 'USR' + Date.now();
-}
+function nextId(){ return nextUniqueLeoId('NEW_'); }
+function nextStudentId(){ return nextUniqueLeoId('STD_'); }
+function nextRegistrationId(){ return nextUniqueLeoId('REG_'); }
+function nextUserId(){ return nextUniqueLeoId('USR_'); }
 
 function currentUser(){
   return USERS.find(u => u.id === S.currentUserId) || null;
@@ -9681,111 +9691,244 @@ function renderRegistrationsPage(){
   `).join('') : `<tr><td colspan="9"><div class="empty-state"><p>Aucun événement ou inscription trouvé.</p></div></td></tr>`;
 }
 
+function normalizeImportHeaderName(v){
+  return String(v ?? '').replace(/^\uFEFF/,'').trim();
+}
+function importNorm(v){
+  return String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+function uniqueImportHeaders(headerRow){
+  const seen = new Map();
+  return (headerRow || []).map((raw, index) => {
+    let base = normalizeImportHeaderName(raw);
+    if(!base) base = `Colonne ${index + 1}`;
+    const key = base.toLowerCase();
+    const n = (seen.get(key) || 0) + 1;
+    seen.set(key,n);
+    return n === 1 ? base : `${base} (${n})`;
+  });
+}
+function countDelimiterOutsideQuotes(line, delimiter){
+  let quote=false, count=0;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(quote && line[i+1]==='"'){ i++; continue; }
+      quote=!quote; continue;
+    }
+    if(!quote && ch===delimiter) count++;
+  }
+  return count;
+}
+async function readImportFileRows(file){
+  if(!file) throw new Error('Aucun fichier sélectionné');
+  if(typeof XLSX === 'undefined') throw new Error('Le module Excel/CSV n’est pas chargé');
+  const name=String(file.name||'').toLowerCase();
+  let wb;
+  if(name.endsWith('.csv')){
+    const buf=await file.arrayBuffer();
+    let text='';
+    try { text=new TextDecoder('utf-8',{fatal:true}).decode(buf); }
+    catch(_) { text=new TextDecoder('windows-1252').decode(buf); }
+    text=text.replace(/^\uFEFF/,'');
+    const sample=(text.split(/\r?\n/).find(l=>l.trim())||'');
+    const candidates=[';','\t',','];
+    const delimiter=candidates.map(d=>[d,countDelimiterOutsideQuotes(sample,d)]).sort((a,b)=>b[1]-a[1])[0][0];
+    wb=XLSX.read(text,{type:'string',FS:delimiter,raw:false});
+  }else{
+    const buf=await file.arrayBuffer();
+    wb=XLSX.read(buf,{type:'array',raw:false});
+  }
+  const sheetName=wb.SheetNames?.[0];
+  if(!sheetName) throw new Error('Aucune feuille détectée');
+  const matrix=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:false,blankrows:false});
+  const nonEmptyRows=matrix.filter(row=>(row||[]).some(v=>String(v??'').trim()!==''));
+  if(!nonEmptyRows.length) return {rows:[],headers:[],sheetName};
+  let headerIndex=0;
+  for(let i=0;i<Math.min(nonEmptyRows.length,8);i++){
+    const meaningful=(nonEmptyRows[i]||[]).filter(v=>String(v??'').trim()!=='').length;
+    if(meaningful>=2){headerIndex=i;break;}
+  }
+  const headers=uniqueImportHeaders(nonEmptyRows[headerIndex]);
+  const rows=[];
+  for(const rawRow of nonEmptyRows.slice(headerIndex+1)){
+    if(!(rawRow||[]).some(v=>String(v??'').trim()!=='')) continue;
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=rawRow[i] ?? '');
+    rows.push(obj);
+  }
+  return {rows,headers,sheetName};
+}
+function guessImportHeader(headers, aliases){
+  const list=(headers||[]).map(h=>({h,n:importNorm(h)}));
+  for(const alias of aliases||[]){
+    const a=importNorm(alias);
+    const exact=list.find(x=>x.n===a); if(exact) return exact.h;
+  }
+  for(const alias of aliases||[]){
+    const a=importNorm(alias);
+    const partial=list.find(x=>x.n.includes(a)||a.includes(x.n)); if(partial) return partial.h;
+  }
+  return '';
+}
+function importOptionHtml(headers){
+  const escAttr=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  return '<option value="">— Ne pas importer —</option>' + (headers||[]).map(h=>`<option value="${escAttr(h)}">${escAttr(h)}</option>`).join('');
+}
+function setImportProgress(boxId,current,total,label='Import'){
+  const box=document.getElementById(boxId); if(!box)return;
+  const pct=total?Math.max(0,Math.min(100,Math.round(current/total*100))):0;
+  const progress=box.querySelector('.leo-import-progress-fill');
+  const text=box.querySelector('.leo-import-progress-text');
+  if(progress) progress.style.width=pct+'%';
+  if(text) text.textContent=`${label} : ${current} / ${total} (${pct} %)`;
+}
+function studentImportDefaults(){
+  return {
+    school: document.getElementById('imp-default-school')?.value || '',
+    campus: document.getElementById('imp-default-campus')?.value || ''
+  };
+}
 function openImportStudentsModal(){
   document.getElementById('students-import-file').value = '';
-  document.getElementById('import-students-box').innerHTML = "Sélectionne d'abord un fichier Excel.";
+  const box=document.getElementById('import-students-box');
+  box.className='muted-box';
+  box.innerHTML = "Sélectionnez un fichier Excel ou CSV pour commencer le mapping.";
   IMPORT_STUDENT_ROWS = [];
   IMPORT_STUDENT_HEADERS = [];
   document.getElementById('modal-import-students').classList.add('open');
 }
-
-function handleStudentsFile(event){
+async function handleStudentsFile(event){
   const file = event.target.files?.[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    try {
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, {type:'array'});
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
-      IMPORT_STUDENT_ROWS = rows;
-      IMPORT_STUDENT_HEADERS = rows.length ? Object.keys(rows[0]) : [];
-      renderImportStudentMapping();
-    } catch(err){
-      document.getElementById('import-students-box').innerHTML = '<span style="color:var(--red)">Impossible de lire ce fichier.</span>';
-    }
-  };
-  reader.readAsArrayBuffer(file);
+  const box=document.getElementById('import-students-box');
+  box.className='muted-box'; box.textContent='Lecture du fichier…';
+  try {
+    const parsed=await readImportFileRows(file);
+    IMPORT_STUDENT_ROWS = parsed.rows;
+    IMPORT_STUDENT_HEADERS = parsed.headers;
+    renderImportStudentMapping(parsed.sheetName);
+  } catch(err){
+    console.error('Import ambassadeurs - lecture fichier',err);
+    box.className='muted-box';
+    box.innerHTML = `<span style="color:var(--red)">Impossible de lire ce fichier : ${typeof escapeHtml==='function'?escapeHtml(err.message||String(err)):String(err.message||err)}</span>`;
+  }
 }
-
-function renderImportStudentMapping(){
+function renderImportStudentMapping(sheetName=''){
   const box = document.getElementById('import-students-box');
   if(!IMPORT_STUDENT_HEADERS.length){
-    box.innerHTML = 'Aucune donnée détectée dans le fichier.';
-    return;
+    box.className='muted-box'; box.innerHTML = 'Aucune donnée détectée dans le fichier.'; return;
   }
-  const options = ['<option value="">— Ne pas importer —</option>', ...IMPORT_STUDENT_HEADERS.map(h=>`<option value="${h}">${h}</option>`)].join('');
+  const options = importOptionHtml(IMPORT_STUDENT_HEADERS);
   const fields = [
-    ['imp-firstName','Prénom *'],
-    ['imp-lastName','Nom *'],
-    ['imp-email','Email'],
-    ['imp-phone','Téléphone'],
-    ['imp-school','École actuelle *'],
-    ['imp-campus','Campus'],
-    ['imp-lycee',"Lycée d'origine *"],
-    ['imp-lyceeVille','Ville du lycée'],
-    ['imp-promo','Promo'],
-    ['imp-notes','Notes']
+    ['imp-firstName','Prénom *',['prénom','prenom','first name','firstname']],
+    ['imp-lastName','Nom *',['nom','last name','lastname']],
+    ['imp-email','Email',['email','mail','adresse mail','courriel']],
+    ['imp-phone','Téléphone',['téléphone','telephone','tel','phone','portable']],
+    ['imp-school','École actuelle',['école actuelle','ecole actuelle','école','ecole','school','marque']],
+    ['imp-campus','Campus',['campus','ville campus']],
+    ['imp-lycee',"Ancien lycée *",['ancien lycée','ancien lycee',"lycée d'origine",'lycee origine','lycée','lycee']],
+    ['imp-lyceeVille','Ville de l’ancien lycée',['ville lycée','ville lycee','ville ancien lycée','ville ancien lycee']],
+    ['imp-residenceCity','Ville de résidence',['ville de résidence','ville de residence','résidence','residence city']],
+    ['imp-promo','Promo / année',['promo','année de promo','annee de promo','promotion','classe']],
+    ['imp-notes','Notes',['notes','commentaire','commentaires','remarque']]
   ];
+  box.className='';
   box.innerHTML = `
-    <div class="kicker">Colonnes détectées</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">${IMPORT_STUDENT_HEADERS.join(' · ')}</div>
-    <div class="form-grid">
-      ${fields.map(([id,label])=>`<div class="form-field"><label class="form-label">${label}</label><select class="form-select" id="${id}">${options}</select></div>`).join('')}
+    <div class="import-scope-box">
+      <div class="import-scope-title">1. Valeurs par défaut</div>
+      <div class="import-scope-copy">Facultatif : si le fichier ne contient pas l’école ou le campus, la valeur choisie ici sera appliquée aux lignes concernées.</div>
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">École par défaut</label><select class="form-select" id="imp-default-school"><option value="">— Aucune —</option>${(window.SCHOOLS||SCHOOLS||[]).map(s=>`<option value="${s}">${s}</option>`).join('')}</select></div>
+        <div class="form-field"><label class="form-label">Campus par défaut</label><select class="form-select" id="imp-default-campus"><option value="">— Aucun —</option>${(window.CAMPUS_LIST||CAMPUS_LIST||[]).map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
+      </div>
     </div>
+    <div class="muted-box" style="margin-bottom:12px"><strong>${IMPORT_STUDENT_ROWS.length}</strong> ligne(s) détectée(s)${sheetName?` dans <strong>${typeof escapeHtml==='function'?escapeHtml(sheetName):sheetName}</strong>`:''}. Vérifiez le mapping avant import. Les doublons sont recherchés par email, puis par prénom + nom + école.</div>
+    <div class="kicker" style="margin-bottom:8px">2. Mapping des colonnes</div>
+    <div class="form-grid">${fields.map(([id,label])=>`<div class="form-field"><label class="form-label">${label}</label><select class="form-select" id="${id}">${options}</select></div>`).join('')}</div>
     <div class="divider"></div>
-    <div style="font-size:12px;color:var(--text2)">Lignes détectées : ${IMPORT_STUDENT_ROWS.length}</div>
-  `;
+    <div class="leo-import-progress"><div class="leo-import-progress-text">Prêt à importer ${IMPORT_STUDENT_ROWS.length} ligne(s).</div><div class="leo-import-progress-track"><div class="leo-import-progress-fill"></div></div></div>`;
+  fields.forEach(([id,,aliases])=>{const el=document.getElementById(id),g=guessImportHeader(IMPORT_STUDENT_HEADERS,aliases);if(el&&g)el.value=g;});
 }
-
-function importStudentsFromFile(){
-  if(!IMPORT_STUDENT_ROWS.length){
-    showToast('Aucun fichier étudiant à importer', 'error');
-    return;
+async function retryImportOperation(fn, attempts=3){
+  let last;
+  for(let i=0;i<attempts;i++){
+    try { const r=await fn(); if(r?.ok || r?.skipped) return r; last=r; }
+    catch(err){ last={ok:false,error:err,message:err?.message||String(err)}; }
+    if(i<attempts-1) await new Promise(r=>setTimeout(r,300*(i+1)));
   }
+  return last || {ok:false,message:'Échec de synchronisation'};
+}
+async function runImportPool(items, worker, concurrency=4, onProgress){
+  let cursor=0, done=0;
+  async function lane(){
+    while(true){
+      const index=cursor++; if(index>=items.length) return;
+      await worker(items[index],index);
+      done++; if(onProgress) onProgress(done,items.length);
+      if(done%25===0) await new Promise(r=>setTimeout(r,0));
+    }
+  }
+  await Promise.all(Array.from({length:Math.max(1,Math.min(concurrency,items.length||1))},lane));
+}
+async function importStudentsFromFile(){
+  if(!IMPORT_STUDENT_ROWS.length){ showToast('Aucun fichier ambassadeur à importer', 'error'); return; }
+  if(!supabaseClient){ showToast('Supabase n’est pas connecté : import annulé pour éviter de perdre les ambassadeurs au rechargement.', 'error'); return; }
   const map = {
-    firstName: document.getElementById('imp-firstName')?.value || '',
-    lastName: document.getElementById('imp-lastName')?.value || '',
-    email: document.getElementById('imp-email')?.value || '',
-    phone: document.getElementById('imp-phone')?.value || '',
-    school: document.getElementById('imp-school')?.value || '',
-    campus: document.getElementById('imp-campus')?.value || '',
-    lycee: document.getElementById('imp-lycee')?.value || '',
-    lyceeVille: document.getElementById('imp-lyceeVille')?.value || '',
-    promo: document.getElementById('imp-promo')?.value || '',
+    firstName: document.getElementById('imp-firstName')?.value || '', lastName: document.getElementById('imp-lastName')?.value || '',
+    email: document.getElementById('imp-email')?.value || '', phone: document.getElementById('imp-phone')?.value || '',
+    school: document.getElementById('imp-school')?.value || '', campus: document.getElementById('imp-campus')?.value || '',
+    lycee: document.getElementById('imp-lycee')?.value || '', lyceeVille: document.getElementById('imp-lyceeVille')?.value || '',
+    residenceCity: document.getElementById('imp-residenceCity')?.value || '', promo: document.getElementById('imp-promo')?.value || '',
     notes: document.getElementById('imp-notes')?.value || ''
   };
-  if(!map.firstName || !map.lastName || !map.school || !map.lycee){
-    showToast("Associe au minimum prénom, nom, école et lycée d'origine", 'error');
-    return;
+  const defaults=studentImportDefaults();
+  if(!map.firstName || !map.lastName || !map.lycee){ showToast("Associez au minimum prénom, nom et ancien lycée", 'error'); return; }
+  if(!map.school && !defaults.school){ showToast("Associez une colonne École actuelle ou choisissez une école par défaut", 'error'); return; }
+  const btn=document.getElementById('students-import-submit'); if(btn){btn.disabled=true;btn.classList.add('is-loading');}
+  const prepared=[]; let skipped=0;
+  for(let i=0;i<IMPORT_STUDENT_ROWS.length;i++){
+    const row=IMPORT_STUDENT_ROWS[i];
+    const firstName=String(row[map.firstName]||'').trim(), lastName=String(row[map.lastName]||'').trim(), lycee=String(row[map.lycee]||'').trim();
+    const email=String(map.email?row[map.email]||'':'').trim().toLowerCase();
+    const rawSchool=String(map.school?row[map.school]||'':'').trim() || defaults.school;
+    const school=normalizeSchoolName(rawSchool)||rawSchool;
+    if(!firstName||!lastName||!lycee||!school){skipped++;continue;}
+    const existing=(STUDENTS||[]).find(st=>(email && String(st.email||'').trim().toLowerCase()===email) ||
+      (importNorm(st.firstName)===importNorm(firstName)&&importNorm(st.lastName)===importNorm(lastName)&&normalizeSchoolName(st.school||'')===normalizeSchoolName(school)));
+    const obj=existing?{...existing}:{id:nextStudentId()};
+    Object.assign(obj,{firstName,lastName,email,school,lycee,
+      phone:String(map.phone?row[map.phone]||'':'').trim() || obj.phone || '',
+      campus:String(map.campus?row[map.campus]||'':'').trim() || defaults.campus || obj.campus || '',
+      lyceeVille:String(map.lyceeVille?row[map.lyceeVille]||'':'').trim() || obj.lyceeVille || '',
+      residenceCity:String(map.residenceCity?row[map.residenceCity]||'':'').trim() || obj.residenceCity || '',
+      promo:String(map.promo?row[map.promo]||'':'').trim() || obj.promo || '',
+      notes:String(map.notes?row[map.notes]||'':'').trim() || obj.notes || ''});
+    prepared.push({obj,existing});
   }
-  let imported = 0;
-  IMPORT_STUDENT_ROWS.forEach(row=>{
-    const schoolVal = normalizeSchoolName(row[map.school] || '');
-    if(!row[map.firstName] || !row[map.lastName] || !row[map.lycee] || !schoolVal) return;
-    const obj = {
-      id: nextStudentId(),
-      firstName: String(row[map.firstName] || '').trim(),
-      lastName: String(row[map.lastName] || '').trim(),
-      email: String(row[map.email] || '').trim(),
-      phone: String(row[map.phone] || '').trim(),
-      school: schoolVal,
-      campus: String(row[map.campus] || '').trim(),
-      lycee: String(row[map.lycee] || '').trim(),
-      lyceeVille: String(row[map.lyceeVille] || '').trim(),
-      promo: String(row[map.promo] || '').trim(),
-      notes: String(row[map.notes] || '').trim()
-    };
-    STUDENTS.unshift(obj);
-    imported += 1;
-  });
-  saveLocalData();
-  closeModal('modal-import-students');
-  renderStudentsPage();
-  showToast(`${imported} étudiant(s) importé(s)`);
+  let created=0,updated=0,failed=0; const failedNames=[];
+  try{
+    setImportProgress('import-students-box',0,prepared.length,'Synchronisation Supabase');
+    await runImportPool(prepared,async ({obj,existing})=>{
+      const result=await retryImportOperation(()=>saveStudentDirectToSupabase(obj),3);
+      if(result?.ok){
+        if(existing){Object.assign(existing,obj);updated++;}
+        else{STUDENTS.unshift(obj);created++;}
+      }else{failed++;failedNames.push(`${obj.firstName} ${obj.lastName}`);}
+    },4,(done,total)=>setImportProgress('import-students-box',done,total,'Synchronisation Supabase'));
+    saveLocalData();
+    if(typeof loadFromSupabase==='function' && supabaseClient) await loadFromSupabase({silent:true});
+    if(typeof renderStudentsPage==='function') renderStudentsPage();
+    const msg=`${created} créé(s), ${updated} mis à jour${skipped?` · ${skipped} ligne(s) ignorée(s)`:''}${failed?` · ${failed} erreur(s)`:''}`;
+    if(failed){
+      const box=document.getElementById('import-students-box');
+      box.insertAdjacentHTML('beforeend',`<div class="network-retry-box" style="margin-top:12px"><span>${msg}. Échecs : ${failedNames.slice(0,8).map(x=>typeof escapeHtml==='function'?escapeHtml(x):x).join(', ')}${failedNames.length>8?'…':''}</span></div>`);
+      showToast(msg,'error');
+    }else{
+      closeModal('modal-import-students'); showToast(msg,'success');
+    }
+  }finally{if(btn){btn.disabled=false;btn.classList.remove('is-loading');}}
 }
-
 
 function downloadStudentsExcel(){
   const rows = STUDENTS.map(s=>({Prénom:s.firstName, Nom:s.lastName, Email:s.email, Téléphone:s.phone, École:s.school, Campus:s.campus, "Lycée d'origine":s.lycee, "Ville lycée":s.lyceeVille, Promo:s.promo, Notes:s.notes}));
@@ -14640,16 +14783,14 @@ html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!importa
   function currentScopeSchools(){return Array.from(document.querySelectorAll('input[name="db-import-scope-schools"]:checked')).map(x=>x.value)}
 
   // ── IMPORT BASE : le périmètre est imposé à tout le fichier ──
-  window.handleDatabaseImportFile=function(event){
+  window.handleDatabaseImportFile=async function(event){
     const file=event.target.files?.[0]; if(!file)return;
-    const reader=new FileReader();
-    reader.onload=e=>{try{
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}), sh=wb.Sheets[wb.SheetNames[0]];
-      IMPORT_DATABASE_ROWS=XLSX.utils.sheet_to_json(sh,{defval:''});
-      IMPORT_DATABASE_HEADERS=IMPORT_DATABASE_ROWS.length?Object.keys(IMPORT_DATABASE_ROWS[0]):[];
+    const box=$('database-import-box'); if(box){box.className='muted-box';box.textContent='Lecture du fichier…';}
+    try{
+      const parsed=await readImportFileRows(file);
+      IMPORT_DATABASE_ROWS=parsed.rows; IMPORT_DATABASE_HEADERS=parsed.headers;
       renderDatabaseMappingV83();
-    }catch(err){console.error(err);$('database-import-box').innerHTML='<span style="color:var(--red)">Impossible de lire ce fichier.</span>'}}
-    reader.readAsArrayBuffer(file);
+    }catch(err){console.error('Import lycées - lecture fichier',err);if(box)box.innerHTML=`<span style="color:var(--red)">Impossible de lire ce fichier : ${esc(err.message||String(err))}</span>`;}
   };
   function renderDatabaseMappingV83(){
     const box=$('database-import-box'); if(!box)return;
@@ -14675,31 +14816,54 @@ html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!importa
   }
   window.importMappedDatabase=async function(){
     if(!IMPORT_DATABASE_ROWS.length)return showToast('Aucune donnée à importer','error');
+    if(!supabaseClient)return showToast('Supabase n’est pas connecté : import annulé pour éviter un import partiel.','error');
     const map={};V83_DB_FIELDS.forEach(([k])=>map[k]=$('dbmap-'+k)?.value||'');
     const campus=$('db-import-scope-campus')?.value.trim()||'', schools=currentScopeSchools(), mode=$('db-import-scope-mode')?.value||'replace';
     if(!map.nom||!map.ville)return showToast('Associez au minimum Nom du lycée et Ville du lycée','error');
     if(!campus)return showToast('Choisissez la ville / campus de rattachement de cet import','error');
     if(!schools.length)return showToast('Sélectionnez au moins une marque / école pour cet import','error');
     const btn=$('database-import-submit');if(btn){btn.disabled=true;btn.classList.add('is-loading')}
-    let created=0,updated=0,failed=0;
+    const dedup=new Map();let invalid=0;
+    IMPORT_DATABASE_ROWS.forEach((row,i)=>{
+      const nom=String(row[map.nom]||'').trim(),ville=String(row[map.ville]||'').trim();
+      if(!nom||!ville){invalid++;return;}
+      const key=norm(nom)+'__'+norm(ville);dedup.set(key,{row,i,nom,ville});
+    });
+    const prepared=[];
+    for(const {row,i,nom,ville} of dedup.values()){
+      const existing=(LYCEES||[]).find(l=>norm(l.nom)===norm(nom)&&norm(l.ville)===norm(ville));
+      const l=existing?{...existing}:{id:(typeof nextId==='function'?nextId():`LYC_${Date.now()}_${i}_${Math.random().toString(36).slice(2,8)}`),statut:'A contacter'};
+      V83_DB_FIELDS.forEach(([k])=>{if(map[k]&&row[map[k]]!==undefined&&String(row[map[k]]).trim()!=='')l[k]=String(row[map[k]]).trim()});
+      if(existing&&mode==='merge'){
+        l.campus=mergeValues(l.campus||l.region,[campus]);l.region=l.campus;
+        const oldSchools=getSchoolsArray(l.ecoles||'');
+        l.ecoles=(String(l.ecoles||'').toLowerCase().includes('tout le monde'))?'tout le monde':mergeValues(oldSchools,schools);
+      }else{l.campus=campus;l.region=campus;l.ecoles=schools.join(', ')}
+      prepared.push({l,existing});
+    }
+    let created=0,updated=0,failed=0,suiviFailed=0;const failedNames=[];
     try{
-      for(let i=0;i<IMPORT_DATABASE_ROWS.length;i++){
-        const row=IMPORT_DATABASE_ROWS[i],nom=String(row[map.nom]||'').trim(),ville=String(row[map.ville]||'').trim();
-        if(!nom||!ville){failed++;continue}
-        const existing=(LYCEES||[]).find(l=>norm(l.nom)===norm(nom)&&norm(l.ville)===norm(ville));
-        const l=existing||{id:typeof nextId==='function'?nextId():'LYC'+Date.now()+'_'+i,statut:'A contacter'};
-        V83_DB_FIELDS.forEach(([k])=>{if(map[k]&&row[map[k]]!==undefined&&String(row[map[k]]).trim()!=='')l[k]=String(row[map[k]]).trim()});
-        if(existing&&mode==='merge'){
-          l.campus=mergeValues(l.campus||l.region,[campus]); l.region=l.campus;
-          const oldSchools=getSchoolsArray(l.ecoles||'');
-          l.ecoles=(String(l.ecoles||'').toLowerCase().includes('tout le monde'))?'tout le monde':mergeValues(oldSchools,schools);
-        }else{l.campus=campus;l.region=campus;l.ecoles=schools.join(', ')}
-        if(!existing)LYCEES.push(l);
-        const a=await saveLyceeDirectToSupabase(l);const b=a.ok?await saveLyceeSuiviAnnuelDirectToSupabase(l):{ok:false};
-        if(a.ok){existing?updated++:created++;if(!b.ok&&!b.skipped)console.warn('Suivi annuel non importé',b)}else failed++;
-      }
-      saveLocalData();if(typeof loadFromSupabase==='function'&&supabaseClient)await loadFromSupabase({silent:true});if(typeof renderListing==='function')renderListing();closeModal('modal-import-database');
-      showToast(`${created} créé(s), ${updated} mis à jour · ${campus} · ${schools.join(', ')}${failed?` · ${failed} erreur(s)`:''}`,failed?'error':'success');
+      const box=$('database-import-box');
+      if(box&&!box.querySelector('.leo-import-progress')) box.insertAdjacentHTML('beforeend','<div class="divider"></div><div class="leo-import-progress"><div class="leo-import-progress-text"></div><div class="leo-import-progress-track"><div class="leo-import-progress-fill"></div></div></div>');
+      setImportProgress('database-import-box',0,prepared.length,'Synchronisation Supabase');
+      await runImportPool(prepared,async ({l,existing})=>{
+        const a=await retryImportOperation(()=>saveLyceeDirectToSupabase(l),3);
+        if(a?.ok){
+          const b=await retryImportOperation(()=>saveLyceeSuiviAnnuelDirectToSupabase(l),2);
+          if(!b?.ok&&!b?.skipped)suiviFailed++;
+          if(existing){Object.assign(existing,l);updated++;}else{LYCEES.push(l);created++;}
+        }else{failed++;failedNames.push(`${l.nom} (${l.ville})`);}
+      },4,(done,total)=>setImportProgress('database-import-box',done,total,'Synchronisation Supabase'));
+      saveLocalData();
+      // Ne recharge depuis Supabase qu'après la fin complète du traitement : aucun import ne peut être écrasé en cours de route.
+      if(typeof loadFromSupabase==='function'&&supabaseClient)await loadFromSupabase({silent:true});
+      if(typeof renderListing==='function')renderListing();
+      const duplicates=IMPORT_DATABASE_ROWS.length-invalid-prepared.length;
+      const msg=`${created} créé(s), ${updated} mis à jour${duplicates>0?` · ${duplicates} doublon(s) dans le fichier fusionné(s)`:''}${invalid?` · ${invalid} ligne(s) incomplète(s)`:''}${failed?` · ${failed} erreur(s)`:''}${suiviFailed?` · ${suiviFailed} suivi(s) annuel(s) en erreur`:''}`;
+      if(failed){
+        if(box)box.insertAdjacentHTML('beforeend',`<div class="network-retry-box" style="margin-top:12px"><span>${msg}. Échecs : ${failedNames.slice(0,8).map(esc).join(', ')}${failedNames.length>8?'…':''}</span></div>`);
+        showToast(msg,'error');
+      }else{closeModal('modal-import-database');showToast(`${msg} · ${campus} · ${schools.join(', ')}`,'success');}
     }finally{if(btn){btn.disabled=false;btn.classList.remove('is-loading')}}
   };
 
