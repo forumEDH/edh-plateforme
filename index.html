@@ -1639,6 +1639,23 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 @media(max-width:1100px){.backlog-filter-box .form-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:768px){.backlog-filter-box .form-grid{grid-template-columns:1fr!important}.backlog-message-cell{min-width:0}}
 </style>
+
+<style id="plateforme-leo-v84-repaired-style">
+/* V84.1 — intégration stable : sélections séparées, onglets Ambassadeurs, filtre ville */
+.v84-section-tabs{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 14px;padding:5px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:max-content;max-width:100%}
+.v84-section-tab{border:0;background:transparent;color:var(--text2);font:800 12px 'DM Sans',sans-serif;padding:8px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.v84-section-tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow-sm)}
+.v84-student-panel{display:none}.v84-student-panel.active{display:block;animation:edh-fade-slide .15s ease both}
+.v84-filter-city{min-width:150px}
+.v84-school-access-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.v84-school-access-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);font-size:12px;font-weight:800;color:var(--text)}
+.v84-school-access-meta{font-size:10px;color:var(--text3);font-weight:800}
+.v84-mail-recipient-summary{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.v84-mail-pill{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid var(--border);border-radius:999px;background:var(--bg);font-size:11px;font-weight:800;color:var(--text2)}
+html[data-theme="dark"] .v84-section-tab.active{background:#111!important}html[data-theme="dark"] .v84-section-tabs,html[data-theme="dark"] .v84-school-access-row{background:#090909!important;border-color:#2b2b2b!important}
+@media(max-width:900px){.v84-school-access-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.v84-section-tabs{width:100%;display:grid;grid-template-columns:1fr}.v84-section-tab{width:100%}.v84-filter-city{width:100%;min-width:0}}
+</style>
 </head>
 <body>
 
@@ -1895,6 +1912,9 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
           <option value="privé">Privé</option>
           <option value="public">Public</option>
         </select>
+        <select class="filter-select v84-filter-city" id="filter-city-v84" aria-label="Filtrer par ville" onchange="S.page=1; renderListing()">
+          <option value="">Toutes les villes</option>
+        </select>
       </div>
     </div>
     <div class="topbar-right" id="topbar-listing-actions" style="display:none">
@@ -2073,26 +2093,17 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 
       <div class="kpi-row" id="students-kpis"></div>
 
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header"><div><div class="card-title">Formulaire nouveaux ambassadeurs</div><div class="card-count">QR code public · sans connexion</div></div></div>
-        <div style="padding:16px" class="qr-box">
-          <div style="flex:1;min-width:280px">
-            <div style="font-size:14px;font-weight:800;margin-bottom:6px">Collecter les coordonnées dès l’arrivée des étudiants</div>
-            <div style="font-size:12px;color:var(--text2);line-height:1.55">Le QR code ouvre un formulaire public demandant nom, prénom, ancien lycée, école actuelle, campus, téléphone, mail et ville de résidence. Les réponses alimentent la base Ambassadeurs.</div>
-            <div class="small-actions" style="margin-top:12px">
-              <button class="btn btn-outline" type="button" onclick="copyAmbassadorFormUrl()">Copier le lien</button>
-              <button class="btn btn-outline" type="button" onclick="downloadAmbassadorQrCode()">Télécharger le QR code</button>
-              <button class="btn btn-primary" type="button" onclick="openAmbassadorPublicForm()">Ouvrir le formulaire</button>
-            </div>
-          </div>
-          <div class="qr-preview" id="ambassador-qr-preview">QR</div>
-        </div>
+
+      <div class="v84-section-tabs" role="tablist" aria-label="Sections Ambassadeurs">
+        <button class="v84-section-tab active" id="v84-student-tab-directory" data-section="directory" type="button" onclick="showStudentSectionV84('directory')">Répertoire</button>
+        <button class="v84-section-tab" id="v84-student-tab-qr" data-section="qr" type="button" onclick="showStudentSectionV84('qr')">Formulaire QR</button>
+        <button class="v84-section-tab" id="v84-student-tab-selection" data-section="selection" type="button" onclick="showStudentSectionV84('selection')">Sélection</button>
       </div>
 
-      <div class="simple-grid-2">
+      <section class="v84-student-panel active" data-section="directory">
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Recherche étudiants</div>
+            <div class="card-title">Répertoire des ambassadeurs</div>
             <div class="card-count" id="students-count"></div>
           </div>
           <div style="padding:16px">
@@ -2104,53 +2115,48 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
               <div class="form-field">
                 <label class="form-label">École actuelle</label>
                 <select class="form-select" id="student-school-filter" onchange="renderStudentsPage()">
-                  <option value="">Toutes les écoles</option>
-                  <option value="EFAP">EFAP</option>
-                  <option value="ICART">ICART</option>
-                  <option value="CREAD">CREAD</option>
-                  <option value="BRASSART">BRASSART</option>
+                  <option value="">Toutes les écoles</option><option value="EFAP">EFAP</option><option value="ICART">ICART</option><option value="CREAD">CREAD</option><option value="BRASSART">BRASSART</option>
                 </select>
               </div>
               <div class="form-field">
                 <label class="form-label">Lycée d'origine</label>
-                <select class="form-select" id="student-origin-filter" onchange="renderStudentsPage()">
-                  <option value="">Tous les lycées</option>
-                </select>
+                <select class="form-select" id="student-origin-filter" onchange="renderStudentsPage()"><option value="">Tous les lycées</option></select>
               </div>
               <div class="form-field">
                 <label class="form-label">Ville du lycée</label>
-                <select class="form-select" id="student-city-filter" onchange="renderStudentsPage()">
-                  <option value="">Toutes les villes</option>
-                </select>
+                <select class="form-select" id="student-city-filter" onchange="renderStudentsPage()"><option value="">Toutes les villes</option></select>
               </div>
               <div class="form-field">
                 <label class="form-label">Trier par</label>
-                <select class="form-select" id="student-sort" onchange="renderStudentsPage()">
-                  <option value="lastname">Nom A → Z</option>
-                  <option value="school">École</option>
-                  <option value="lycee">Lycée d'origine</option>
-                </select>
+                <select class="form-select" id="student-sort" onchange="renderStudentsPage()"><option value="lastname">Nom A → Z</option><option value="school">École</option><option value="lycee">Lycée d'origine</option></select>
               </div>
             </div>
             <div class="list-cards" id="students-list"></div>
           </div>
         </div>
+      </section>
 
-        <div class="inline-form">
-          <div class="kicker">À quoi ça sert</div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:10px">Repérer rapidement les ambassadeurs d'un lycée</div>
-          <div style="font-size:13px;color:var(--text2);line-height:1.7">
-            Cette page est réservée aux administrateurs. Elle permet d'enregistrer uniquement les étudiants actuellement inscrits dans les écoles du groupe EDH avec leur lycée d'origine. Les inscriptions à un forum ne créent pas automatiquement un profil ici.
-          </div>
-          <div class="divider"></div>
-          <div class="kicker">Bon usage</div>
-          <div class="muted-box">
-            1. Ajouter les étudiants dès leur intégration<br>
-            2. Renseigner précisément le lycée d'origine<br>
-            3. Utiliser la recherche lycée pour identifier des profils mobilisables
+      <section class="v84-student-panel" data-section="qr">
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Formulaire nouveaux ambassadeurs</div><div class="card-count">QR code public · sans connexion</div></div></div>
+          <div style="padding:16px" class="qr-box">
+            <div style="flex:1;min-width:280px">
+              <div style="font-size:14px;font-weight:800;margin-bottom:6px">Collecter les coordonnées des nouveaux étudiants</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.55">Nom, prénom, ancien lycée, école actuelle, campus, téléphone, mail et ville de résidence.</div>
+              <div class="small-actions" style="margin-top:12px">
+                <button class="btn btn-outline" type="button" onclick="copyAmbassadorFormUrl()">Copier le lien</button>
+                <button class="btn btn-outline" type="button" onclick="downloadAmbassadorQrCode()">Télécharger le QR code</button>
+                <button class="btn btn-primary" type="button" onclick="openAmbassadorPublicForm()">Ouvrir le formulaire</button>
+              </div>
+            </div>
+            <div class="qr-preview" id="ambassador-qr-preview">QR</div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <section class="v84-student-panel" data-section="selection">
+        <div data-bulk-toolbar="students"></div>
+      </section>
     </div>
 
     <!-- ═══ REGISTRATIONS COLLAB PAGE ═══ -->
@@ -3483,7 +3489,7 @@ html[data-theme="dark"] .backlog-table code{color:#fecaca!important;background:r
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-const APP_PATCH_VERSION = "V83-2026-07-24-scoped-import-bulk-actions-email-campaigns";
+const APP_PATCH_VERSION = "V84.1-2026-07-24-repaired-integrated-bulk-selections-performance";
 // V80 : les écouteurs globaux sont installés après l'initialisation du backlog,
 // afin d'éviter les doubles handlers et les accès à un état encore non initialisé.
 // ══════════════════════════════════════
@@ -3561,7 +3567,7 @@ const DEFAULT_SEASON = '2025-2026';
 const SUPABASE_PROJECT_URL = 'https://qyeroclflrxdxjagpjtn.supabase.co';
 const SUPABASE_PUBLIC_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXJvY2xmbHJ4ZHhqYWdwanRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNzI3OTksImV4cCI6MjA5Mjk0ODc5OX0.Jh5r7BWsxgfFdRBRYGEbd310pxlXx9HtKGVaQWGD_Wk';
 let SUPABASE_ENABLED = Boolean(window.supabase && SUPABASE_PROJECT_URL && SUPABASE_PUBLIC_KEY);
-let supabaseClient = SUPABASE_ENABLED ? window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_PUBLIC_KEY) : null;
+let supabaseClient = (SUPABASE_ENABLED && window.supabase && typeof window.supabase.createClient === 'function') ? window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_PUBLIC_KEY) : null;
 let SUPABASE_SDK_LOAD_PROMISE = null;
 
 function loadSupabaseSdkSource(src, timeoutMs=8000){
@@ -6241,6 +6247,15 @@ function statusMatchesFilter(status, selectedStatuses){
 function deptMatchesFilter(dept, selectedDepts){
   return selectedDepts.includes(dept);
 }
+function populateListingCityFilterV84(){
+  const sel=document.getElementById('filter-city-v84');
+  if(!sel) return;
+  const current=sel.value;
+  const cities=[...new Set(getVisibleLycees().map(l=>String(l.ville||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  sel.innerHTML='<option value="">Toutes les villes</option>'+cities.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  if(cities.includes(current)) sel.value=current;
+}
+
 function filtered(){
   let d = getVisibleLycees().slice();
   const q = S.search.toLowerCase().trim();
@@ -6256,6 +6271,8 @@ function filtered(){
   const selectedDepts = asArrayFilter(S.dept);
   if(selectedDepts.length) d = d.filter(l=>deptMatchesFilter(l.departement, selectedDepts));
   if(S.type) d = d.filter(l=>(l.type||'').toLowerCase()===S.type);
+  const cityFilter=document.getElementById('filter-city-v84')?.value||'';
+  if(cityFilter) d=d.filter(l=>String(l.ville||'').trim().toLowerCase()===String(cityFilter).trim().toLowerCase());
   if(S.school) d = d.filter(l=>schoolMatches(l.ecoles, S.school));
 
   d.sort((a,b)=>{
@@ -6386,6 +6403,7 @@ function forceListingTelephoneColumn(){
 
 function renderListing(){
   forceListingTelephoneColumn();
+  populateListingCityFilterV84();
   const data = filtered();
   const pg = paged(data, S.page, S.pageSize);
   document.getElementById('listing-sub').textContent = `${data.length} établissement${data.length>1?'s':''}`;
@@ -6411,7 +6429,7 @@ function renderListing(){
         </div>
       </td>
     </tr>`).join('')
-    : `<tr><td colspan="10">${edhEmptyState({icon:'⌕', title:'Aucun lycée trouvé', text:S.search || S.statut || S.dept || S.type ? 'Aucun établissement ne correspond aux filtres actifs. Réinitialise les filtres ou élargis ta recherche.' : 'Ajoute ton premier lycée pour commencer à construire le listing de prospection.', primaryLabel:'Ajouter un lycée', primaryAction:'openAddModal()', secondaryLabel:'Réinitialiser les filtres', secondaryAction:'clearListingFilters()'})}</td></tr>`;
+    : `<tr><td colspan="10">${edhEmptyState({icon:'⌕', title:'Aucun lycée trouvé', text:S.search || S.statut || S.dept || S.type || document.getElementById('filter-city-v84')?.value ? 'Aucun établissement ne correspond aux filtres actifs. Réinitialise les filtres ou élargis ta recherche.' : 'Ajoute ton premier lycée pour commencer à construire le listing de prospection.', primaryLabel:'Ajouter un lycée', primaryAction:'openAddModal()', secondaryLabel:'Réinitialiser les filtres', secondaryAction:'clearListingFilters()'})}</td></tr>`;
   renderPagination(data.length, S.page, S.pageSize, 'listing-pag', 'goPage');
 }
 
@@ -6421,6 +6439,7 @@ function clearListingFilters(){
   S.search=''; S.statut=''; S.dept=''; S.type=''; S.page=1;
   const search=document.getElementById('global-search'); if(search) search.value='';
   const type=document.getElementById('filter-type'); if(type) type.value='';
+  const city=document.getElementById('filter-city-v84'); if(city) city.value='';
   ['filter-statut-menu','filter-dept-menu'].forEach(id=>document.querySelectorAll(`#${id} input[type="checkbox"]`).forEach(cb=>cb.checked=false));
   if(typeof applyFilters === 'function') applyFilters(); else renderListing();
 }
@@ -7847,38 +7866,31 @@ function renderActionsStructurePage(){
 }
 
 function renderPerformancePage(){
-  const events = activeValidatedForums();
+  try { if(typeof mergeManualReportingV52==='function') mergeManualReportingV52(); } catch(_) {}
+  try { if(typeof syncReportingFromLeadsV46==='function') syncReportingFromLeadsV46(); } catch(_) {}
+  const events = typeof getValidatedEventsForReporting==='function' ? getValidatedEventsForReporting() : activeValidatedForums();
   const rows = [];
   const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
   events.forEach(l => {
     const report = reportSummaryForEvent(l);
     const leads = eventLeads(l).length;
-    const prospects = report.global || report.prospect || leads || Number(l.prospect_global || 0);
-    totals.prospects += prospects;
-    totals.candidats += report.candidat;
-    totals.admis += report.admis;
-    totals.inscrits += report.inscrit;
+    const prospects = Number(report.global || report.prospect || leads || l.prospect_global || 0);
+    totals.prospects += prospects; totals.candidats += Number(report.candidat||0); totals.admis += Number(report.admis||0); totals.inscrits += Number(report.inscrit||0);
     const rate = pct(report.inscrit, prospects);
-    const reading = !prospects ? 'Reporting à compléter' : report.inscrit > 0 ? 'Forum générateur d’inscrits' : report.candidat > 0 ? 'Forum à suivre en admissions' : 'Prospects à qualifier';
+    let reading = !prospects ? 'Reporting à compléter' : Number(report.inscrit||0)>0 ? 'Forum générateur d’inscrits' : Number(report.candidat||0)>0 ? 'Forum à suivre en admissions' : 'Prospects à qualifier';
+    if(typeof isForumArchived==='function' && isForumArchived(l)) reading='Archivé · '+reading;
     rows.push({l, schools:getSchoolsArray(l.ecoles), prospects, report, rate, reading});
   });
   const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-  set('perf-forums', totals.forums);
-  set('perf-prospects', totals.prospects);
-  set('perf-candidats', totals.candidats);
-  set('perf-admis', totals.admis);
-  set('perf-inscrits', totals.inscrits);
-  set('perf-taux', pct(totals.inscrits, totals.prospects));
-  set('perf-count', `${rows.length} lycée(s)`);
+  set('perf-forums', totals.forums); set('perf-prospects', totals.prospects); set('perf-candidats', totals.candidats); set('perf-admis', totals.admis); set('perf-inscrits', totals.inscrits); set('perf-taux', pct(totals.inscrits, totals.prospects)); set('perf-count', `${rows.length} lycée(s)`);
   const body = document.getElementById('performance-tbody');
   if(body){
     body.innerHTML = rows.length ? rows.map(r => {
       const id = canonicalEventId(r.l) || r.l.id;
-      return `<tr onclick="openDetail('${id}')" style="cursor:pointer"><td><strong>${escapeHtml(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${escapeHtml(r.l.ville||'')}</span></td><td>${fmtDate(r.l.date)}</td><td>${schoolTags(r.l.ecoles)}</td><td>${r.prospects}</td><td>${r.report.candidat}</td><td>${r.report.admis}</td><td>${r.report.inscrit}</td><td><span class="conversion-rate">${r.rate}</span></td><td>${escapeHtml(r.reading)}</td></tr>`;
-    }).join('') : `<tr><td colspan="9">${edhEmptyState({icon:'◌', title:'Aucun bilan à afficher', text:'Le bilan conversion apparaîtra dès qu’un forum validé possède du reporting ou des leads associés sur la saison active.', primaryLabel:'Importer un reporting', primaryAction:'openImportReportingModal()', secondaryLabel:'Voir le reporting', secondaryAction:'showPage(\'reporting\')'})}</td></tr>`;
+      return `<tr onclick="openDetail('${id}')" style="cursor:pointer"><td><strong>${escapeHtml(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${escapeHtml(r.l.ville||'')}</span></td><td>${fmtDate(r.l.date)}</td><td>${schoolTags(r.l.ecoles)}</td><td>${r.prospects}</td><td>${Number(r.report.candidat||0)}</td><td>${Number(r.report.admis||0)}</td><td>${Number(r.report.inscrit||0)}</td><td><span class="conversion-rate">${r.rate}</span></td><td>${escapeHtml(r.reading)}</td></tr>`;
+    }).join('') : `<tr><td colspan="9">${edhEmptyState({icon:'◌', title:'Aucun bilan à afficher', text:'Aucun forum validé n’est disponible pour la saison active. Le bilan utilise la même source que le reporting, y compris les forums archivés.', primaryLabel:'Voir le reporting', primaryAction:'showPage(\'reporting\')'})}</td></tr>`;
   }
 }
-
 
 
 // ══════════════════════════════════════
@@ -8346,6 +8358,7 @@ async function changeSeason(season){
   S.search=''; S.statut=[]; S.dept=[]; S.type=''; S.school=''; S.page=1; S.schoolPage=1;
   const search = document.getElementById('global-search'); if(search) search.value='';
   const type = document.getElementById('filter-type'); if(type) type.value='';
+  const city = document.getElementById('filter-city-v84'); if(city) city.value='';
   initSeasonSelect();
   setMultiChecks('filter-statut', []);
   setMultiChecks('filter-dept', []);
@@ -11017,8 +11030,8 @@ window.addEventListener('DOMContentLoaded', () => {
     window.__EDH_RENDER_PERF_LOCK = true;
     try {
       try { if(typeof mergeManualReportingV52 === 'function') mergeManualReportingV52(); } catch(_) {}
-      window.syncReportingFromLeadsV46();
-      const events = typeof activeValidatedForums === 'function' ? activeValidatedForums() : [];
+      try { window.syncReportingFromLeadsV46(); } catch(_) {}
+      const events = typeof getValidatedEventsForReporting === 'function' ? getValidatedEventsForReporting() : (typeof activeValidatedForums === 'function' ? activeValidatedForums() : []);
       const totals = {forums:events.length, prospects:0, candidats:0, admis:0, inscrits:0};
       const rows = events.map(l => {
         const report = typeof reportSummaryForEvent === 'function' ? reportSummaryForEvent(l) : {global:0,prospect:0,candidat:0,admis:0,inscrit:0};
@@ -11026,13 +11039,16 @@ window.addEventListener('DOMContentLoaded', () => {
         const prospects = Number(report.global || report.prospect || leads || l.prospect_global || 0);
         totals.prospects += prospects; totals.candidats += Number(report.candidat||0); totals.admis += Number(report.admis||0); totals.inscrits += Number(report.inscrit||0);
         const rate = typeof pct === 'function' ? pct(report.inscrit, prospects) : (prospects ? Math.round((Number(report.inscrit||0)/prospects)*100)+'%' : '—');
-        const reading = !prospects ? 'Reporting à compléter' : Number(report.inscrit||0) > 0 ? 'Forum générateur d’inscrits' : Number(report.candidat||0) > 0 ? 'Forum à suivre en admissions' : 'Prospects à qualifier';
+        let reading = !prospects ? 'Reporting à compléter' : Number(report.inscrit||0) > 0 ? 'Forum générateur d’inscrits' : Number(report.candidat||0) > 0 ? 'Forum à suivre en admissions' : 'Prospects à qualifier';
+        if(typeof isForumArchived==='function' && isForumArchived(l)) reading='Archivé · '+reading;
         return {l, prospects, report, rate, reading};
       });
       const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
       set('perf-forums', totals.forums); set('perf-prospects', totals.prospects); set('perf-candidats', totals.candidats); set('perf-admis', totals.admis); set('perf-inscrits', totals.inscrits); set('perf-taux', typeof pct === 'function' ? pct(totals.inscrits, totals.prospects) : '—'); set('perf-count', `${rows.length} lycée(s)`);
       const body=document.getElementById('performance-tbody');
-      if(body){ body.innerHTML = rows.length ? rows.map(r=>{ const id=evKey(r.l); return `<tr onclick="openDetail('${h(id)}')" style="cursor:pointer"><td><strong>${h(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${h(r.l.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.l.date):h(r.l.date||'—')}</td><td>${typeof schoolTags==='function'?schoolTags(r.l.ecoles):h(r.l.ecoles||'')}</td><td>${r.prospects}</td><td>${Number(r.report.candidat||0)}</td><td>${Number(r.report.admis||0)}</td><td>${Number(r.report.inscrit||0)}</td><td><span class="conversion-rate">${h(r.rate)}</span></td><td>${h(r.reading)}</td></tr>`; }).join('') : `<tr><td colspan="9">${edhEmptyState({icon:'◌', title:'Aucun bilan à afficher', text:'Le bilan conversion apparaîtra dès qu’un forum validé possède du reporting ou des leads associés sur la saison active.', primaryLabel:'Importer un reporting', primaryAction:'openImportReportingModal()', secondaryLabel:'Voir le reporting', secondaryAction:'showPage(\'reporting\')'})}</td></tr>`; }
+      if(body){
+        body.innerHTML = rows.length ? rows.map(r=>{ const id=evKey(r.l); return `<tr onclick="openDetail('${h(id)}')" style="cursor:pointer"><td><strong>${h(r.l.nom)}</strong><br><span style="color:var(--text3);font-size:11px">${h(r.l.ville||'')}</span></td><td>${typeof fmtDate==='function'?fmtDate(r.l.date):h(r.l.date||'—')}</td><td>${typeof schoolTags==='function'?schoolTags(r.l.ecoles):h(r.l.ecoles||'')}</td><td>${r.prospects}</td><td>${Number(r.report.candidat||0)}</td><td>${Number(r.report.admis||0)}</td><td>${Number(r.report.inscrit||0)}</td><td><span class="conversion-rate">${h(r.rate)}</span></td><td>${h(r.reading)}</td></tr>`; }).join('') : `<tr><td colspan="9">${edhEmptyState({icon:'◌', title:'Aucun bilan à afficher', text:'Aucun forum validé n’est disponible pour la saison active. Le bilan utilise désormais la même source que Reporting forums, y compris les forums archivés.', primaryLabel:'Voir le reporting', primaryAction:'showPage(\'reporting\')'})}</td></tr>`;
+      }
       try { if(typeof formatVisibleNumbers === 'function') formatVisibleNumbers(); } catch(_) {}
     } finally { window.__EDH_RENDER_PERF_LOCK = false; }
   };
@@ -14700,7 +14716,17 @@ html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!importa
   window.toggleBulkSelection=function(type,id,checked){if(!BULK[type])return;checked?BULK[type].add(String(id)):BULK[type].delete(String(id));saveBulk();refreshBulkToolbars()};
   window.toggleBulkVisible=function(type,checked){visibleRows(type).forEach(o=>checked?BULK[type].add(String(o.id)):BULK[type].delete(String(o.id)));saveBulk();refreshBulkToolbars();decorateCurrentBulk(type)};
   window.clearBulkSelection=function(type){BULK[type]?.clear();saveBulk();refreshBulkToolbars();decorateCurrentBulk(type)};
-  function canBulkManageV83(){return typeof roleIsInternal==='function'?roleIsInternal(S.role):true}function toolbarHtml(type){if(!canBulkManageV83())return '';const n=selectedObjects(type).length,v=visibleRows(type).length;return `<div class="bulk-toolbar-left"><input class="bulk-check" type="checkbox" ${v&&visibleRows(type).every(o=>BULK[type].has(String(o.id)))?'checked':''} onchange="toggleBulkVisible('${type}',this.checked)" title="Sélectionner les éléments visibles"><div><div class="bulk-selection-count">${n} ${labelType(type)} dans la sélection</div><div class="bulk-selection-meta">La sélection reste mémorisée pendant les changements de filtre et de page.</div></div></div><div class="bulk-toolbar-actions"><button class="btn btn-outline" type="button" onclick="toggleBulkVisible('${type}',true)">Ajouter les visibles</button><button class="btn btn-ghost" type="button" onclick="clearBulkSelection('${type}')">Vider</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="startCampaignFromSelection('${type}')">Envoyer un mail</button><button class="btn btn-primary" type="button" ${n?'':'disabled'} onclick="openBulkActions('${type}')">Actions de masse</button></div>`}
+  function canBulkManageV83(){return typeof roleIsInternal==='function'?roleIsInternal(S.role):true}
+  function toolbarHtml(type){
+    if(!canBulkManageV83()) return '';
+    const n=selectedObjects(type).length, v=visibleRows(type).length;
+    const commonStart=`<div class="bulk-toolbar-left"><input class="bulk-check" type="checkbox" ${v&&visibleRows(type).every(o=>BULK[type].has(String(o.id)))?'checked':''} onchange="toggleBulkVisible('${type}',this.checked)" title="Sélectionner les éléments visibles"><div><div class="bulk-selection-count">${n} ${labelType(type)} dans la sélection</div><div class="bulk-selection-meta">La sélection reste mémorisée pendant les changements de filtre et de page.</div></div></div>`;
+    let actions='';
+    if(type==='lycees') actions=`<div class="bulk-toolbar-actions"><button class="btn btn-outline" type="button" onclick="toggleBulkVisible('lycees',true)">Ajouter les visibles</button><button class="btn btn-ghost" type="button" onclick="clearBulkSelection('lycees')">Vider</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="openLyceeMassMailV84()">Envoyer un mail</button><button class="btn btn-primary" type="button" ${n?'':'disabled'} onclick="openBulkActions('lycees')">Actions de masse</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="exportBulkSelectionV84('lycees','xlsx')">Excel</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="exportBulkSelectionV84('lycees','csv')">CSV</button></div>`;
+    else if(type==='students') actions=`<div class="bulk-toolbar-actions"><button class="btn btn-outline" type="button" onclick="toggleBulkVisible('students',true)">Ajouter les visibles</button><button class="btn btn-ghost" type="button" onclick="clearBulkSelection('students')">Vider</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="startCampaignFromSelection('students')">Envoyer un mail</button><button class="btn btn-primary" type="button" ${n?'':'disabled'} onclick="openBulkActions('students')">Actions de masse</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="exportBulkSelectionV84('students','xlsx')">Excel</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="exportBulkSelectionV84('students','csv')">CSV</button></div>`;
+    else actions=`<div class="bulk-toolbar-actions"><button class="btn btn-outline" type="button" onclick="toggleBulkVisible('${type}',true)">Ajouter les visibles</button><button class="btn btn-ghost" type="button" onclick="clearBulkSelection('${type}')">Vider</button><button class="btn btn-outline" type="button" ${n?'':'disabled'} onclick="startCampaignFromSelection('${type}')">Envoyer un mail</button><button class="btn btn-primary" type="button" ${n?'':'disabled'} onclick="openBulkActions('${type}')">Actions de masse</button></div>`;
+    return commonStart+actions;
+  }
   function ensureBulkToolbars(){
     [['page-listing','lycees'],['page-students','students'],['page-leads','leads'],['page-leadsall','leads']].forEach(([pageId,type])=>{const page=$(pageId);if(!page)return;let host=page.querySelector(`[data-bulk-toolbar="${type}"]`);if(!host){host=document.createElement('div');host.dataset.bulkToolbar=type;const header=page.querySelector('.page-header');header?.insertAdjacentElement('afterend',host)}host.innerHTML=toolbarHtml(type)});
   }
@@ -14717,9 +14743,25 @@ html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!importa
   [['renderListing','lycees',decorateListing],['renderStudentsPage','students',decorateStudents],['renderLeadsPage','leads',decorateLeads],['renderAllLeadsPage','leads',decorateLeads]].forEach(([name,type,decor])=>{const base=window[name];if(typeof base==='function')window[name]=function(){const r=base.apply(this,arguments);setTimeout(()=>{decor();refreshBulkToolbars()},0);return r}});
 
   // ── Modale d'actions de masse ──
-  function installBulkModal(){if($('modal-bulk-v83'))return;document.body.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modal-bulk-v83" onclick="closeModalIf(event,'modal-bulk-v83')"><div class="modal" style="max-width:680px"><div class="modal-header"><div><div class="modal-title">Actions de masse</div><div class="modal-subtitle" id="bulk-v83-subtitle"></div></div><button class="modal-close" onclick="closeModal('modal-bulk-v83')">✕</button></div><div class="modal-body"><div class="form-field" style="margin-bottom:12px"><label class="form-label">Action</label><select class="form-select" id="bulk-v83-action" onchange="renderBulkActionFields()"><option value="campus">Attribuer à une ville / campus</option><option value="school">Attribuer à une marque / école</option><option value="delete">Supprimer les éléments sélectionnés</option></select></div><div id="bulk-v83-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-bulk-v83')">Annuler</button><button class="btn btn-primary" id="bulk-v83-apply" onclick="applyBulkActionV83()">Appliquer</button></div></div></div>`)}
-  window.openBulkActions=function(type){if(!canBulkManageV83())return showToast('Actions de masse réservées aux collaborateurs','error');bulkType=type;installBulkModal();const n=selectedObjects(type).length;$('bulk-v83-subtitle').textContent=`${n} ${labelType(type)} accessible(s) sélectionné(s)`;$('bulk-v83-action').value='campus';renderBulkActionFields();$('modal-bulk-v83').classList.add('open')};
-  window.renderBulkActionFields=function(){const host=$('bulk-v83-fields');if(!host)return;const action=$('bulk-v83-action')?.value||'campus';if(action==='campus'){host.innerHTML=`<div class="form-field"><label class="form-label">Ville / campus de rattachement</label><select class="form-select" id="bulk-v83-campus"><option value="">— Sélectionner —</option>${(window.CAMPUS_LIST||CAMPUS_LIST||[]).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select></div><div class="muted-box" style="margin-top:10px">Cette valeur sert aussi au cloisonnement des données selon les campus autorisés sur le compte utilisateur.</div>`}else if(action==='school'){const schools=window.SCHOOLS||SCHOOLS||[];host.innerHTML=bulkType==='lycees'?`<div class="form-field"><label class="form-label">Marques / écoles autorisées</label><div class="bulk-school-grid">${schools.map(s=>`<label><input class="bulk-check" type="checkbox" name="bulk-v83-schools" value="${esc(s)}"> ${esc(s)}</label>`).join('')}</div></div><div class="form-field" style="margin-top:10px"><label class="form-label">Mode</label><select class="form-select" id="bulk-v83-school-mode"><option value="replace">Remplacer l’attribution actuelle</option><option value="merge">Ajouter aux marques déjà attribuées</option></select></div>`:`<div class="form-field"><label class="form-label">Marque / école</label><select class="form-select" id="bulk-v83-school"><option value="">— Sélectionner —</option>${schools.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}</select></div>`}else{host.innerHTML=`<div class="muted-box"><strong>Suppression définitive</strong><br>Les ${labelType(bulkType)} seront supprimés localement et dans Supabase quand la ligne distante existe.</div><div class="bulk-danger-note">Vérifiez votre sélection avant de continuer. Cette action n’est pas annulable depuis la plateforme.</div>`}};
+  function installBulkModal(){if(document.getElementById('modal-bulk-v83'))return;document.body.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modal-bulk-v83" onclick="closeModalIf(event,'modal-bulk-v83')"><div class="modal" style="max-width:700px"><div class="modal-header"><div><div class="modal-title">Actions de masse</div><div class="modal-subtitle" id="bulk-v83-subtitle"></div></div><button class="modal-close" onclick="closeModal('modal-bulk-v83')">✕</button></div><div class="modal-body"><div class="form-field" style="margin-bottom:12px"><label class="form-label">Action</label><select class="form-select" id="bulk-v83-action" onchange="renderBulkActionFields()"></select></div><div id="bulk-v83-fields"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-bulk-v83')">Annuler</button><button class="btn btn-primary" id="bulk-v83-apply" onclick="applyBulkActionV83()">Appliquer</button></div></div></div>`)}
+  window.openBulkActions=function(type){
+    if(!canBulkManageV83())return showToast('Actions de masse réservées aux collaborateurs','error');
+    bulkType=type;installBulkModal();const n=selectedObjects(type).length;document.getElementById('bulk-v83-subtitle').textContent=`${n} ${labelType(type)} accessible(s) sélectionné(s)`;
+    const action=document.getElementById('bulk-v83-action');
+    if(type==='lycees') action.innerHTML='<option value="campus">Changer l’attribution / transférer de campus</option><option value="school">Attribuer / retirer des écoles</option><option value="delete">Supprimer les lycées</option>';
+    else if(type==='students') action.innerHTML='<option value="school">Changer d’école</option><option value="campus">Changer de campus</option><option value="delete">Supprimer les ambassadeurs</option>';
+    else action.innerHTML='<option value="campus">Changer de campus</option><option value="school">Changer d’école / marque</option><option value="delete">Supprimer les leads</option>';
+    action.value=type==='students'?'school':'campus';renderBulkActionFields();document.getElementById('modal-bulk-v83').classList.add('open');
+  };
+  window.v84SchoolBulkChanged=function(cb){cb.dataset.mixed='0';cb.indeterminate=false};
+  window.renderBulkActionFields=function(){
+    const host=document.getElementById('bulk-v83-fields');if(!host)return;const action=document.getElementById('bulk-v83-action')?.value||'campus';const objs=selectedObjects(bulkType);
+    if(action==='campus'){host.innerHTML=`<div class="form-field"><label class="form-label">Nouveau campus *</label><select class="form-select" id="bulk-v83-campus"><option value="">— Sélectionner —</option>${CAMPUS_LIST.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select></div>${bulkType==='lycees'?'<div class="muted-box" style="margin-top:10px"><strong>Transfert :</strong> le nouveau campus remplace l’attribution actuelle. Le lycée peut disparaître de votre vue si votre compte n’a pas accès au campus choisi.</div>':''}`;}
+    else if(action==='school'){
+      if(bulkType==='lycees'){const n=objs.length;host.innerHTML=`<div class="muted-box" style="margin-bottom:10px">Cochée = école attribuée à tous les lycées. Vide = attribuée à aucun. État intermédiaire = attribuée seulement à une partie ; laissez-le intact pour conserver les différences.</div><div class="v84-school-access-grid">${SCHOOLS.map(s=>{const count=objs.filter(o=>getSchoolsArray(o.ecoles||'').includes(s)).length;const mixed=count>0&&count<n;return `<label class="v84-school-access-row"><span><input class="bulk-check v84-school-access-check" type="checkbox" value="${esc(s)}" ${count===n?'checked':''} data-mixed="${mixed?'1':'0'}" onchange="v84SchoolBulkChanged(this)"> ${esc(s)}</span><span class="v84-school-access-meta">${count}/${n}</span></label>`}).join('')}</div>`;setTimeout(()=>document.querySelectorAll('.v84-school-access-check[data-mixed="1"]').forEach(cb=>cb.indeterminate=true),0);}
+      else host.innerHTML=`<div class="form-field"><label class="form-label">Nouvelle école *</label><select class="form-select" id="bulk-v83-school"><option value="">— Sélectionner —</option>${SCHOOLS.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}</select></div>`;
+    }else host.innerHTML=`<div class="muted-box"><strong>Suppression définitive</strong><br>Les ${labelType(bulkType)} sélectionnés seront supprimés de Supabase et de la plateforme.</div><div class="bulk-danger-note">Cette opération est irréversible depuis l’interface.</div>`;
+  };
   async function saveBulkObject(type,obj){if(type==='lycees'){const a=await saveLyceeDirectToSupabase(obj);if(a.ok)await saveLyceeSuiviAnnuelDirectToSupabase(obj);return a}if(type==='students')return saveStudentDirectToSupabase(obj);return saveLeadDirectToSupabase(obj)}
   async function deleteBulkObject(type,obj){if(type==='lycees')return deleteLyceeDirectFromSupabase(obj);if(type==='students')return deleteStudentDirectFromSupabase(obj);return deleteLeadDirectFromSupabase(obj)}
   function removeLocalBulk(type,ids){const set=new Set(ids.map(String));if(type==='lycees')LYCEES=(LYCEES||[]).filter(x=>!set.has(String(x.id)));else if(type==='students')STUDENTS=(STUDENTS||[]).filter(x=>!set.has(String(x.id)));else LEADS=(LEADS||[]).filter(x=>!set.has(String(x.id)))}
@@ -14733,7 +14775,10 @@ html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!importa
       }else{
         if(action==='campus'){const c=$('bulk-v83-campus')?.value||'';if(!c)return showToast('Sélectionnez une ville / campus','error');for(const obj of objs){obj.campus=c;if(bulkType==='lycees')obj.region=c;await saveBulkObject(bulkType,obj)}}
         if(action==='school'){
-          if(bulkType==='lycees'){const s=Array.from(document.querySelectorAll('input[name="bulk-v83-schools"]:checked')).map(x=>x.value);if(!s.length)return showToast('Sélectionnez au moins une marque','error');const mode=$('bulk-v83-school-mode')?.value||'replace';for(const obj of objs){const old=getSchoolsArray(obj.ecoles||'');obj.ecoles=mode==='merge'&&!String(obj.ecoles||'').toLowerCase().includes('tout le monde')?mergeValues(old,s):s.join(', ');await saveBulkObject(bulkType,obj)}}else{const s=$('bulk-v83-school')?.value||'';if(!s)return showToast('Sélectionnez une marque','error');for(const obj of objs){obj.school=s;await saveBulkObject(bulkType,obj)}}
+          if(bulkType==='lycees'){
+            const checks=[...document.querySelectorAll('.v84-school-access-check')];
+            for(const obj of objs){const set=new Set(getSchoolsArray(obj.ecoles||''));checks.forEach(cb=>{if(cb.dataset.mixed==='1')return;cb.checked?set.add(cb.value):set.delete(cb.value)});obj.ecoles=[...set].join(', ');await saveBulkObject(bulkType,obj)}
+          }else{const school=document.getElementById('bulk-v83-school')?.value||'';if(!school)return showToast('Sélectionnez une école','error');for(const obj of objs){obj.school=school;await saveBulkObject(bulkType,obj)}}
         }
         showToast(`${objs.length} ${labelType(bulkType)} modifié(s)`);
       }
@@ -14741,6 +14786,32 @@ html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!importa
     }catch(err){console.error(err);showToast('Une erreur est survenue pendant l’action de masse','error')}finally{if(btn){btn.disabled=false;btn.classList.remove('is-loading')}}
   };
   function rerenderBulkType(type){if(type==='lycees')renderListing();else if(type==='students')renderStudentsPage();else{renderLeadsPage();renderAllLeadsPage()}refreshBulkToolbars()}
+
+  // ── V84.1 : onglets Ambassadeurs, exports et mail de masse Lycées ──
+  window.showStudentSectionV84=function(section){
+    const allowed=['directory','qr','selection'];if(!allowed.includes(section))section='directory';
+    document.querySelectorAll('#page-students .v84-section-tab').forEach(b=>b.classList.toggle('active',b.dataset.section===section));
+    document.querySelectorAll('#page-students .v84-student-panel').forEach(p=>p.classList.toggle('active',p.dataset.section===section));
+    try{sessionStorage.setItem('plateforme_leo_student_section_v84',section)}catch(_){}
+    if(section==='qr'&&typeof renderAmbassadorQr==='function')renderAmbassadorQr();
+    if(section==='selection')refreshBulkToolbars();
+  };
+  function updateStudentSelectionTabV84(){const tab=document.getElementById('v84-student-tab-selection');if(tab)tab.textContent=`Sélection (${selectedObjects('students').length})`}
+  const baseRefreshBulkToolbarsV84=refreshBulkToolbars;refreshBulkToolbars=function(){baseRefreshBulkToolbarsV84();updateStudentSelectionTabV84()};
+  function restoreStudentSectionV84(){let section='directory';try{section=sessionStorage.getItem('plateforme_leo_student_section_v84')||'directory'}catch(_){};showStudentSectionV84(section)}
+
+  function exportRowsV84(type){return selectedObjects(type).map(o=>type==='lycees'?{'Nom du lycée':o.nom||'',Ville:o.ville||'',Département:o.departement||'',CP:o.cp||'',Type:o.type||'',Adresse:o.adresse||'',Statut:o.statut||'',Campus:o.campus||o.region||'',Écoles:getSchoolsArray(o.ecoles||'').join(', '),'Contact / organisateur':o.organisateur||'',Email:mailRecipient(o),Téléphone:o.tel_ecole||o.telephone||'',Commentaire:o.commentaire||''}:{Prénom:o.firstName||'',Nom:o.lastName||'','Ancien lycée':o.lycee||'','Ville du lycée':o.lyceeVille||'',École:o.school||'',Campus:o.campus||o.region||'',Téléphone:o.phone||'',Email:o.email||'','Ville de résidence':o.residenceCity||o.ville_residence||'',Promo:o.promo||'',Notes:o.notes||''})}
+  window.exportBulkSelectionV84=function(type,format){if(typeof XLSX==='undefined')return showToast('Module Excel indisponible','error');const rows=exportRowsV84(type);if(!rows.length)return showToast('La sélection est vide','error');const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,type==='lycees'?'Lycées sélectionnés':'Ambassadeurs sélectionnés');const name=`Plateforme_Leo_${type==='lycees'?'Lycees':'Ambassadeurs'}_selection_${new Date().toISOString().slice(0,10)}`;XLSX.writeFile(wb,`${name}.${format==='csv'?'csv':'xlsx'}`,format==='csv'?{bookType:'csv'}:undefined)};
+
+  function selectedLyceeEmailsV84(){const seen=new Set();return selectedObjects('lycees').map(l=>({lycee:l,email:String(mailRecipient(l)||'').trim().toLowerCase()})).filter(x=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x.email)&&!seen.has(x.email)&&seen.add(x.email))}
+  function massMailEventV84(){const rows=selectedObjects('lycees'),schools=[...new Set(rows.flatMap(l=>getSchoolsArray(l.ecoles||'')))];return {nom:'votre établissement',organisateur:'Madame, Monsieur',ville:'',date:'',ecoles:schools.join(', ')||'Groupe EDH'}}
+  function massMailTemplateOptionsV84(){try{if(typeof loadV39LocalState==='function')loadV39LocalState()}catch(_){};const base=[['prospection','Contact / prospection'],['relance','Relance'],['confirmation','Confirmation de participation'],['refus','Refus de participation'],['annulation','Annulation et excuses'],['merci','Remerciement']];const custom=Array.isArray(CUSTOM_EMAIL_TEMPLATES)?CUSTOM_EMAIL_TEMPLATES:[];return base.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')+(custom.length?'<optgroup label="Templates personnalisés">'+custom.map(t=>`<option value="custom:${esc(t.id)}">${esc(t.name)}</option>`).join('')+'</optgroup>':'')}
+  function ensureLyceeMassMailModalV84(){if(document.getElementById('modal-lycee-mass-mail-v84'))return;document.body.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modal-lycee-mass-mail-v84" onclick="closeModalIf(event,'modal-lycee-mass-mail-v84')"><div class="modal" style="max-width:820px"><div class="modal-header"><div><div class="modal-title">Mail en masse — sélection de lycées</div><div class="modal-subtitle" id="v84-mass-mail-sub"></div></div><button class="modal-close" onclick="closeModal('modal-lycee-mass-mail-v84')">✕</button></div><div class="modal-body"><div class="email-template-tools"><div class="template-help">Même logique que le bouton Mail individuel : choisissez un template puis adaptez le contenu.</div><button class="btn btn-outline" type="button" onclick="openEmailTemplateModal()">Gérer les templates</button></div><div class="form-grid"><div class="form-field"><label class="form-label">Template</label><select class="form-select" id="v84-mass-mail-template" onchange="renderLyceeMassMailV84()"></select></div><div class="form-field"><label class="form-label">Objet</label><input class="form-input" id="v84-mass-mail-subject"></div><div class="form-field full"><label class="form-label">Message</label><textarea class="form-textarea" id="v84-mass-mail-body" rows="11"></textarea></div></div><div class="v84-mail-recipient-summary"><span class="v84-mail-pill" id="v84-mass-valid"></span><span class="v84-mail-pill" id="v84-mass-missing"></span></div><div class="muted-box">Les destinataires sont placés en <strong>BCC</strong>. Les variables personnalisées sont volontairement généralisées en « votre établissement » pour un envoi groupé.</div></div><div class="modal-footer"><button class="btn btn-outline" type="button" onclick="copyLyceeMassBccV84()">Copier les BCC</button><button class="btn btn-outline" type="button" onclick="copyLyceeMassMessageV84()">Copier le message</button><button class="btn btn-primary" type="button" onclick="sendLyceeMassMailV84()">Ouvrir dans la messagerie</button></div></div></div>`)}
+  window.openLyceeMassMailV84=function(){if(!selectedObjects('lycees').length)return showToast('Sélectionnez au moins un lycée','error');ensureLyceeMassMailModalV84();const sel=document.getElementById('v84-mass-mail-template');sel.innerHTML=massMailTemplateOptionsV84();sel.value='prospection';renderLyceeMassMailV84();document.getElementById('modal-lycee-mass-mail-v84').classList.add('open')};
+  window.renderLyceeMassMailV84=function(){const type=document.getElementById('v84-mass-mail-template')?.value||'prospection',tpl=emailTemplates(massMailEventV84(),type),valid=selectedLyceeEmailsV84(),all=selectedObjects('lycees');document.getElementById('v84-mass-mail-subject').value=tpl.subject;document.getElementById('v84-mass-mail-body').value=tpl.body;document.getElementById('v84-mass-mail-sub').textContent=`${all.length} lycée(s) sélectionné(s)`;document.getElementById('v84-mass-valid').textContent=`${valid.length} email(s) valide(s)`;document.getElementById('v84-mass-missing').textContent=`${Math.max(0,all.length-valid.length)} sans email exploitable`};
+  window.copyLyceeMassBccV84=async function(){const emails=selectedLyceeEmailsV84().map(x=>x.email);if(!emails.length)return showToast('Aucun email exploitable','error');try{await navigator.clipboard.writeText(emails.join('; '));showToast(`${emails.length} adresse(s) copiée(s)`)}catch(_){showToast('Copie impossible','error')}};
+  window.copyLyceeMassMessageV84=async function(){const subject=document.getElementById('v84-mass-mail-subject')?.value||'',body=document.getElementById('v84-mass-mail-body')?.value||'';try{await navigator.clipboard.writeText(`Objet : ${subject}\n\n${body}`);showToast('Mail copié')}catch(_){showToast('Copie impossible','error')}};
+  window.sendLyceeMassMailV84=function(){const emails=selectedLyceeEmailsV84().map(x=>x.email),subject=document.getElementById('v84-mass-mail-subject')?.value.trim()||'',body=document.getElementById('v84-mass-mail-body')?.value||'';if(!emails.length)return showToast('Aucun email exploitable','error');if(!subject||!body)return showToast('Objet et message requis','error');const batch=emails.slice(0,40);if(emails.length>40)showToast('Ouverture avec les 40 premiers destinataires. Utilisez le module Campagnes pour les volumes supérieurs.','error');location.href=`mailto:?bcc=${encodeURIComponent(batch.join(';'))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`};
 
   // ── Campagnes email ──
   const CAMPAIGN_LOCAL_KEY='plateforme_leo_campaigns_v83';let CAMPAIGN_SOURCE='selection-all',CAMPAIGN_ROWS=[];
@@ -14765,7 +14836,7 @@ html[data-theme="dark"] .import-scope-box{background:rgba(37,99,235,.16)!importa
   window.renderCampaignsPageV83=function(){installCampaignPage();document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelector('[data-page="campaigns"]')?.classList.add('active');const mt=$('mobile-page-title');if(mt)mt.textContent='Campagnes email';if($('campaign-source-v83'))$('campaign-source-v83').value=CAMPAIGN_SOURCE;refreshCampaignRecipientsV83();loadCampaignHistory()};
 
   const baseShowPage=window.showPage;if(typeof baseShowPage==='function')window.showPage=function(page){const r=baseShowPage.apply(this,arguments);if(page==='campaigns')setTimeout(renderCampaignsPageV83,0);return r};
-  function boot(){installCampaignPage();installBulkModal();ensureBulkToolbars();decorateListing();decorateStudents();decorateLeads();refreshBulkToolbars()}
+  function boot(){installCampaignPage();installBulkModal();ensureBulkToolbars();decorateListing();decorateStudents();decorateLeads();refreshBulkToolbars();try{populateListingCityFilterV84()}catch(_){};try{restoreStudentSectionV84()}catch(_){}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
